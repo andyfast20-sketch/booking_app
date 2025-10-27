@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS   # ✅ Add this line
 
 app = Flask(__name__)
+CORS(app)  # ✅ Add this line
 
 # --- Route 1: Show the booking form ---
 @app.route('/')
