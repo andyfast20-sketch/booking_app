@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS   # ✅ Add this line
 
 app = Flask(__name__)
-CORS(app)  # ✅ Add this line
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # --- Route 1: Show the booking form ---
 @app.route('/')
@@ -31,3 +31,4 @@ def book():
 if __name__ == '__main__':
     # host="0.0.0.0" lets it work online later too
     app.run(host="0.0.0.0", port=5000, debug=True)
+
