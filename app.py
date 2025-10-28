@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 
-# ✅ Allow your sites
+# ✅ Allow your connected sites
 CORS(app, resources={r"/*": {"origins": [
     "https://payasyounow71.neocities.org",
     "https://booking-app-p8q8.onrender.com",
@@ -20,20 +21,30 @@ def home():
     return "✅ Flask Booking API running. Visit /bookings to manage and /availability to view free slots."
 
 
-# --- Handle bookings (from user form) ---
+# --- Handle booking submissions ---
 @app.route("/book", methods=["POST"])
 def book():
     data = request.json
     name = data.get("name")
     time = data.get("time")
 
+    # Save booking
     with open(BOOKINGS_FILE, "a") as f:
         f.write(f"{name},{time}\n")
+
+    # Remove the booked slot from available times
+    if os.path.exists(AVAIL_FILE):
+        with open(AVAIL_FILE) as f:
+            slots = [line.strip() for line in f if line.strip()]
+        if time in slots:
+            slots.remove(time)
+        with open(AVAIL_FILE, "w") as f:
+            f.write("\n".join(slots) + ("\n" if slots else ""))
 
     return jsonify({"message": f"✅ Booking confirmed for {name} at {time}!"})
 
 
-# --- Get list of available times (for frontend dropdown) ---
+# --- Get available times for dropdown ---
 @app.route("/availability")
 def get_availability():
     if not os.path.exists(AVAIL_FILE):
@@ -43,15 +54,21 @@ def get_availability():
     return jsonify(times)
 
 
-# --- Admin page: view bookings + set free times ---
+# --- Admin page: manage bookings + set available times ---
 @app.route("/bookings", methods=["GET", "POST"])
 def view_bookings():
-    # Handle new availability submission
+    # Add new slot
     if request.method == "POST":
-        slot = request.form.get("slot")
-        if slot:
-            with open(AVAIL_FILE, "a") as f:
-                f.write(slot + "\n")
+        date = request.form.get("date")
+        time = request.form.get("time")
+        if date and time:
+            try:
+                datetime.strptime(date, "%Y-%m-%d")
+                slot = f"{date} {time}"
+                with open(AVAIL_FILE, "a") as f:
+                    f.write(slot + "\n")
+            except ValueError:
+                pass
 
     # Read bookings
     bookings = []
@@ -65,7 +82,7 @@ def view_bookings():
         with open(AVAIL_FILE) as f:
             avail = [line.strip() for line in f if line.strip()]
 
-    # --- Pretty admin HTML ---
+    # --- Pretty Admin Page ---
     html = """
     <!DOCTYPE html>
     <html lang="en">
@@ -76,27 +93,36 @@ def view_bookings():
         body {
           font-family: 'Segoe UI', sans-serif;
           background: linear-gradient(135deg, #74ABE2, #5563DE);
-          color: white; text-align:center; padding:2rem;
+          color: white;
+          text-align: center;
+          padding: 2rem;
         }
         table {
-          margin:auto; border-collapse:collapse;
-          background-color:rgba(255,255,255,0.15);
-          box-shadow:0 4px 10px rgba(0,0,0,0.3);
-          border-radius:12px; overflow:hidden;
+          margin: auto;
+          border-collapse: collapse;
+          background-color: rgba(255,255,255,0.15);
+          box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+          border-radius: 12px;
+          overflow: hidden;
         }
-        th, td { padding:10px 20px; }
-        th { background:rgba(255,255,255,0.25); }
-        tr:nth-child(even){background:rgba(255,255,255,0.1);}
-        input, button {
-          margin-top:1rem; padding:10px 15px;
-          border:none; border-radius:6px; font-size:1rem;
+        th, td { padding: 10px 20px; }
+        th { background: rgba(255,255,255,0.25); }
+        tr:nth-child(even){ background: rgba(255,255,255,0.1); }
+        input, select, button {
+          margin-top: 1rem; padding: 10px 15px;
+          border: none; border-radius: 6px; font-size: 1rem;
         }
-        input {width:200px;}
+        input[type="date"] {
+          width: 180px;
+        }
+        select {
+          width: 100px;
+        }
         button {
-          background:#00C9A7; color:white; cursor:pointer;
+          background: #00C9A7; color: white; cursor: pointer;
         }
-        button:hover { background:#00A387; }
-        .section {margin-top:2rem;}
+        button:hover { background: #00A387; }
+        .section { margin-top: 2rem; }
       </style>
     </head>
     <body>
@@ -115,7 +141,11 @@ def view_bookings():
       <div class="section">
         <h2>🗓️ Set Available Times</h2>
         <form method="POST">
-          <input type="text" name="slot" placeholder="e.g. 2025-10-30 12:30" required>
+          <input type="date" name="date" required>
+          <select name="time" required>
+            <option value="18:00">6:00 PM</option>
+            <option value="20:00">8:00 PM</option>
+          </select>
           <button type="submit">Add Slot</button>
         </form>
 
