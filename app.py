@@ -4,7 +4,8 @@ from flask_cors import CORS   # ✅ Import stays the same
 app = Flask(__name__)
 
 # ✅ Updated CORS rule: only allow requests from your Neocities site
-CORS(app, origins=["https://payasyounow71.neocities.org"])
+CORS(app, resources={r"/*": {"origins": "https://payasyounow71.neocities.org"}})
+
 
 # --- Route 1: Show the booking form ---
 @app.route('/')
@@ -28,6 +29,7 @@ def book():
 # --- Run the Flask app ---
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
