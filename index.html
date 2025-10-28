@@ -1,168 +1,2126 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Make a Booking</title>
-  <style>
-    body {
-      background: linear-gradient(135deg, #74ABE2, #5563DE);
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 1rem;
-    }
-
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 20px;
-      text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-      text-align: center;
-    }
-
-    form {
-      background-color: rgba(255, 255, 255, 0.1);
-      padding: 20px 30px;
-      border-radius: 15px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      width: 300px;
-      text-align: center;
-    }
-
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 5px;
-      font-size: 1rem;
-    }
-
-    input, select {
-      background-color: rgba(255,255,255,0.9);
-      color: #333;
-    }
-
-    button {
-      background-color: #00C9A7;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #00A387;
-      transform: scale(1.05);
-    }
-
-    #response {
-      margin-top: 15px;
-      font-weight: bold;
-    }
-
-    .footer {
-      margin-top: 30px;
-      font-size: 0.9rem;
-      text-align: center;
-    }
-
-    .footer a {
-      color: #00FFB3;
-      text-decoration: none;
-    }
-  </style>
-</head>
-
-<body>
-  <h1>✨ Make a Booking ✨</h1>
-
-  <form id="bookingForm">
-    <input type="text" id="name" placeholder="Your Name" required />
-    <select id="time" required>
-      <option value="">Loading available times...</option>
-    </select>
-    <button type="submit">Book Now</button>
-  </form>
-
-  <p id="response"></p>
-
-  <div class="footer">
-    <p>View admin panel: <a href="https://booking-app-p8q8.onrender.com/bookings" target="_blank">Bookings Page</a></p>
-  </div>
-
-  <script>
-    const API_BASE = "https://booking-app-p8q8.onrender.com";
-
-    // 🕒 Load available times into the dropdown
-    async function loadAvailability() {
-      const select = document.getElementById("time");
-      try {
-        const res = await fetch(`${API_BASE}/availability`);
-        const slots = await res.json();
-
-        select.innerHTML = ""; // Clear current options
-
-        if (slots.length === 0) {
-          const opt = document.createElement("option");
-          opt.text = "No available times 😅";
-          opt.disabled = true;
-          opt.selected = true;
-          select.add(opt);
-        } else {
-          const defaultOpt = document.createElement("option");
-          defaultOpt.text = "Select a time";
-          defaultOpt.value = "";
-          select.add(defaultOpt);
-
-          slots.forEach((slot) => {
-            const opt = document.createElement("option");
-            opt.value = slot;
-            opt.text = slot;
-            select.add(opt);
-          });
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pay As You Mow | Professional Garden Maintenance</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-dark: #1b5e20;
+            --secondary: #ff9800;
+            --text: #333333;
+            --text-light: #666666;
+            --background: #f9f9f9;
+            --white: #ffffff;
+            --shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
         }
-      } catch (err) {
-        console.error("Error loading availability:", err);
-        select.innerHTML = "<option>Error loading times</option>";
-      }
-    }
 
-    // 📤 Handle booking submission
-    document.getElementById("bookingForm").onsubmit = async (e) => {
-      e.preventDefault();
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-      const name = document.getElementById("name").value;
-      const time = document.getElementById("time").value;
-      const responseEl = document.getElementById("response");
+        body {
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: var(--background);
+            overflow-x: hidden;
+        }
 
-      try {
-        const res = await fetch(`${API_BASE}/book`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, time })
+        h1, h2, h3, h4 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        section {
+            padding: 80px 0;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background-color: #f57c00;
+        }
+
+        .btn-quote {
+            background: linear-gradient(135deg, #ffb347, #ff7e5f);
+            padding: 10px 26px;
+            font-size: 0.95rem;
+            border-radius: 999px;
+            box-shadow: 0 12px 22px rgba(255, 126, 95, 0.25);
+            text-transform: none;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-quote:hover {
+            background: linear-gradient(135deg, #ff9566, #ff5f6d);
+            transform: translateY(-2px);
+            box-shadow: 0 16px 28px rgba(255, 95, 109, 0.3);
+        }
+
+        .whatsapp-button {
+            position: fixed;
+            bottom: 28px;
+            right: 32px;
+            z-index: 1200;
+            display: inline-flex;
+            align-items: center;
+            gap: 10.5px;
+            padding: 12px 21px;
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 45%, #075e54 100%);
+            color: var(--white);
+            text-decoration: none;
+            border-radius: 999px;
+            box-shadow: 0 18px 35px rgba(7, 94, 84, 0.35);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            isolation: isolate;
+        }
+
+        .whatsapp-button::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.45), transparent 55%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .whatsapp-button:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 22px 40px rgba(7, 94, 84, 0.4);
+        }
+
+        .whatsapp-button:hover::after {
+            opacity: 1;
+        }
+
+        .whatsapp-button .icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 31.5px;
+            height: 31.5px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            font-size: 16.5px;
+            box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .whatsapp-button .whatsapp-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
+        .whatsapp-button .whatsapp-text span:first-child {
+            font-size: 0.53rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.85;
+        }
+
+        .whatsapp-button .whatsapp-text span:last-child {
+            font-size: 0.79rem;
+        }
+
+        @keyframes whatsapp-pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 18px rgba(37, 211, 102, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+            }
+        }
+
+        .whatsapp-button::before {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: inherit;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            animation: whatsapp-pulse 2.8s infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @media (max-width: 768px) {
+            .whatsapp-button {
+                bottom: 18px;
+                right: 18px;
+                left: auto;
+                padding: 10.5px 18px;
+                gap: 9px;
+            }
+
+            .whatsapp-button .whatsapp-text span:last-child {
+                font-size: 0.71rem;
+            }
+        }
+
+        /* Header Styles */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background: linear-gradient(120deg, rgba(46, 125, 50, 0.95) 0%, rgba(26, 94, 32, 0.92) 60%, rgba(255, 152, 0, 0.85) 100%);
+            box-shadow: 0 20px 45px rgba(14, 51, 23, 0.18);
+            transition: var(--transition);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 65%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        header.scrolled {
+            padding: 10px 0;
+            background: rgba(255, 255, 255, 0.98);
+            border-bottom-color: rgba(46, 125, 50, 0.15);
+            box-shadow: 0 12px 25px rgba(23, 61, 32, 0.15);
+        }
+
+        header.scrolled::before {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.65) 0%, rgba(46, 125, 50, 0.1) 65%);
+            opacity: 0.85;
+        }
+
+        .header-container {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 22px 0;
+            gap: 40px;
+            z-index: 2;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            font-family: 'Playfair Display', serif;
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--white);
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
+
+        .logo-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            background: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.1));
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+            padding: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(46, 125, 50, 0.95), rgba(67, 160, 71, 0.9));
+            z-index: 1;
+        }
+
+        .logo-icon svg {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+        }
+
+        .logo-wordmark {
+            display: inline-flex;
+            flex-direction: column;
+            line-height: 1;
+        }
+
+        .logo-wordmark strong {
+            font-size: 0.65em;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.82);
+            margin-bottom: 6px;
+        }
+
+        .logo-title {
+            font-size: 1.15em;
+            line-height: 1;
+        }
+
+        .logo-title .highlight {
+            color: var(--secondary);
+        }
+
+        header.scrolled .logo {
+            color: var(--primary);
+        }
+
+        header.scrolled .logo-wordmark strong {
+            color: var(--primary-light);
+        }
+
+        header.scrolled .logo-title {
+            color: var(--primary);
+        }
+
+        header.scrolled .logo-title .highlight {
+            color: var(--secondary);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            align-items: center;
+            gap: 24px;
+        }
+
+        nav ul li {
+            position: relative;
+        }
+
+        nav ul li a {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            transition: var(--transition);
+            padding: 6px 4px;
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+        }
+
+        nav ul li a::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -8px;
+            width: 0;
+            height: 3px;
+            border-radius: 999px;
+            background: linear-gradient(120deg, var(--secondary), #ffe082);
+            transition: var(--transition);
+        }
+
+        nav ul li a:hover {
+            color: var(--white);
+        }
+
+        nav ul li a:hover::after {
+            width: 100%;
+        }
+
+        header.scrolled nav ul li a {
+            color: var(--text);
+        }
+
+        header.scrolled nav ul li a:hover {
+            color: var(--primary);
+        }
+
+        header.scrolled nav ul li a::after {
+            background: linear-gradient(120deg, var(--primary), var(--secondary));
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 26px;
+            color: var(--white);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .mobile-menu-btn:hover {
+            transform: scale(1.05);
+            color: var(--secondary);
+        }
+
+        header.scrolled .mobile-menu-btn {
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 80vh;
+            color: var(--white);
+            overflow: hidden;
+        }
+
+        .hero-slide {
+            --hero-image: none;
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 20px;
+            background-image: var(--hero-image);
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transform: scale(1.04);
+            transition: opacity 1s ease, transform 8s ease;
+            pointer-events: none;
+        }
+
+        .hero-slide::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.35));
+            z-index: 1;
+        }
+
+        .hero-slide.active {
+            opacity: 1;
+            z-index: 2;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .hero-slide .container {
+            position: relative;
+            z-index: 3;
+            width: 100%;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .hero-slide.active .hero-content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* Services Section */
+        .services {
+            background-color: var(--white);
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background-color: var(--secondary);
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .service-card {
+            background-color: var(--white);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .service-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .service-image {
+            position: relative;
+            width: 100%;
+            padding-top: 62%;
+            overflow: hidden;
+        }
+
+        .service-image img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: saturate(1.05);
+            transition: transform 0.5s ease;
+        }
+
+        .service-card:hover .service-image img {
+            transform: scale(1.05);
+        }
+
+        .service-content {
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            height: 100%;
+        }
+
+        .service-content h3 {
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        .service-content p {
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        /* About Section */
+        .about {
+            background-color: var(--background);
+            padding-bottom: 56px;
+        }
+
+        .about-content {
+            display: flex;
+            align-items: center;
+            gap: 50px;
+            background: linear-gradient(135deg, rgba(103, 159, 87, 0.18) 0%, rgba(255, 255, 255, 0) 65%);
+            border-radius: 18px;
+            padding: 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-content::before {
+            content: "";
+            position: absolute;
+            top: -40%;
+            left: -20%;
+            width: 55%;
+            aspect-ratio: 1 / 1;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.5) 0%, rgba(103, 159, 87, 0.25) 55%, rgba(103, 159, 87, 0) 80%);
+            z-index: 0;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        .about-text {
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        .about-text p {
+            text-align: justify;
+        }
+
+        .about-text .btn-quote {
+            margin-top: 24px;
+            font-size: 0.85rem;
+            padding: 8px 22px;
+        }
+
+        .about-video {
+            flex: 1;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(37, 68, 35, 0.25);
+            position: relative;
+            background: radial-gradient(circle at top left, rgba(37, 68, 35, 0.35), rgba(37, 68, 35, 0.15) 45%, rgba(0, 0, 0, 0) 75%);
+            isolation: isolate;
+            aspect-ratio: 16 / 9;
+        }
+
+        .about-video::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(140deg, rgba(37, 68, 35, 0.4) 0%, rgba(37, 68, 35, 0.05) 60%, rgba(255, 255, 255, 0) 100%);
+            mix-blend-mode: soft-light;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .about-video iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            border-radius: inherit;
+        }
+
+        /* FAQ Section */
+        .faq {
+            background-color: var(--background);
+            padding-top: 56px;
+        }
+
+        .faq .section-title {
+            margin-bottom: 32px;
+        }
+
+        .faq .section-title h2 {
+            font-size: 2.2rem;
+            letter-spacing: -0.01em;
+        }
+
+        .faq-intro {
+            max-width: 760px;
+            margin: 0 auto 36px;
+            text-align: center;
+            color: var(--text-light);
+            font-size: 1rem;
+            line-height: 1.65;
+        }
+
+        .faq-grid {
+            display: grid;
+            gap: 38px 60px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-items: stretch;
+        }
+
+        .faq-card {
+            background-color: var(--white);
+            border-radius: 22px;
+            padding: 32px 34px;
+            box-shadow: 0 22px 45px rgba(37, 68, 35, 0.12);
+            border: 1px solid rgba(37, 68, 35, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .faq-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            border-top: 4px solid rgba(46, 125, 50, 0.5);
+            pointer-events: none;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        }
+
+        .faq-card h3 {
+            font-size: 1.3rem;
+            color: var(--text);
+            margin-bottom: 14px;
+        }
+
+        .faq-card p {
+            color: var(--text-light);
+            font-size: 1rem;
+            line-height: 1.75;
+        }
+
+        @media (max-width: 900px) {
+            .faq-grid {
+                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                gap: 32px;
+            }
+
+            .faq {
+                padding-top: 48px;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .about {
+                padding-bottom: 48px;
+            }
+
+            .faq {
+                padding-top: 44px;
+            }
+
+            .faq-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .faq-card p + p {
+            margin-top: 12px;
+        }
+
+        /* Video Showcase Section */
+        .video-showcase {
+            background: linear-gradient(135deg, rgba(37, 68, 35, 0.1) 0%, rgba(37, 68, 35, 0.3) 55%, rgba(37, 68, 35, 0.05) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .video-showcase::before {
+            content: "";
+            position: absolute;
+            top: -220px;
+            right: -160px;
+            width: 480px;
+            height: 480px;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.25) 0%, rgba(103, 159, 87, 0.4) 45%, rgba(37, 68, 35, 0) 75%);
+            filter: blur(0px);
+            opacity: 0.75;
+            pointer-events: none;
+        }
+
+        .video-showcase::after {
+            content: "";
+            position: absolute;
+            bottom: -180px;
+            left: -120px;
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle at center, rgba(103, 159, 87, 0.3) 0%, rgba(103, 159, 87, 0.15) 40%, rgba(37, 68, 35, 0) 70%);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .video-showcase .section-title h2 {
+            font-size: 2.4rem;
+        }
+
+        .video-showcase .section-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-weight: 600;
+            color: var(--primary-dark);
+            background: rgba(255, 255, 255, 0.65);
+            padding: 6px 18px;
+            border-radius: 999px;
+            box-shadow: 0 10px 30px rgba(37, 68, 35, 0.12);
+        }
+
+        .video-showcase .section-eyebrow i {
+            color: var(--primary);
+        }
+
+        .video-showcase .section-title p {
+            max-width: 680px;
+            margin: 18px auto 0;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .video-card {
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 24px;
+            padding: 26px 26px 32px;
+            box-shadow: 0 24px 60px rgba(37, 68, 35, 0.22);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .video-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(145deg, rgba(103, 159, 87, 0.18), rgba(103, 159, 87, 0));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .video-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 30px 70px rgba(37, 68, 35, 0.26);
+        }
+
+        .video-card:hover::after {
+            opacity: 1;
+        }
+
+        .video-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .video-card-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 16px;
+            border-radius: 999px;
+            background: rgba(103, 159, 87, 0.12);
+            color: var(--primary-dark);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .video-card-label i {
+            color: var(--primary);
+        }
+
+        .video-card-metric {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-light);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .video-card-metric i {
+            color: var(--primary);
+        }
+
+        .video-card h3 {
+            font-size: 1.35rem;
+            margin-bottom: 12px;
+            color: var(--text);
+            position: relative;
+            z-index: 2;
+        }
+
+        .video-card p {
+            color: var(--text-light);
+            line-height: 1.7;
+            margin-bottom: 22px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .video-frame {
+            border-radius: 18px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 16 / 9;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+        }
+
+        .video-frame::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0));
+            mix-blend-mode: soft-light;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .video-frame iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+            border-radius: inherit;
+        }
+
+        .video-thumbnail {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+            cursor: pointer;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .video-thumbnail::after {
+            content: 'Replay video';
+            font-size: 0.9rem;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: var(--white);
+            background: rgba(0, 0, 0, 0.65);
+            padding: 10px 22px;
+            border-radius: 999px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+        }
+
+        .video-thumbnail.visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        @media (max-width: 1024px) {
+            .video-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 720px) {
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .video-showcase .section-title h2 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Testimonials Section */
+        .testimonials {
+            background-color: var(--background);
+        }
+
+        .testimonials-slider {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .testimonial {
+            background-color: var(--white);
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            display: none;
+        }
+
+        .testimonial.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .testimonial-text {
+            font-style: italic;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        .testimonial-author {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .testimonial-nav {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .testimonial-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #ddd;
+            margin: 0 5px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .testimonial-dot.active {
+            background-color: var(--primary);
+        }
+
+        /* Booking Section */
+        .booking {
+            position: relative;
+            background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.12), transparent 45%),
+                        linear-gradient(140deg, rgba(46, 125, 50, 0.95) 0%, rgba(27, 94, 32, 0.92) 55%, rgba(67, 160, 71, 0.9) 100%);
+            color: var(--white);
+            overflow: hidden;
+        }
+
+        .booking::before,
+        .booking::after {
+            content: '';
+            position: absolute;
+            width: 480px;
+            height: 480px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 65%);
+            filter: blur(0.5px);
+            opacity: 0.45;
+            z-index: 0;
+        }
+
+        .booking::before {
+            top: -240px;
+            right: -120px;
+        }
+
+        .booking::after {
+            bottom: -220px;
+            left: -160px;
+        }
+
+        .booking .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .booking-header {
+            max-width: 780px;
+            margin: 0 auto 60px;
+            text-align: center;
+        }
+
+        .booking-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 18px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            font-size: 0.85rem;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.88);
+            margin-bottom: 18px;
+        }
+
+        .booking-header h2 {
+            font-size: 2.8rem;
+            color: var(--white);
+            margin-bottom: 18px;
+        }
+
+        .booking-header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1.05rem;
+        }
+
+        .booking-form-wrapper {
+            max-width: 500px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.14);
+            border-radius: 26px;
+            padding: 40px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 20px 45px rgba(9, 35, 15, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .booking-form-wrapper::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            pointer-events: none;
+        }
+
+        .booking-form {
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--white);
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--text);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            transition: border 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15);
+        }
+
+        .form-group select {
+            cursor: pointer;
+        }
+
+        .booking-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #ffb347, #ff7e5f);
+            color: var(--white);
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .booking-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 28px rgba(255, 95, 109, 0.3);
+        }
+
+        .booking-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .booking-response {
+            margin-top: 20px;
+            padding: 14px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .booking-response.visible {
+            display: block;
+        }
+
+        .booking-response.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.4);
+            color: #c8e6c9;
+        }
+
+        .booking-response.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.4);
+            color: #ffcdd2;
+        }
+
+        .booking-support {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+            margin-top: 60px;
+        }
+
+        .support-card {
+            background: rgba(255, 255, 255, 0.12);
+            padding: 26px;
+            border-radius: 22px;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 18px 40px rgba(10, 36, 15, 0.28);
+            position: relative;
+        }
+
+        .support-card h3 {
+            color: var(--white);
+            margin-bottom: 12px;
+            font-size: 1.25rem;
+        }
+
+        .support-card p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 14px;
+        }
+
+        .support-card .btn {
+            background: var(--white);
+            color: var(--primary);
+            text-transform: none;
+            letter-spacing: 0.5px;
+        }
+
+        .support-card .btn:hover {
+            background: #f1f8e9;
+            color: var(--primary-dark);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--primary-dark);
+            color: var(--white);
+            padding: 60px 0 30px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-column h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .footer-column h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            height: 2px;
+            background-color: var(--secondary);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: #ccc;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: var(--white);
+            padding-left: 5px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: var(--white);
+            transition: var(--transition);
+        }
+
+        .social-links a:hover {
+            background-color: var(--secondary);
+            transform: translateY(-3px);
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .about-content {
+                padding: 40px;
+            }
+
+            .faq-grid {
+                gap: 28px;
+            }
+
+            .support-card {
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .about-content {
+                flex-direction: column;
+                padding: 30px;
+                gap: 35px;
+            }
+
+            .faq .section-title h2 {
+                font-size: 1.9rem;
+            }
+
+            .faq-intro {
+                font-size: 0.95rem;
+            }
+
+            .faq-grid {
+                gap: 24px;
+            }
+
+            .faq-card {
+                padding: 28px 24px;
+            }
+
+            .faq-card h3 {
+                font-size: 1.25rem;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .logo {
+                font-size: 24px;
+            }
+
+            .logo-icon {
+                width: 48px;
+                height: 48px;
+            }
+
+            .logo-wordmark strong {
+                font-size: 0.6em;
+                letter-spacing: 3px;
+            }
+
+            nav {
+                position: fixed;
+                top: 80px;
+                left: -100%;
+                width: 100%;
+                background: linear-gradient(135deg, rgba(46, 125, 50, 0.95), rgba(26, 94, 32, 0.92));
+                transition: var(--transition);
+                box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1);
+            }
+
+            nav.active {
+                left: 0;
+            }
+
+            nav ul {
+                flex-direction: column;
+                padding: 20px;
+            }
+
+            nav ul li {
+                margin: 0 0 15px 0;
+            }
+
+            nav ul li a {
+                color: rgba(255, 255, 255, 0.92);
+                font-size: 1.1rem;
+            }
+
+            nav ul li a::after {
+                bottom: -4px;
+            }
+
+            header.scrolled nav ul li a {
+                color: rgba(255, 255, 255, 0.92);
+            }
+
+            .section-title h2 {
+                font-size: 2rem;
+            }
+
+            .service-content {
+                padding: 24px;
+            }
+
+            .booking-header {
+                margin-bottom: 40px;
+            }
+
+            .booking-header h2 {
+                font-size: 2.3rem;
+            }
+
+            .booking-form-wrapper {
+                padding: 30px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .btn {
+                padding: 10px 25px;
+            }
+
+            .service-content {
+                padding: 20px;
+            }
+
+            .faq .section-title h2 {
+                font-size: 1.7rem;
+            }
+
+            .faq-intro {
+                font-size: 0.92rem;
+            }
+
+            .faq-card {
+                padding: 26px 22px;
+            }
+
+            .faq-card h3 {
+                font-size: 1.18rem;
+            }
+
+            .logo {
+                font-size: 22px;
+            }
+
+            .logo-icon {
+                width: 44px;
+                height: 44px;
+            }
+
+            .booking-header h2 {
+                font-size: 2rem;
+            }
+
+            .booking-header p {
+                font-size: 1rem;
+            }
+
+            .booking-form-wrapper {
+                padding: 26px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header id="header">
+        <div class="container header-container">
+            <a href="#" class="logo">
+                <span class="logo-icon" aria-hidden="true">
+                    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="presentation">
+                        <defs>
+                            <linearGradient id="logo-leaf-gradient" x1="12%" y1="12%" x2="88%" y2="88%">
+                                <stop offset="0%" stop-color="#d4ff91" />
+                                <stop offset="45%" stop-color="#81c784" />
+                                <stop offset="100%" stop-color="#2e7d32" />
+                            </linearGradient>
+                            <linearGradient id="logo-blade-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#ffecb3" />
+                                <stop offset="100%" stop-color="#ffa000" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M32 8c-9.8 7.1-16 16.9-16 27.6 0 10.8 7.4 17.8 16 20.4 8.6-2.6 16-9.6 16-20.4C48 24.9 41.8 15.1 32 8z" fill="url(#logo-leaf-gradient)" />
+                        <path d="M20.5 36.4c6.8-1.7 12.9-4.8 17.9-9.4-1.2 4.9-4.3 10.5-9 15.6-3.7 4.1-8.1 7.5-12.3 9.6 1.1-5.4 2.3-10.9 3.4-15.8z" fill="#f1f8e9" opacity="0.55" />
+                        <path d="M33.5 14.7c4.9 2.5 8.1 6.2 9.6 10.9-4.3 4.4-9.3 7.2-15.6 8.7 1.6-6.9 3.7-13.2 6-19.6z" fill="#a5d6a7" opacity="0.8" />
+                        <path d="M28.2 48.5c4.7-4.1 8.7-8.7 11.7-13.5-0.8 6.5-4.3 11.6-11.7 13.5z" fill="url(#logo-blade-gradient)" />
+                        <path d="M17 51.5c7-1.2 12.7-4.2 17.4-9 1.1 2.5 0.5 5.4-1.8 7.6-2.1 2.1-5.3 3.3-8.8 3.3-2.4 0-4.6-0.6-6.8-1.9z" fill="#fff8e1" opacity="0.7" />
+                    </svg>
+                </span>
+                <span class="logo-wordmark">
+                    <strong>Tailored Lawn Care</strong>
+                    <span class="logo-title">Pay As You <span class="highlight">Mow</span></span>
+                </span>
+            </a>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav id="nav">
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#services">Services</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                    <li><a href="#voices">Voices</a></li>
+                    <li><a href="#testimonials">Testimonials</a></li>
+                    <li><a href="#booking">Book</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-slide active" style="--hero-image: url('https://image.pollinations.ai/prompt/Ultra%20realistic%20photo%20of%20a%20professional%20male%20gardener%20with%20olive%20skin%20pushing%20a%20lawn%20mower%20across%20a%20lush%20small%20urban%20garden%2C%20wearing%20khaki%20shorts%20and%20a%20green%20t-shirt%2C%20bright%20summer%20day%2C%20hyper-detailed%2C%208k');">
+            <div class="container">
+                <div class="hero-content">
+                    <h1>Garden Maintenance Service</h1>
+                    <p>Probably the best rates in Tameside.</p>
+                    <div class="hero-actions">
+                        <a href="#booking" class="btn">Get a Free Quote</a>
+                        <a href="#services" class="btn btn-secondary">Our Services</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-slide" style="--hero-image: url('https://image.pollinations.ai/prompt/Ultra%20realistic%20photo%20of%20the%20same%20professional%20male%20gardener%20with%20olive%20skin%20on%20his%20hands%20and%20knees%20weeding%20a%20flower%20border%20in%20a%20well-kept%20urban%20garden%2C%20wearing%20khaki%20shorts%20and%20a%20green%20t-shirt%2C%20bright%20summer%20day%2C%20hyper-detailed%2C%208k');">
+            <div class="container">
+                <div class="hero-content">
+                    <h1>Garden Maintenance Service</h1>
+                    <p>Detailed border care, weeding, and mowing tailored to your garden.</p>
+                    <div class="hero-actions">
+                        <a href="#booking" class="btn">Get a Free Quote</a>
+                        <a href="#services" class="btn btn-secondary">Our Services</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="services" id="services">
+        <div class="container">
+            <div class="section-title">
+                <h2>Our Services</h2>
+                <p>Comprehensive garden care tailored to your needs</p>
+            </div>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-image">
+                        <img src="https://image.pollinations.ai/prompt/Realistic%20photo%20of%20freshly%20mowed%20lawn%20with%20striped%20patterns%2C%20modern%20electric%20lawn%20mower%20parked%2C%20no%20people%2C%20bright%20day" alt="Close-up of a freshly mowed lawn with a modern electric mower and no people">
+                    </div>
+                    <div class="service-content">
+                        <h3>Lawn Mowing</h3>
+                        <p>We provide regular mowing to keep your lawn neat and healthy. Grass is cut to the right length, and edges are trimmed for a clean, polished look. Routine care helps maintain a lush, green lawn.</p>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <div class="service-image">
+                        <img src="https://image.pollinations.ai/prompt/Realistic%20photo%20of%20neatly%20trimmed%20garden%20hedges%20with%20electric%20shears%20resting%20nearby%2C%20detailed%20texture%2C%20no%20people%2C%20soft%20morning%20light" alt="Neatly trimmed hedges with electric shears resting nearby and no people present">
+                    </div>
+                    <div class="service-content">
+                        <h3>Hedge Trimming</h3>
+                        <p>We trim and shape hedges and bushes to maintain a tidy appearance. Overgrown branches are carefully removed for healthy growth. Regular pruning enhances your garden's overall beauty.</p>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <div class="service-image">
+                        <img src="https://image.pollinations.ai/prompt/Realistic%20photo%20of%20eco-friendly%20weed%20control%20tools%20arranged%20next%20to%20flowerbeds%2C%20lush%20greenery%2C%20no%20people%2C%20sunny%20garden" alt="Eco-friendly weed control tools arranged beside colorful flowerbeds with no people in view">
+                    </div>
+                    <div class="service-content">
+                        <h3>Weed Control</h3>
+                        <p>We keep your garden neat by removing weeds from flower beds, borders, and pathways. Edges are trimmed, debris is cleared, and plants are arranged to maintain a tidy and well-kept appearance.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about" id="about">
+        <div class="container">
+            <div class="section-title">
+                <h2>About Andy</h2>
+                <p>Friendly, professional garden maintenance across Audenshaw and Denton</p>
+            </div>
+            <div class="about-content">
+                <div class="about-text">
+                    <h3>Meet Your Gardener</h3>
+                    <p>Hi, I'm Andy, a dedicated garden maintenance professional with 14 years of experience serving Audenshaw and Denton. I take pride in delivering high-quality service at competitive rates while helping customers maintain beautiful outdoor spaces.</p>
+                    <p>Gardening is more than a job—it's my passion. I enjoy working in nature, meeting people, and staying active. As I operate part-time, availability is limited, but I always strive to accommodate my customers. If you're looking for a reliable gardener, feel free to get in touch!</p>
+                    <a href="#booking" class="btn btn-quote">Arrange a Free Quote</a>
+                </div>
+                <div class="about-video">
+                    <iframe src="https://www.youtube.com/embed/oJrPPeow__s?si=4qciSvhRowzZ9yMh" title="Pay As You Mow introduction video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq" id="faq">
+        <div class="container">
+            <div class="section-title">
+                <h2>FAQ</h2>
+            </div>
+            <p class="faq-intro">We know choosing the right gardener raises a few questions. Here are the answers we share with new clients all the time.</p>
+            <div class="faq-grid">
+                <article class="faq-card">
+                    <h3>What areas do you cover?</h3>
+                    <p>The areas I cover are Audenshaw, Denton and some areas of Dukinfield. If you live outside any of these areas, please get in touch and I will look into whether I can accommodate your area.</p>
+                </article>
+                <article class="faq-card">
+                    <h3>Are you a registered business?</h3>
+                    <p>Yes, I am a fully registered gardener and submit my accounts every year.</p>
+                    <p>Payment for my services can be made by cash or online which adds convenience for my customers.</p>
+                </article>
+                <article class="faq-card">
+                    <h3>How much do you charge?</h3>
+                    <p>I consistently receive feedback that my rates are highly competitive. I ensure thorough care and attention for every garden.</p>
+                    <p>For example, the average cost is £35 for a 70-minute visit, and I often spend considerably more time at the same rate. Rest assured, green waste removal comes at no additional cost.</p>
+                    <p>I need to see the garden to give you a price.</p>
+                </article>
+                <article class="faq-card">
+                    <h3>What can you do for me?</h3>
+                    <p>I can visit every few weeks or arrange a one-off visit to do a garden tidy.</p>
+                    <p>My work involves keeping your yard looking fresh during the growing season. A typical visit includes mowing, weeding, tidying borders and hedge/bush trimming.</p>
+                    <p>If you need other garden work doing then this can be arranged.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Voices Section -->
+    <section class="video-showcase" id="voices">
+        <div class="container">
+            <div class="section-title">
+                <span class="section-eyebrow"><i class="fas fa-tower-broadcast" aria-hidden="true"></i> Real Voices</span>
+                <h2>See What Our Community Is Saying</h2>
+                <p>Press play on these rapid-fire stories from homeowners who trust Pay As You Mow to keep their lawns lush, welcoming, and worry-free season after season.</p>
+            </div>
+            <div class="video-grid">
+                <article class="video-card">
+                    <div class="video-card-header">
+                        <span class="video-card-label"><i class="fas fa-star" aria-hidden="true"></i> Featured Story</span>
+                        <span class="video-card-metric"><i class="fas fa-clock" aria-hidden="true"></i> 2 min watch</span>
+                    </div>
+                    <h3>"Unbeatable rates, impeccable finish"</h3>
+                    <p>Ray from Data says Pay As You Mow brings unbeatable rates and meticulous work no other local gardener can rival.</p>
+                    <div class="video-frame" data-video-id="pcQuRLu64-g">
+                        <iframe src="https://www.youtube.com/embed/pcQuRLu64-g?si=O2Rt4JNLHxFpcFPf&amp;rel=0&amp;enablejsapi=1" title="Claire talks about Pay As You Mow" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    </div>
+                </article>
+                <article class="video-card">
+                    <div class="video-card-header">
+                        <span class="video-card-label"><i class="fas fa-leaf" aria-hidden="true"></i> Neighbour Spotlight</span>
+                        <span class="video-card-metric"><i class="fas fa-stopwatch" aria-hidden="true"></i> 90 sec watch</span>
+                    </div>
+                    <h3>"Pay as you go was the game changer"</h3>
+                    <p>James explains why flexible visits and tidy finishes make Pay As You Mow the perfect fit for his busy schedule.</p>
+                    <div class="video-frame" data-video-id="hBbBok5MkQY">
+                        <iframe src="https://www.youtube.com/embed/hBbBok5MkQY?si=GS8SKBmV6uUDwKQ9&amp;rel=0&amp;enablejsapi=1" title="James shares his Pay As You Mow experience" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    </div>
+                </article>
+                <article class="video-card">
+                    <div class="video-card-header">
+                        <span class="video-card-label"><i class="fas fa-sun" aria-hidden="true"></i> Garden Glow-Up</span>
+                        <span class="video-card-metric"><i class="fas fa-play" aria-hidden="true"></i> Quick watch</span>
+                    </div>
+                    <h3>"From overgrown to outstanding"</h3>
+                    <p>Helen walks through her transformed borders and the peace of mind that comes with a meticulous gardener.</p>
+                    <div class="video-frame" data-video-id="enB1NOnPrhY">
+                        <iframe src="https://www.youtube.com/embed/enB1NOnPrhY?si=EIDoJoJhiP-LsMMZ&amp;rel=0&amp;enablejsapi=1" title="Helen's Pay As You Mow testimonial" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials" id="testimonials">
+        <div class="container">
+            <div class="section-title">
+                <h2>Customer Testimonials</h2>
+                <p>What our clients say about our services</p>
+            </div>
+            <div class="testimonials-slider">
+                <div class="testimonial active">
+                    <p class="testimonial-text">"Pay As You Mow transformed my neglected garden into a beautiful oasis. Their flexible payment model meant I could get the help I needed without breaking the bank. Highly recommended!"</p>
+                    <p class="testimonial-author">- Sarah Johnson, Northwood</p>
+                </div>
+                <div class="testimonial">
+                    <p class="testimonial-text">"As someone who travels frequently, I love that I can schedule garden maintenance only when I need it. The team is professional, reliable, and does an amazing job every time."</p>
+                    <p class="testimonial-author">- Michael Chen, Westfield</p>
+                </div>
+                <div class="testimonial">
+                    <p class="testimonial-text">"The quality of work is exceptional. My hedges have never looked better, and the lawn is always perfectly manicured. The pay-as-you-go model is perfect for my budget."</p>
+                    <p class="testimonial-author">- Emma Davis, Riverside</p>
+                </div>
+                <div class="testimonial-nav">
+                    <span class="testimonial-dot active" data-index="0"></span>
+                    <span class="testimonial-dot" data-index="1"></span>
+                    <span class="testimonial-dot" data-index="2"></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Booking Section -->
+    <section class="booking" id="booking">
+        <div class="container">
+            <div class="booking-header">
+                <span class="booking-eyebrow"><i class="fas fa-calendar-check" aria-hidden="true"></i> Book Your Appointment</span>
+                <h2>Schedule Your Garden Visit</h2>
+                <p>Select your preferred time slot and we'll confirm your booking right away.</p>
+            </div>
+
+            <div class="booking-form-wrapper">
+                <form class="booking-form" id="bookingForm">
+                    <div class="form-group">
+                        <label for="customerName">Your Name</label>
+                        <input type="text" id="customerName" name="name" placeholder="Enter your full name" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="customerTime">Available Time Slots</label>
+                        <select id="customerTime" name="time" required>
+                            <option value="">Loading available times...</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="booking-submit">Book Now</button>
+                </form>
+                <div class="booking-response" id="bookingResponse"></div>
+            </div>
+
+            <div class="booking-support">
+                <div class="support-card">
+                    <h3>Prefer to speak first?</h3>
+                    <p>Call our garden specialist team and we'll lock in a quote visit for you.</p>
+                    <a class="btn" href="tel:+441234567890"><i class="fas fa-phone" aria-hidden="true"></i>&nbsp; Call 01234 567 890</a>
+                </div>
+                <div class="support-card">
+                    <h3>Need a different time?</h3>
+                    <p>Tell us what works for you and we'll release bespoke slots outside standard hours.</p>
+                    <a class="btn" href="mailto:hello@payasyoumow.co.uk?subject=Custom%20Garden%20Quote"><i class="fas fa-envelope-open-text" aria-hidden="true"></i>&nbsp; Email the team</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <a href="https://wa.me/447595289669" class="whatsapp-button" target="_blank" rel="noopener" aria-label="Chat with Pay As You Mow on WhatsApp">
+        <span class="icon"><i class="fa-brands fa-whatsapp"></i></span>
+        <div class="whatsapp-text">
+            <span>Message us on</span>
+            <span>WhatsApp</span>
+        </div>
+    </a>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Pay As You Mow</h3>
+                    <p>Professional garden maintenance with flexible payment options. Beautiful gardens, no contracts.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-pinterest"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#services">Services</a></li>
+                        <li><a href="#about">About Us</a></li>
+                        <li><a href="#faq">FAQ</a></li>
+                        <li><a href="#booking">Book</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Our Services</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Lawn Mowing</a></li>
+                        <li><a href="#">Hedge Trimming</a></li>
+                        <li><a href="#">Weed Control</a></li>
+                        <li><a href="#">Garden Cleanups</a></li>
+                        <li><a href="#">Irrigation Systems</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Info</h3>
+                    <ul class="footer-links">
+                        <li><i class="fas fa-map-marker-alt"></i> 123 Garden Street, Greenville</li>
+                        <li><i class="fas fa-phone"></i> (555) 123-4567</li>
+                        <li><i class="fas fa-envelope"></i> info@payasyoumow.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 Pay As You Mow. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const API_BASE = "https://booking-app-p8q8.onrender.com";
+
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const nav = document.getElementById('nav');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            nav.classList.toggle('active');
+            mobileMenuBtn.innerHTML = nav.classList.contains('active') ? 
+                '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
         });
 
-        const data = await res.json();
-        responseEl.innerText = data.message;
-        responseEl.style.color = "#00FFB3";
+        // Header Scroll Effect
+        const header = document.getElementById('header');
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
 
-        // Reload available times (in case the slot is now taken)
-        await loadAvailability();
+        // Hero Slider
+        const heroSlides = document.querySelectorAll('.hero-slide');
+        let currentHeroSlide = 0;
+        const heroInterval = 4000;
 
-      } catch (error) {
-        responseEl.innerText = "❌ Error sending booking!";
-        responseEl.style.color = "red";
-      }
-    };
+        function showHeroSlide(index) {
+            if (index === currentHeroSlide || !heroSlides[index]) {
+                return;
+            }
 
-    // Load availability on page load
-    loadAvailability();
-  </script>
+            const currentSlide = heroSlides[currentHeroSlide];
+            const nextSlide = heroSlides[index];
+
+            nextSlide.classList.add('active');
+            currentSlide.classList.remove('active');
+
+            currentHeroSlide = index;
+        }
+
+        if (heroSlides.length > 0) {
+            heroSlides[0].classList.add('active');
+
+            if (heroSlides.length > 1) {
+                setInterval(() => {
+                    const nextIndex = (currentHeroSlide + 1) % heroSlides.length;
+                    showHeroSlide(nextIndex);
+                }, heroInterval);
+            }
+        }
+
+        // Testimonial Slider
+        const testimonialDots = document.querySelectorAll('.testimonial-dot');
+        const testimonials = document.querySelectorAll('.testimonial');
+        
+        testimonialDots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                const index = dot.getAttribute('data-index');
+                
+                testimonials.forEach(testimonial => {
+                    testimonial.classList.remove('active');
+                });
+                testimonials[index].classList.add('active');
+                
+                testimonialDots.forEach(d => {
+                    d.classList.remove('active');
+                });
+                dot.classList.add('active');
+            });
+        });
+
+        let currentTestimonial = 0;
+        
+        function rotateTestimonials() {
+            testimonialDots.forEach(d => d.classList.remove('active'));
+            testimonials.forEach(t => t.classList.remove('active'));
+            
+            currentTestimonial = (currentTestimonial + 1) % testimonials.length;
+            
+            testimonialDots[currentTestimonial].classList.add('active');
+            testimonials[currentTestimonial].classList.add('active');
+        }
+        
+        if (testimonialDots.length > 0 && testimonials.length > 0) {
+            setInterval(rotateTestimonials, 5000);
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    nav.classList.remove('active');
+                    mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // YouTube community video thumbnails
+        const communityVideoFrames = Array.from(document.querySelectorAll('.video-showcase .video-frame'));
+        const youtubePlayers = [];
+        const youtubeOverlays = [];
+
+        function addThumbnailOverlay(frame, index) {
+            const iframe = frame.querySelector('iframe');
+            if (!iframe) return;
+
+            const videoId = frame.dataset.videoId;
+            if (!videoId) return;
+
+            if (!iframe.src.includes('enablejsapi=1')) {
+                const separator = iframe.src.includes('?') ? '&' : '?';
+                iframe.src = `${iframe.src}${separator}enablejsapi=1`;
+            }
+
+            if (!iframe.id) {
+                iframe.id = `video-player-${index}`;
+            }
+
+            const overlay = document.createElement('div');
+            overlay.className = 'video-thumbnail';
+            overlay.style.backgroundImage = `url(https://img.youtube.com/vi/${videoId}/hqdefault.jpg)`;
+            overlay.setAttribute('role', 'button');
+            overlay.setAttribute('tabindex', '0');
+            overlay.setAttribute('aria-label', 'Replay video');
+
+            const replayVideo = () => {
+                overlay.classList.remove('visible');
+                const player = youtubePlayers[index];
+                if (player && typeof player.seekTo === 'function') {
+                    player.seekTo(0);
+                    player.playVideo();
+                }
+            };
+
+            overlay.addEventListener('click', replayVideo);
+            overlay.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    replayVideo();
+                }
+            });
+
+            frame.appendChild(overlay);
+            youtubeOverlays[index] = overlay;
+        }
+
+        function handleCommunityVideoState(event, overlay) {
+            if (!overlay || typeof YT === 'undefined' || !YT.PlayerState) return;
+
+            if (event.data === YT.PlayerState.ENDED) {
+                overlay.classList.add('visible');
+            } else if (event.data === YT.PlayerState.PLAYING) {
+                overlay.classList.remove('visible');
+            }
+        }
+
+        if (communityVideoFrames.length > 0) {
+            communityVideoFrames.forEach((frame, index) => {
+                addThumbnailOverlay(frame, index);
+            });
+
+            window.onYouTubeIframeAPIReady = function() {
+                communityVideoFrames.forEach((frame, index) => {
+                    const iframe = frame.querySelector('iframe');
+                    if (!iframe) return;
+
+                    const overlay = youtubeOverlays[index];
+
+                    youtubePlayers[index] = new YT.Player(iframe.id, {
+                        events: {
+                            onStateChange: event => handleCommunityVideoState(event, overlay)
+                        }
+                    });
+                });
+            };
+
+            const ytScript = document.createElement('script');
+            ytScript.src = 'https://www.youtube.com/iframe_api';
+            document.body.appendChild(ytScript);
+        }
+
+        // Booking System
+        const timeSelect = document.getElementById('customerTime');
+        const bookingForm = document.getElementById('bookingForm');
+        const bookingResponse = document.getElementById('bookingResponse');
+
+        // Load available times
+        async function loadAvailability() {
+            try {
+                const res = await fetch(`${API_BASE}/availability`);
+                const slots = await res.json();
+
+                timeSelect.innerHTML = "";
+
+                if (slots.length === 0) {
+                    const opt = document.createElement("option");
+                    opt.text = "No available times";
+                    opt.disabled = true;
+                    opt.selected = true;
+                    timeSelect.add(opt);
+                } else {
+                    const defaultOpt = document.createElement("option");
+                    defaultOpt.text = "Select a time";
+                    defaultOpt.value = "";
+                    timeSelect.add(defaultOpt);
+
+                    slots.forEach((slot) => {
+                        const opt = document.createElement("option");
+                        opt.value = slot;
+                        opt.text = slot;
+                        timeSelect.add(opt);
+                    });
+                }
+            } catch (err) {
+                console.error("Error loading availability:", err);
+                timeSelect.innerHTML = "<option>Error loading times</option>";
+            }
+        }
+
+        // Handle booking submission
+        bookingForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById("customerName").value;
+            const time = document.getElementById("customerTime").value;
+
+            bookingResponse.classList.remove('visible', 'success', 'error');
+
+            try {
+                const res = await fetch(`${API_BASE}/book`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, time })
+                });
+
+                const data = await res.json();
+                
+                bookingResponse.innerText = data.message;
+                bookingResponse.classList.add('visible', 'success');
+
+                bookingForm.reset();
+                await loadAvailability();
+
+            } catch (error) {
+                bookingResponse.innerText = "❌ Error sending booking! Please try again.";
+                bookingResponse.classList.add('visible', 'error');
+            }
+        });
+
+        // Load availability on page load
+        loadAvailability();
+    </script>
 </body>
 </html>
