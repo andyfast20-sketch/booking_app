@@ -2,11 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://booking-app-p8q8.onrender.com; default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:;">
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Make a Booking</title>
-
   <style>
     body {
       background: linear-gradient(135deg, #74ABE2, #5563DE);
@@ -16,14 +13,16 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
+      padding: 1rem;
     }
 
     h1 {
       font-size: 2rem;
       margin-bottom: 20px;
       text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+      text-align: center;
     }
 
     form {
@@ -35,7 +34,7 @@
       text-align: center;
     }
 
-    input, button {
+    input, select, button {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
@@ -44,7 +43,7 @@
       font-size: 1rem;
     }
 
-    input {
+    input, select {
       background-color: rgba(255,255,255,0.9);
       color: #333;
     }
@@ -66,47 +65,104 @@
       margin-top: 15px;
       font-weight: bold;
     }
+
+    .footer {
+      margin-top: 30px;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    .footer a {
+      color: #00FFB3;
+      text-decoration: none;
+    }
   </style>
 </head>
 
 <body>
   <h1>✨ Make a Booking ✨</h1>
+
   <form id="bookingForm">
     <input type="text" id="name" placeholder="Your Name" required />
-    <input type="text" id="time" placeholder="Booking Time (e.g. 12:30)" required />
+    <select id="time" required>
+      <option value="">Loading available times...</option>
+    </select>
     <button type="submit">Book Now</button>
   </form>
 
   <p id="response"></p>
 
+  <div class="footer">
+    <p>View admin panel: <a href="https://booking-app-p8q8.onrender.com/bookings" target="_blank">Bookings Page</a></p>
+  </div>
+
   <script>
+    const API_BASE = "https://booking-app-p8q8.onrender.com";
+
+    // 🕒 Load available times into the dropdown
+    async function loadAvailability() {
+      const select = document.getElementById("time");
+      try {
+        const res = await fetch(`${API_BASE}/availability`);
+        const slots = await res.json();
+
+        select.innerHTML = ""; // Clear current options
+
+        if (slots.length === 0) {
+          const opt = document.createElement("option");
+          opt.text = "No available times 😅";
+          opt.disabled = true;
+          opt.selected = true;
+          select.add(opt);
+        } else {
+          const defaultOpt = document.createElement("option");
+          defaultOpt.text = "Select a time";
+          defaultOpt.value = "";
+          select.add(defaultOpt);
+
+          slots.forEach((slot) => {
+            const opt = document.createElement("option");
+            opt.value = slot;
+            opt.text = slot;
+            select.add(opt);
+          });
+        }
+      } catch (err) {
+        console.error("Error loading availability:", err);
+        select.innerHTML = "<option>Error loading times</option>";
+      }
+    }
+
+    // 📤 Handle booking submission
     document.getElementById("bookingForm").onsubmit = async (e) => {
       e.preventDefault();
 
       const name = document.getElementById("name").value;
       const time = document.getElementById("time").value;
+      const responseEl = document.getElementById("response");
 
       try {
-        // ✅ This is your Render app’s correct endpoint
-        const res = await fetch("https://booking-app-p8q8.onrender.com/book", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ name, time })
-});
+        const res = await fetch(`${API_BASE}/book`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, time })
+        });
 
         const data = await res.json();
+        responseEl.innerText = data.message;
+        responseEl.style.color = "#00FFB3";
 
-        // ✅ Show the success message from Flask
-        document.getElementById("response").innerText = data.message;
-        document.getElementById("response").style.color = "#00FFB3";
+        // Reload available times (in case the slot is now taken)
+        await loadAvailability();
 
       } catch (error) {
-        // ❌ If it can’t reach Flask or Flask errors out
-        document.getElementById("response").innerText = "❌ Error sending booking!";
-        document.getElementById("response").style.color = "red";
+        responseEl.innerText = "❌ Error sending booking!";
+        responseEl.style.color = "red";
       }
     };
+
+    // Load availability on page load
+    loadAvailability();
   </script>
 </body>
 </html>
-
