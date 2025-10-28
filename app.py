@@ -178,7 +178,12 @@ def get_bookings_json():
     except FileNotFoundError:
         return jsonify({"bookings": []})
     return jsonify({"bookings": bookings})
+# --- Serve admin.html file ---
+@app.route("/admin")
+def admin_page():
+    return app.send_static_file("admin.html")
 
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
