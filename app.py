@@ -30,7 +30,7 @@ def book():
 
     # Save booking
     with open(BOOKINGS_FILE, "a") as f:
-        f.write(f"{name},{time}\n")
+        f.write(f"Name: {name}, Time: {time}\n")
 
     # Remove the booked slot from available times
     if os.path.exists(AVAIL_FILE):
@@ -112,15 +112,9 @@ def view_bookings():
           margin-top: 1rem; padding: 10px 15px;
           border: none; border-radius: 6px; font-size: 1rem;
         }
-        input[type="date"] {
-          width: 180px;
-        }
-        select {
-          width: 100px;
-        }
-        button {
-          background: #00C9A7; color: white; cursor: pointer;
-        }
+        input[type="date"] { width: 180px; }
+        select { width: 100px; }
+        button { background: #00C9A7; color: white; cursor: pointer; }
         button:hover { background: #00A387; }
         .section { margin-top: 2rem; }
       </style>
@@ -165,6 +159,25 @@ def view_bookings():
     </html>
     """
     return render_template_string(html, bookings=bookings, avail=avail)
+
+
+# --- NEW: JSON endpoint for bookings dashboard ---
+@app.route("/bookings_json", methods=["GET"])
+def get_bookings_json():
+    bookings = []
+    try:
+        with open(BOOKINGS_FILE, "r") as file:
+            for line in file:
+                line = line.strip()
+                if line:
+                    # Example: "Name: Fred, Time: 12.44"
+                    parts = line.split(",")
+                    name = parts[0].split(":")[1].strip() if len(parts) > 0 else ""
+                    time = parts[1].split(":")[1].strip() if len(parts) > 1 else ""
+                    bookings.append({"name": name, "time": time})
+    except FileNotFoundError:
+        return jsonify({"bookings": []})
+    return jsonify({"bookings": bookings})
 
 
 if __name__ == "__main__":
