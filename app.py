@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
+import os
 
 app = Flask(__name__)
 
@@ -10,113 +11,131 @@ CORS(app, resources={r"/*": {"origins": [
     "https://andyfast20-sketch.github.io"
 ]}})
 
-# --- Booking Form (already handled from GitHub Pages via /book endpoint) ---
-@app.route('/')
-def home():
-    return "✅ Flask Booking API is running! Visit /bookings to view saved bookings."
+BOOKINGS_FILE = "bookings.txt"
+AVAIL_FILE = "availability.txt"
 
-# --- Handle booking submissions ---
-@app.route('/book', methods=['POST'])
+
+@app.route("/")
+def home():
+    return "✅ Flask Booking API running. Visit /bookings to manage and /availability to view free slots."
+
+
+# --- Handle bookings (from user form) ---
+@app.route("/book", methods=["POST"])
 def book():
     data = request.json
-    name = data.get('name')
-    time = data.get('time')
+    name = data.get("name")
+    time = data.get("time")
 
-    with open("bookings.txt", "a") as file:
-        file.write(f"{name},{time}\n")
+    with open(BOOKINGS_FILE, "a") as f:
+        f.write(f"{name},{time}\n")
 
     return jsonify({"message": f"✅ Booking confirmed for {name} at {time}!"})
 
-# --- View all bookings (pretty UI) ---
-@app.route('/bookings')
+
+# --- Get list of available times (for frontend dropdown) ---
+@app.route("/availability")
+def get_availability():
+    if not os.path.exists(AVAIL_FILE):
+        return jsonify([])
+    with open(AVAIL_FILE) as f:
+        times = [line.strip() for line in f if line.strip()]
+    return jsonify(times)
+
+
+# --- Admin page: view bookings + set free times ---
+@app.route("/bookings", methods=["GET", "POST"])
 def view_bookings():
-    try:
-        with open("bookings.txt", "r") as file:
-            lines = file.readlines()
-    except FileNotFoundError:
-        lines = []
+    # Handle new availability submission
+    if request.method == "POST":
+        slot = request.form.get("slot")
+        if slot:
+            with open(AVAIL_FILE, "a") as f:
+                f.write(slot + "\n")
 
-    bookings = [line.strip().split(",") for line in lines if line.strip()]
+    # Read bookings
+    bookings = []
+    if os.path.exists(BOOKINGS_FILE):
+        with open(BOOKINGS_FILE) as f:
+            bookings = [line.strip().split(",") for line in f if line.strip()]
 
-    # 🖌️ Inline HTML template with CSS
-    html_template = """
+    # Read available times
+    avail = []
+    if os.path.exists(AVAIL_FILE):
+        with open(AVAIL_FILE) as f:
+            avail = [line.strip() for line in f if line.strip()]
+
+    # --- Pretty admin HTML ---
+    html = """
     <!DOCTYPE html>
     <html lang="en">
     <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>View Bookings</title>
-        <style>
-            body {
-                font-family: 'Segoe UI', sans-serif;
-                background: linear-gradient(135deg, #74ABE2, #5563DE);
-                color: white;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                min-height: 100vh;
-                margin: 0;
-            }
-            h1 {
-                text-shadow: 2px 2px 10px rgba(0,0,0,0.3);
-            }
-            table {
-                background-color: rgba(255,255,255,0.15);
-                border-collapse: collapse;
-                border-radius: 15px;
-                overflow: hidden;
-                width: 80%;
-                max-width: 600px;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            }
-            th, td {
-                padding: 15px;
-                text-align: center;
-            }
-            th {
-                background-color: rgba(255,255,255,0.3);
-                color: #fff;
-                font-size: 1.1rem;
-            }
-            tr:nth-child(even) {
-                background-color: rgba(255,255,255,0.05);
-            }
-            tr:hover {
-                background-color: rgba(0,0,0,0.2);
-                transition: 0.3s;
-            }
-            a {
-                color: #00FFB3;
-                margin-top: 20px;
-                text-decoration: none;
-                font-weight: bold;
-            }
-            a:hover {
-                text-decoration: underline;
-            }
-        </style>
+      <meta charset="UTF-8" />
+      <title>Manage Bookings</title>
+      <style>
+        body {
+          font-family: 'Segoe UI', sans-serif;
+          background: linear-gradient(135deg, #74ABE2, #5563DE);
+          color: white; text-align:center; padding:2rem;
+        }
+        table {
+          margin:auto; border-collapse:collapse;
+          background-color:rgba(255,255,255,0.15);
+          box-shadow:0 4px 10px rgba(0,0,0,0.3);
+          border-radius:12px; overflow:hidden;
+        }
+        th, td { padding:10px 20px; }
+        th { background:rgba(255,255,255,0.25); }
+        tr:nth-child(even){background:rgba(255,255,255,0.1);}
+        input, button {
+          margin-top:1rem; padding:10px 15px;
+          border:none; border-radius:6px; font-size:1rem;
+        }
+        input {width:200px;}
+        button {
+          background:#00C9A7; color:white; cursor:pointer;
+        }
+        button:hover { background:#00A387; }
+        .section {margin-top:2rem;}
+      </style>
     </head>
     <body>
-        <h1>📘 Current Bookings</h1>
-        {% if bookings %}
-        <table>
-            <tr><th>Name</th><th>Time</th></tr>
-            {% for name, time in bookings %}
-            <tr><td>{{ name }}</td><td>{{ time }}</td></tr>
+      <h1>📘 Current Bookings</h1>
+      {% if bookings %}
+      <table>
+        <tr><th>Name</th><th>Time</th></tr>
+        {% for name, time in bookings %}
+        <tr><td>{{ name }}</td><td>{{ time }}</td></tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      <p>No bookings yet 😅</p>
+      {% endif %}
+
+      <div class="section">
+        <h2>🗓️ Set Available Times</h2>
+        <form method="POST">
+          <input type="text" name="slot" placeholder="e.g. 2025-10-30 12:30" required>
+          <button type="submit">Add Slot</button>
+        </form>
+
+        {% if avail %}
+          <h3>Current Free Slots</h3>
+          <table>
+            <tr><th>Time</th></tr>
+            {% for t in avail %}
+            <tr><td>{{ t }}</td></tr>
             {% endfor %}
-        </table>
+          </table>
         {% else %}
-        <p>No bookings yet 😅</p>
+          <p>No free times set yet</p>
         {% endif %}
-        <a href="/">⬅ Back to Home</a>
+      </div>
     </body>
     </html>
     """
+    return render_template_string(html, bookings=bookings, avail=avail)
 
-    return render_template_string(html_template, bookings=bookings)
 
-
-# --- Run the Flask app ---
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
