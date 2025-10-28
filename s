@@ -1,25 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Admin | Pay As You Mow Bookings</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-<style>
-body{
-  font-family:'Montserrat',sans-serif;
-  background:linear-gradient(135deg,#74ABE2,#5563DE);
-  color:#fff;
-  margin:0;
-  min-height:100vh;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:flex-start;
-  padding:2rem 1rem;
-}
-h1{margin-top:0.5rem;}
+
 #login-box{
   background:rgba(255,255,255,0.1);
   padding:2rem;
