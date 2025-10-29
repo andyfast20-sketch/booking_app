@@ -520,6 +520,149 @@
             box-shadow: none;
         }
 
+        .chat-invite-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(6, 17, 11, 0.68);
+            backdrop-filter: blur(6px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease;
+            z-index: 1600;
+        }
+
+        .chat-invite-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .chat-invite-overlay::before {
+            content: '';
+            position: absolute;
+            width: 340px;
+            height: 340px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(46, 125, 50, 0.45), transparent 65%);
+            filter: blur(2px);
+            animation: chat-invite-glow 3.6s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        .chat-invite-card {
+            position: relative;
+            max-width: 420px;
+            width: 100%;
+            padding: 32px 30px;
+            border-radius: 24px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(236, 253, 243, 0.98));
+            box-shadow: 0 40px 70px rgba(6, 31, 18, 0.35);
+            text-align: center;
+            color: var(--text);
+            transform: translateY(24px) scale(0.95);
+            opacity: 0;
+            transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease;
+            overflow: hidden;
+        }
+
+        .chat-invite-overlay.visible .chat-invite-card {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        .chat-invite-card::before {
+            content: '';
+            position: absolute;
+            inset: -30%;
+            background: conic-gradient(from 120deg, rgba(46, 125, 50, 0.14), transparent 45%, rgba(255, 152, 0, 0.18), transparent 70%);
+            animation: chat-invite-shimmer 6s linear infinite;
+            z-index: 0;
+        }
+
+        .chat-invite-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .chat-invite-title {
+            font-size: 1.45rem;
+            font-family: 'Playfair Display', serif;
+            color: var(--primary-dark);
+            text-shadow: 0 8px 22px rgba(46, 125, 50, 0.25);
+        }
+
+        .chat-invite-message {
+            font-size: 1.02rem;
+            line-height: 1.55;
+            color: var(--text-light);
+        }
+
+        .chat-invite-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-invite-actions button {
+            border: none;
+            border-radius: 16px;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .chat-invite-actions .chat-invite-accept {
+            background: linear-gradient(135deg, var(--primary), #2e8b57 45%, #1b5e20 100%);
+            color: var(--white);
+            box-shadow: 0 24px 38px rgba(46, 125, 50, 0.35);
+        }
+
+        .chat-invite-actions .chat-invite-accept:hover {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 32px 48px rgba(27, 94, 32, 0.38);
+        }
+
+        .chat-invite-actions .chat-invite-decline {
+            background: rgba(255, 255, 255, 0.88);
+            color: var(--primary-dark);
+            border: 1px solid rgba(46, 125, 50, 0.3);
+            box-shadow: 0 16px 26px rgba(46, 125, 50, 0.18);
+        }
+
+        .chat-invite-actions .chat-invite-decline:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.02);
+        }
+
+        @keyframes chat-invite-glow {
+            0%, 100% {
+                transform: scale(0.85);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+        }
+
+        @keyframes chat-invite-shimmer {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
         .live-chat-form.is-disabled textarea {
             opacity: 0.6;
             cursor: not-allowed;
@@ -546,6 +689,22 @@
             .live-chat-window {
                 width: min(320px, calc(100vw - 24px));
                 bottom: 86px;
+            }
+
+            .chat-invite-overlay {
+                padding: 18px;
+            }
+
+            .chat-invite-card {
+                padding: 26px 22px;
+            }
+
+            .chat-invite-title {
+                font-size: 1.3rem;
+            }
+
+            .chat-invite-message {
+                font-size: 0.98rem;
             }
         }
 
@@ -2612,6 +2771,19 @@
         </div>
     </div>
 
+    <div class="chat-invite-overlay" id="liveChatInviteOverlay" aria-hidden="true">
+        <div class="chat-invite-card" role="dialog" aria-modal="true" aria-labelledby="liveChatInviteTitle" aria-describedby="liveChatInviteMessage">
+            <div class="chat-invite-content">
+                <h3 class="chat-invite-title" id="liveChatInviteTitle">Need a hand?</h3>
+                <p class="chat-invite-message" id="liveChatInviteMessage">We're right here if you have any questions about your garden.</p>
+                <div class="chat-invite-actions">
+                    <button type="button" class="chat-invite-accept" id="liveChatInviteAccept">Start chatting</button>
+                    <button type="button" class="chat-invite-decline" id="liveChatInviteDecline">Not right now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="live-chat-widget" id="liveChatWidget">
         <button type="button" class="live-chat-toggle" id="liveChatToggle" aria-expanded="false">
             <span class="live-chat-indicator" id="liveChatIndicator" aria-hidden="true"></span>
@@ -2802,6 +2974,10 @@
             const liveChatInput = document.getElementById('liveChatInput');
             const liveChatSubmit = document.getElementById('liveChatSubmit');
             const liveChatStatusBanner = document.getElementById('liveChatStatusBanner');
+            const liveChatInviteOverlay = document.getElementById('liveChatInviteOverlay');
+            const liveChatInviteMessage = document.getElementById('liveChatInviteMessage');
+            const liveChatInviteAccept = document.getElementById('liveChatInviteAccept');
+            const liveChatInviteDecline = document.getElementById('liveChatInviteDecline');
 
             let liveChatSessionId = getStoredChatSessionId();
             let liveChatLastMessageId = 0;
@@ -2810,6 +2986,8 @@
             let liveChatWindowOpen = false;
             let liveChatInitialized = false;
             let liveChatHasUnread = false;
+            const liveChatHandledInvites = new Set();
+            let liveChatActiveInviteId = null;
 
             function formatLiveChatTime(value) {
                 if (!value) return '';
@@ -2870,6 +3048,47 @@
                     : 'We\'re offline right now. Please reach out via the contact form or WhatsApp.';
             }
 
+            function hideLiveChatInvite(markHandled = false) {
+                if (!liveChatInviteOverlay) return;
+                if (markHandled && Number.isFinite(liveChatActiveInviteId)) {
+                    liveChatHandledInvites.add(liveChatActiveInviteId);
+                }
+                liveChatActiveInviteId = null;
+                liveChatInviteOverlay.classList.remove('visible');
+                liveChatInviteOverlay.setAttribute('aria-hidden', 'true');
+            }
+
+            function showLiveChatInvite(message) {
+                if (!liveChatInviteOverlay) return;
+                const inviteId = Number(message.id);
+                if (Number.isFinite(inviteId)) {
+                    if (liveChatWindowOpen) {
+                        liveChatHandledInvites.add(inviteId);
+                        return;
+                    }
+                    if (liveChatHandledInvites.has(inviteId)) {
+                        return;
+                    }
+                    liveChatActiveInviteId = inviteId;
+                } else {
+                    liveChatActiveInviteId = null;
+                }
+
+                if (liveChatInviteMessage) {
+                    liveChatInviteMessage.textContent = message.text ||
+                        'We\'re right here if you have any questions about your garden.';
+                }
+
+                liveChatInviteOverlay.classList.add('visible');
+                liveChatInviteOverlay.setAttribute('aria-hidden', 'false');
+                setChatUnreadIndicator(true);
+                if (liveChatInviteAccept) {
+                    setTimeout(() => {
+                        liveChatInviteAccept.focus({ preventScroll: true });
+                    }, 120);
+                }
+            }
+
             function renderLiveChatMessage(message) {
                 if (!message || typeof message !== 'object' || !liveChatMessages) return;
                 const messageId = Number(message.id);
@@ -2878,6 +3097,11 @@
                 }
                 if (Number.isFinite(messageId)) {
                     liveChatLastMessageId = messageId;
+                }
+                const messageType = typeof message.type === 'string' ? message.type : 'message';
+                if (messageType === 'invite') {
+                    showLiveChatInvite(message);
+                    return;
                 }
                 if (liveChatEmptyState) {
                     liveChatEmptyState.classList.add('hidden');
@@ -2921,6 +3145,7 @@
                 liveChatWindow.setAttribute('aria-hidden', String(!shouldOpen));
                 liveChatToggle.setAttribute('aria-expanded', String(shouldOpen));
                 if (shouldOpen) {
+                    hideLiveChatInvite(true);
                     setChatUnreadIndicator(false);
                     fetchLiveChatMessages(true);
                     setTimeout(() => {
@@ -2964,7 +3189,8 @@
                     if (Array.isArray(data.messages)) {
                         let hasAdminMessage = false;
                         data.messages.forEach((entry) => {
-                            if (entry && entry.sender === 'admin') {
+                            const entryType = entry && typeof entry.type === 'string' ? entry.type : 'message';
+                            if (entry && entry.sender === 'admin' && entryType !== 'invite') {
                                 hasAdminMessage = true;
                             }
                             renderLiveChatMessage(entry);
@@ -3063,9 +3289,45 @@
             if (liveChatForm) {
                 liveChatForm.addEventListener('submit', sendLiveChatMessage);
             }
+            if (liveChatInviteAccept) {
+                liveChatInviteAccept.addEventListener('click', () => {
+                    hideLiveChatInvite(true);
+                    toggleLiveChatWindow(true);
+                });
+            }
+            if (liveChatInviteDecline) {
+                liveChatInviteDecline.addEventListener('click', () => {
+                    hideLiveChatInvite(true);
+                    setChatUnreadIndicator(false);
+                    if (liveChatToggle) {
+                        liveChatToggle.focus({ preventScroll: true });
+                    }
+                });
+            }
+            if (liveChatInviteOverlay) {
+                liveChatInviteOverlay.addEventListener('click', (event) => {
+                    if (event.target === liveChatInviteOverlay) {
+                        hideLiveChatInvite(true);
+                        setChatUnreadIndicator(false);
+                        if (liveChatToggle) {
+                            liveChatToggle.focus({ preventScroll: true });
+                        }
+                    }
+                });
+            }
             document.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape' && liveChatWindowOpen) {
-                    toggleLiveChatWindow(false);
+                if (event.key === 'Escape') {
+                    if (liveChatInviteOverlay && liveChatInviteOverlay.classList.contains('visible')) {
+                        hideLiveChatInvite(true);
+                        setChatUnreadIndicator(false);
+                        if (liveChatToggle) {
+                            liveChatToggle.focus({ preventScroll: true });
+                        }
+                        return;
+                    }
+                    if (liveChatWindowOpen) {
+                        toggleLiveChatWindow(false);
+                    }
                 }
             });
 
