@@ -1105,9 +1105,94 @@
             font-size: 1.05rem;
         }
 
+        .booking-content {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+            gap: 48px;
+            align-items: stretch;
+        }
+
+        .booking-info {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .booking-intro h3 {
+            font-size: 2rem;
+            color: var(--white);
+            margin-bottom: 10px;
+        }
+
+        .booking-intro p {
+            font-size: 1.05rem;
+            line-height: 1.7;
+        }
+
+        .booking-highlights {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 16px;
+        }
+
+        .booking-highlights li {
+            position: relative;
+            padding-left: 34px;
+            line-height: 1.6;
+        }
+
+        .booking-highlights li::before {
+            content: '\2713';
+            position: absolute;
+            left: 0;
+            top: 4px;
+            font-size: 1rem;
+            color: #a5f2c6;
+            background: rgba(165, 242, 198, 0.12);
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 0 1px rgba(165, 242, 198, 0.28);
+        }
+
+        .booking-assurance {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+        }
+
+        .booking-assurance .assurance-item {
+            background: rgba(255, 255, 255, 0.12);
+            padding: 18px 20px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .booking-assurance .assurance-item strong {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .booking-assurance .assurance-item span {
+            font-size: 1.1rem;
+            color: var(--white);
+            font-weight: 600;
+        }
+
         .booking-form-wrapper {
-            max-width: 500px;
-            margin: 0 auto;
+            max-width: 440px;
+            margin: 0;
             background: rgba(255, 255, 255, 0.14);
             border-radius: 26px;
             padding: 40px;
@@ -1115,6 +1200,9 @@
             box-shadow: 0 20px 45px rgba(9, 35, 15, 0.25);
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .booking-form-wrapper::after {
@@ -1348,6 +1436,15 @@
                 gap: 28px;
             }
 
+            .booking-content {
+                grid-template-columns: 1fr;
+                gap: 36px;
+            }
+
+            .booking-form-wrapper {
+                margin: 0 auto;
+            }
+
             .support-card {
                 text-align: center;
             }
@@ -1382,6 +1479,14 @@
 
             .faq-card h3 {
                 font-size: 1.25rem;
+            }
+
+            .booking-intro h3 {
+                font-size: 1.65rem;
+            }
+
+            .booking-assurance {
+                grid-template-columns: 1fr 1fr;
             }
 
             .mobile-menu-btn {
@@ -1507,6 +1612,14 @@
 
             .booking-header p {
                 font-size: 1rem;
+            }
+
+            .booking-content {
+                gap: 28px;
+            }
+
+            .booking-assurance {
+                grid-template-columns: 1fr;
             }
 
             .booking-form-wrapper {
@@ -1767,21 +1880,45 @@
                 <p>Select your preferred time slot and we'll confirm your booking right away.</p>
             </div>
 
-            <div class="booking-form-wrapper">
-                <form class="booking-form" id="bookingForm">
-                    <div class="form-group">
-                        <label for="customerName">Your Name</label>
-                        <input type="text" id="customerName" name="name" placeholder="Enter your full name" required />
+            <div class="booking-content">
+                <div class="booking-info">
+                    <div class="booking-intro">
+                        <h3>Effortless garden scheduling</h3>
+                        <p>Pick a visit time that fits around you and we'll confirm with any prep details you need before we arrive.</p>
                     </div>
-                    <div class="form-group">
-                        <label for="customerTime">Available Time Slots</label>
-                        <select id="customerTime" name="time" required>
-                            <option value="">Loading available times...</option>
-                        </select>
+                    <ul class="booking-highlights">
+                        <li>Live availability direct from our gardener rota.</li>
+                        <li>Share access notes or special requests after you choose a slot.</li>
+                        <li>Receive SMS and email confirmation as soon as we lock in your visit.</li>
+                    </ul>
+                    <div class="booking-assurance">
+                        <div class="assurance-item">
+                            <strong>Average response</strong>
+                            <span>Under 10 minutes</span>
+                        </div>
+                        <div class="assurance-item">
+                            <strong>Service area</strong>
+                            <span>Greater London &amp; Surrey</span>
+                        </div>
                     </div>
-                    <button type="submit" class="booking-submit">Book Now</button>
-                </form>
-                <div class="booking-response" id="bookingResponse"></div>
+                </div>
+
+                <div class="booking-form-wrapper">
+                    <form class="booking-form" id="bookingForm">
+                        <div class="form-group">
+                            <label for="customerName">Your Name</label>
+                            <input type="text" id="customerName" name="name" placeholder="Enter your full name" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="customerTime">Available Time Slots</label>
+                            <select id="customerTime" name="time" required>
+                                <option value="">Loading available times...</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="booking-submit">Book Now</button>
+                    </form>
+                    <div class="booking-response" id="bookingResponse"></div>
+                </div>
             </div>
 
             <div class="booking-support">
