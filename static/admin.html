@@ -1,12 +1,331 @@
-@app.route("/bookings_json", methods=["GET"])
-def get_bookings_json():
-    ...
-    return jsonify({"bookings": bookings})
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Admin</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
 
-# --- Serve admin.html file ---
-@app.route("/admin")
-def admin_page():
-    return app.send_static_file("admin.html")
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #74abe2, #5563de);
+      color: #f6f8ff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1rem 4rem;
+      box-sizing: border-box;
+    }
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    h1 {
+      margin-bottom: 0.5rem;
+    }
+
+    p.lead {
+      margin-top: 0;
+      opacity: 0.85;
+    }
+
+    section {
+      width: min(960px, 100%);
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 18px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.25);
+      padding: 2rem;
+      margin-top: 2rem;
+      backdrop-filter: blur(10px);
+    }
+
+    section:first-of-type {
+      margin-top: 1.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    th,
+    td {
+      padding: 0.85rem 1rem;
+      text-align: left;
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.2);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+    }
+
+    tr:nth-child(even) td {
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .empty-state {
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      text-align: center;
+      font-style: italic;
+      margin-top: 1rem;
+    }
+
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      align-items: center;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    input,
+    select,
+    button {
+      margin-top: 0.4rem;
+      border: none;
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+      font-size: 1rem;
+      font-family: inherit;
+    }
+
+    input,
+    select {
+      min-width: 180px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #1c1c1c;
+    }
+
+    button {
+      cursor: pointer;
+      background: #00c9a7;
+      color: #fff;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .actions button.secondary {
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 2rem 1rem 1rem;
+      opacity: 0.8;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 640px) {
+      form {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      input,
+      select,
+      button,
+      label {
+        width: 100%;
+      }
+
+      section {
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Booking Admin</h1>
+    <p class="lead">Review confirmed bookings and set new availability slots.</p>
+
+    <section aria-labelledby="bookings-heading">
+      <header>
+        <h2 id="bookings-heading">Current Bookings</h2>
+      </header>
+      <div id="bookings-container" class="empty-state">Loading bookings…</div>
+      <div class="actions">
+        <button id="refresh-bookings" type="button" class="secondary">Refresh bookings</button>
+      </div>
+    </section>
+
+    <section aria-labelledby="availability-heading">
+      <header>
+        <h2 id="availability-heading">Set Available Times</h2>
+      </header>
+      <form id="availability-form" autocomplete="off">
+        <label>
+          Date
+          <input type="date" name="date" required />
+        </label>
+        <label>
+          Time
+          <select name="time" required>
+            <option value="">Select time…</option>
+            <option value="18:00">6:00 PM</option>
+            <option value="20:00">8:00 PM</option>
+          </select>
+        </label>
+        <button type="submit">Add slot</button>
+      </form>
+      <div id="availability-container" class="empty-state">Loading availability…</div>
+      <div class="actions">
+        <button id="refresh-availability" type="button" class="secondary">Refresh availability</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    This page uses the same API as <code>/bookings</code>, wrapped in a static dashboard for convenience.
+  </footer>
+
+  <script>
+    const bookingsContainer = document.getElementById("bookings-container");
+    const availabilityContainer = document.getElementById("availability-container");
+    const form = document.getElementById("availability-form");
+    const refreshBookingsBtn = document.getElementById("refresh-bookings");
+    const refreshAvailabilityBtn = document.getElementById("refresh-availability");
+
+    function createTable(headers, rows) {
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+
+      headers.forEach((header) => {
+        const th = document.createElement("th");
+        th.textContent = header;
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+      rows.forEach((cells) => {
+        const tr = document.createElement("tr");
+        cells.forEach((cell) => {
+          const td = document.createElement("td");
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
+      return table;
+    }
+
+    async function loadBookings() {
+      bookingsContainer.textContent = "Loading bookings…";
+      try {
+        const response = await fetch("/bookings_json");
+        if (!response.ok) throw new Error("Failed to fetch bookings");
+        const data = await response.json();
+        const bookings = data.bookings || [];
+
+        if (bookings.length === 0) {
+          bookingsContainer.className = "empty-state";
+          bookingsContainer.textContent = "No bookings yet.";
+          return;
+        }
+
+        bookingsContainer.className = "table-wrapper";
+        bookingsContainer.innerHTML = "";
+        bookingsContainer.appendChild(
+          createTable(
+            ["Name", "Time"],
+            bookings.map(({ name, time }) => [name || "—", time || "—"])
+          )
+        );
+      } catch (error) {
+        bookingsContainer.className = "empty-state";
+        bookingsContainer.textContent = error.message;
+      }
+    }
+
+    async function loadAvailability() {
+      availabilityContainer.textContent = "Loading availability…";
+      try {
+        const response = await fetch("/availability");
+        if (!response.ok) throw new Error("Failed to fetch availability");
+        const slots = await response.json();
+
+        if (!Array.isArray(slots) || slots.length === 0) {
+          availabilityContainer.className = "empty-state";
+          availabilityContainer.textContent = "No availability set yet.";
+          return;
+        }
+
+        availabilityContainer.className = "table-wrapper";
+        availabilityContainer.innerHTML = "";
+        availabilityContainer.appendChild(
+          createTable(["Available Slot"], slots.map((slot) => [slot]))
+        );
+      } catch (error) {
+        availabilityContainer.className = "empty-state";
+        availabilityContainer.textContent = error.message;
+      }
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+      const formData = new FormData(form);
+      const body = new URLSearchParams(formData);
+
+      try {
+        const response = await fetch("/bookings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: body.toString(),
+        });
+
+        if (!response.ok) {
+          throw new Error("Unable to add slot. Please try again.");
+        }
+
+        form.reset();
+        await loadAvailability();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    refreshBookingsBtn.addEventListener("click", loadBookings);
+    refreshAvailabilityBtn.addEventListener("click", loadAvailability);
+    form.addEventListener("submit", handleSubmit);
+
+    loadBookings();
+    loadAvailability();
+  </script>
+</body>
+</html>
