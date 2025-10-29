@@ -26,6 +26,18 @@
             box-sizing: border-box;
         }
 
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
         body {
             font-family: 'Montserrat', sans-serif;
             line-height: 1.6;
@@ -99,7 +111,7 @@
 
         .whatsapp-button {
             position: fixed;
-            bottom: 28px;
+            bottom: 120px;
             right: 32px;
             z-index: 1200;
             display: inline-flex;
@@ -190,9 +202,293 @@
             z-index: 0;
         }
 
+        .live-chat-widget {
+            position: fixed;
+            bottom: 28px;
+            right: 32px;
+            z-index: 1250;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 16px;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .live-chat-toggle {
+            border: none;
+            border-radius: 999px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--white);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            box-shadow: 0 18px 35px rgba(27, 94, 32, 0.35);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .live-chat-toggle:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 22px 40px rgba(27, 94, 32, 0.4);
+        }
+
+        .live-chat-toggle .live-chat-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #66bb6a;
+            box-shadow: 0 0 0 6px rgba(102, 187, 106, 0.25);
+        }
+
+        .live-chat-toggle .live-chat-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+
+        .live-chat-toggle .live-chat-label i {
+            font-size: 1.05rem;
+        }
+
+        .live-chat-toggle.is-offline {
+            background: linear-gradient(135deg, #9e9e9e 0%, #616161 100%);
+            box-shadow: 0 18px 35px rgba(66, 66, 66, 0.3);
+        }
+
+        .live-chat-toggle.is-offline .live-chat-indicator {
+            background: #ff6b6b;
+            box-shadow: 0 0 0 6px rgba(255, 107, 107, 0.25);
+        }
+
+        .live-chat-window {
+            position: absolute;
+            bottom: 68px;
+            right: 0;
+            width: 360px;
+            max-width: calc(100vw - 32px);
+            background: var(--white);
+            border-radius: 22px;
+            box-shadow: 0 30px 65px rgba(12, 28, 18, 0.32);
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(16px);
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+
+        .live-chat-window.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .live-chat-header {
+            background: linear-gradient(135deg, rgba(46, 125, 50, 0.96), rgba(67, 160, 71, 0.92));
+            padding: 18px 22px;
+            color: var(--white);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .live-chat-header strong {
+            display: block;
+            font-size: 1.05rem;
+            letter-spacing: 0.4px;
+        }
+
+        .live-chat-header p {
+            margin: 0;
+            font-size: 0.85rem;
+            opacity: 0.85;
+        }
+
+        .live-chat-close {
+            border: none;
+            background: rgba(255, 255, 255, 0.18);
+            color: var(--white);
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .live-chat-close:hover {
+            background: rgba(255, 255, 255, 0.28);
+            transform: rotate(90deg);
+        }
+
+        .live-chat-body {
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, rgba(249, 249, 249, 1) 0%, rgba(255, 255, 255, 1) 65%);
+        }
+
+        .live-chat-status-banner {
+            display: none;
+            padding: 12px 18px;
+            font-size: 0.85rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .live-chat-status-banner.visible {
+            display: block;
+        }
+
+        .live-chat-status-banner.online {
+            background: rgba(76, 175, 80, 0.12);
+            color: var(--primary-dark);
+        }
+
+        .live-chat-status-banner.offline {
+            background: rgba(255, 107, 107, 0.12);
+            color: #c62828;
+        }
+
+        .live-chat-status-banner.error {
+            background: rgba(255, 152, 0, 0.18);
+            color: #e65100;
+        }
+
+        .live-chat-messages {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .live-chat-empty {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.92rem;
+            padding: 12px 8px 4px;
+        }
+
+        .live-chat-empty i {
+            display: block;
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .live-chat-empty.hidden {
+            display: none;
+        }
+
+        .live-chat-message {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-width: 85%;
+        }
+
+        .live-chat-message.from-admin {
+            align-self: flex-start;
+        }
+
+        .live-chat-message.from-visitor {
+            align-self: flex-end;
+        }
+
+        .live-chat-message .message-bubble {
+            padding: 10px 14px;
+            border-radius: 18px;
+            background: rgba(46, 125, 50, 0.12);
+            color: var(--text);
+            border: 1px solid rgba(46, 125, 50, 0.18);
+            box-shadow: 0 8px 18px rgba(46, 125, 50, 0.12);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .live-chat-message.from-visitor .message-bubble {
+            background: linear-gradient(135deg, var(--secondary), #ff7e5f);
+            color: var(--white);
+            border-color: rgba(255, 126, 95, 0.4);
+            box-shadow: 0 14px 26px rgba(255, 126, 95, 0.3);
+        }
+
+        .live-chat-message .message-meta {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            opacity: 0.9;
+        }
+
+        .live-chat-form {
+            padding: 16px 18px 18px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+        }
+
+        .live-chat-form textarea {
+            flex: 1;
+            border: 1px solid rgba(46, 125, 50, 0.18);
+            border-radius: 14px;
+            padding: 10px 14px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            resize: none;
+            min-height: 60px;
+            max-height: 140px;
+            background: rgba(249, 249, 249, 0.9);
+            transition: border 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .live-chat-form textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
+        }
+
+        .live-chat-form button {
+            border: none;
+            border-radius: 14px;
+            padding: 12px 18px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .live-chat-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 26px rgba(27, 94, 32, 0.32);
+        }
+
+        .live-chat-form button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .live-chat-form.is-disabled textarea {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         @media (max-width: 768px) {
             .whatsapp-button {
-                bottom: 18px;
+                bottom: 106px;
                 right: 18px;
                 left: auto;
                 padding: 10.5px 18px;
@@ -201,6 +497,16 @@
 
             .whatsapp-button .whatsapp-text span:last-child {
                 font-size: 0.71rem;
+            }
+
+            .live-chat-widget {
+                right: 18px;
+                bottom: 18px;
+            }
+
+            .live-chat-window {
+                width: min(320px, calc(100vw - 24px));
+                bottom: 62px;
             }
         }
 
@@ -1897,6 +2203,13 @@
             .booking-form-wrapper {
                 padding: 26px;
             }
+
+            .live-chat-window {
+                width: calc(100vw - 24px);
+                right: 0;
+                left: 0;
+                margin: 0 auto;
+            }
         }
     </style>
 </head>
@@ -2260,6 +2573,41 @@
         </div>
     </div>
 
+    <div class="live-chat-widget" id="liveChatWidget">
+        <button type="button" class="live-chat-toggle" id="liveChatToggle" aria-expanded="false">
+            <span class="live-chat-indicator" id="liveChatIndicator" aria-hidden="true"></span>
+            <span class="live-chat-label"><i class="fas fa-comments"></i> Live chat</span>
+        </button>
+        <div class="live-chat-window" id="liveChatWindow" aria-hidden="true">
+            <div class="live-chat-header">
+                <div>
+                    <strong>Need a hand?</strong>
+                    <p>Chat with Pay As You Mow</p>
+                </div>
+                <button type="button" class="live-chat-close" id="liveChatClose" aria-label="Close live chat">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="live-chat-body">
+                <div class="live-chat-status-banner visible online" id="liveChatStatusBanner">Typically replies within a few minutes.</div>
+                <div class="live-chat-messages" id="liveChatMessages" role="log" aria-live="polite">
+                    <div class="live-chat-empty" id="liveChatEmptyState">
+                        <i class="fas fa-leaf" aria-hidden="true"></i>
+                        <p>Ask us anything about your garden. We're here to help!</p>
+                    </div>
+                </div>
+                <form class="live-chat-form" id="liveChatForm" novalidate>
+                    <label for="liveChatInput" class="sr-only">Type your message</label>
+                    <textarea id="liveChatInput" name="message" placeholder="Type your message…" rows="2" required aria-label="Type your message"></textarea>
+                    <button type="submit" id="liveChatSubmit">
+                        <span>Send</span>
+                        <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <a href="https://wa.me/447595289669" class="whatsapp-button" target="_blank" rel="noopener" aria-label="Chat with Pay As You Mow on WhatsApp">
         <span class="icon"><i class="fa-brands fa-whatsapp"></i></span>
         <div class="whatsapp-text">
@@ -2321,6 +2669,14 @@
         const API_BASE = "https://booking-app-p8q8.onrender.com";
 
         const PRESENCE_ENDPOINT = `${API_BASE}/presence`;
+        const LIVE_CHAT_ENDPOINTS = {
+            session: `${API_BASE}/chat/session`,
+            messages: `${API_BASE}/chat/messages`,
+            send: `${API_BASE}/chat/send`,
+            status: `${API_BASE}/chat/status`,
+        };
+        const LIVE_CHAT_STORAGE_KEY = 'payAsYouMowChatSession';
+        const LIVE_CHAT_POLL_INTERVAL = 4000;
 
         function buildPresencePayload(status = 'online') {
             return {
@@ -2376,6 +2732,281 @@
             }
         });
         window.addEventListener('beforeunload', () => sendPresenceBeacon('offline'));
+
+        function getStoredChatSessionId() {
+            try {
+                return localStorage.getItem(LIVE_CHAT_STORAGE_KEY) || '';
+            } catch (error) {
+                return '';
+            }
+        }
+
+        function storeChatSessionId(value) {
+            try {
+                if (value) {
+                    localStorage.setItem(LIVE_CHAT_STORAGE_KEY, value);
+                }
+            } catch (error) {
+                // Ignore storage errors
+            }
+        }
+
+        const liveChatWidget = document.getElementById('liveChatWidget');
+        if (liveChatWidget) {
+            const liveChatToggle = document.getElementById('liveChatToggle');
+            const liveChatClose = document.getElementById('liveChatClose');
+            const liveChatWindow = document.getElementById('liveChatWindow');
+            const liveChatMessages = document.getElementById('liveChatMessages');
+            const liveChatEmptyState = document.getElementById('liveChatEmptyState');
+            const liveChatForm = document.getElementById('liveChatForm');
+            const liveChatInput = document.getElementById('liveChatInput');
+            const liveChatSubmit = document.getElementById('liveChatSubmit');
+            const liveChatStatusBanner = document.getElementById('liveChatStatusBanner');
+
+            let liveChatSessionId = getStoredChatSessionId();
+            let liveChatLastMessageId = 0;
+            let liveChatPollingTimer = null;
+            let liveChatOnline = true;
+            let liveChatWindowOpen = false;
+
+            function formatLiveChatTime(value) {
+                if (!value) return '';
+                const parsed = new Date(value);
+                if (Number.isNaN(parsed.getTime())) return '';
+                return parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+
+            function setChatOnlineState(isOnline) {
+                liveChatOnline = Boolean(isOnline);
+                if (liveChatToggle) {
+                    liveChatToggle.classList.toggle('is-offline', !liveChatOnline);
+                }
+                if (liveChatStatusBanner) {
+                    liveChatStatusBanner.classList.remove('error');
+                    liveChatStatusBanner.classList.toggle('offline', !liveChatOnline);
+                    liveChatStatusBanner.classList.toggle('online', liveChatOnline);
+                    liveChatStatusBanner.classList.add('visible');
+                    liveChatStatusBanner.textContent = liveChatOnline
+                        ? 'Typically replies within a few minutes.'
+                        : 'We\'re offline right now. Please reach out via the contact form or WhatsApp.';
+                }
+                if (liveChatForm) {
+                    liveChatForm.classList.toggle('is-disabled', !liveChatOnline);
+                }
+                if (liveChatInput) {
+                    liveChatInput.disabled = !liveChatOnline;
+                    liveChatInput.placeholder = liveChatOnline
+                        ? 'Type your message…'
+                        : 'Live chat is offline right now';
+                }
+                if (liveChatSubmit) {
+                    liveChatSubmit.disabled = !liveChatOnline;
+                }
+            }
+
+            function showChatError(message) {
+                if (!liveChatStatusBanner) return;
+                liveChatStatusBanner.textContent = message;
+                liveChatStatusBanner.classList.add('visible', 'error');
+                liveChatStatusBanner.classList.remove('online');
+                liveChatStatusBanner.classList.remove('offline');
+            }
+
+            function clearChatBanner() {
+                if (!liveChatStatusBanner) return;
+                liveChatStatusBanner.classList.remove('error');
+                liveChatStatusBanner.classList.add(liveChatOnline ? 'online' : 'offline');
+                liveChatStatusBanner.textContent = liveChatOnline
+                    ? 'Typically replies within a few minutes.'
+                    : 'We\'re offline right now. Please reach out via the contact form or WhatsApp.';
+            }
+
+            function renderLiveChatMessage(message) {
+                if (!message || typeof message !== 'object' || !liveChatMessages) return;
+                const messageId = Number(message.id);
+                if (Number.isFinite(messageId) && messageId <= liveChatLastMessageId) {
+                    return;
+                }
+                if (Number.isFinite(messageId)) {
+                    liveChatLastMessageId = messageId;
+                }
+                if (liveChatEmptyState) {
+                    liveChatEmptyState.classList.add('hidden');
+                }
+
+                const wrapper = document.createElement('div');
+                wrapper.className = `live-chat-message ${message.sender === 'admin' ? 'from-admin' : 'from-visitor'}`;
+
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble';
+                bubble.textContent = message.text || '';
+                wrapper.appendChild(bubble);
+
+                const meta = document.createElement('span');
+                meta.className = 'message-meta';
+                meta.textContent = formatLiveChatTime(message.timestamp);
+                wrapper.appendChild(meta);
+
+                liveChatMessages.appendChild(wrapper);
+                liveChatMessages.scrollTop = liveChatMessages.scrollHeight;
+            }
+
+            function resetLiveChatMessages(messages = []) {
+                if (!liveChatMessages) return;
+                liveChatMessages.innerHTML = '';
+                liveChatLastMessageId = 0;
+                if (Array.isArray(messages) && messages.length) {
+                    messages.forEach((entry) => renderLiveChatMessage(entry));
+                } else if (liveChatEmptyState) {
+                    liveChatEmptyState.classList.remove('hidden');
+                }
+            }
+
+            function toggleLiveChatWindow(forceOpen) {
+                if (!liveChatWindow || !liveChatToggle) return;
+                const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !liveChatWindowOpen;
+                liveChatWindowOpen = shouldOpen;
+                liveChatWindow.classList.toggle('visible', shouldOpen);
+                liveChatWindow.setAttribute('aria-hidden', String(!shouldOpen));
+                liveChatToggle.setAttribute('aria-expanded', String(shouldOpen));
+                if (shouldOpen) {
+                    fetchLiveChatMessages(true);
+                    setTimeout(() => {
+                        if (liveChatInput && !liveChatInput.disabled) {
+                            liveChatInput.focus();
+                        }
+                    }, 120);
+                }
+            }
+
+            function startLiveChatPolling() {
+                if (liveChatPollingTimer) return;
+                liveChatPollingTimer = setInterval(() => {
+                    fetchLiveChatMessages(false);
+                }, LIVE_CHAT_POLL_INTERVAL);
+            }
+
+            function stopLiveChatPolling() {
+                if (liveChatPollingTimer) {
+                    clearInterval(liveChatPollingTimer);
+                    liveChatPollingTimer = null;
+                }
+            }
+
+            async function fetchLiveChatMessages(forceRefresh = false) {
+                if (!liveChatSessionId) return;
+                const params = new URLSearchParams({ session_id: liveChatSessionId, page: window.location.pathname || '/' });
+                if (!forceRefresh && liveChatLastMessageId) {
+                    params.set('after', String(liveChatLastMessageId));
+                }
+
+                try {
+                    const res = await fetch(`${LIVE_CHAT_ENDPOINTS.messages}?${params.toString()}`);
+                    if (!res.ok) {
+                        throw new Error('Unable to fetch chat updates.');
+                    }
+                    const data = await res.json();
+                    if (typeof data.online === 'boolean') {
+                        setChatOnlineState(data.online);
+                    }
+                    if (Array.isArray(data.messages)) {
+                        data.messages.forEach((entry) => renderLiveChatMessage(entry));
+                    }
+                } catch (error) {
+                    console.warn('Live chat polling failed.', error);
+                }
+            }
+
+            async function initialiseLiveChat() {
+                if (!liveChatForm) return;
+                try {
+                    const response = await fetch(LIVE_CHAT_ENDPOINTS.session, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            session_id: liveChatSessionId,
+                            page: window.location.pathname || '/',
+                        }),
+                    });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Unable to start live chat.');
+                    }
+                    if (data.session_id) {
+                        liveChatSessionId = data.session_id;
+                        storeChatSessionId(liveChatSessionId);
+                    }
+                    setChatOnlineState(typeof data.online === 'boolean' ? data.online : true);
+                    resetLiveChatMessages(Array.isArray(data.messages) ? data.messages : []);
+                    startLiveChatPolling();
+                } catch (error) {
+                    setChatOnlineState(false);
+                    showChatError('We could not connect to live chat right now.');
+                    console.warn('Unable to initialise live chat.', error);
+                }
+            }
+
+            async function sendLiveChatMessage(event) {
+                event.preventDefault();
+                if (!liveChatForm || !liveChatInput || !liveChatSubmit) return;
+                if (!liveChatOnline || !liveChatSessionId) {
+                    return;
+                }
+
+                const message = liveChatInput.value.trim();
+                if (!message) {
+                    liveChatInput.focus();
+                    return;
+                }
+
+                liveChatSubmit.disabled = true;
+                try {
+                    const res = await fetch(LIVE_CHAT_ENDPOINTS.send, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            session_id: liveChatSessionId,
+                            message,
+                            page: window.location.pathname || '/',
+                        }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        if (res.status === 503) {
+                            setChatOnlineState(false);
+                        }
+                        throw new Error(data.message || 'Unable to send your message.');
+                    }
+                    if (data.entry) {
+                        renderLiveChatMessage(data.entry);
+                    }
+                    liveChatInput.value = '';
+                    clearChatBanner();
+                    fetchLiveChatMessages(false);
+                } catch (error) {
+                    showChatError(error.message || 'Unable to send your message.');
+                } finally {
+                    liveChatSubmit.disabled = !liveChatOnline;
+                }
+            }
+
+            if (liveChatToggle) {
+                liveChatToggle.addEventListener('click', () => toggleLiveChatWindow());
+            }
+            if (liveChatClose) {
+                liveChatClose.addEventListener('click', () => toggleLiveChatWindow(false));
+            }
+            if (liveChatForm) {
+                liveChatForm.addEventListener('submit', sendLiveChatMessage);
+            }
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && liveChatWindowOpen) {
+                    toggleLiveChatWindow(false);
+                }
+            });
+
+            initialiseLiveChat();
+        }
 
         // Mobile Menu Toggle
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
