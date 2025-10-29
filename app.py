@@ -306,6 +306,27 @@ def _ensure_chat_session(session_id: str = "", *, page: str = "", ip_str: str = 
     return cleaned_id, snapshot
 
 
+# Helper used by admin tooling to locate a visitor session by IP
+def _get_session_id_for_ip(ip_str: str) -> str:
+    if not ip_str:
+        return ""
+
+    best_id = ""
+    best_last_seen = ""
+    with _chat_state_lock:
+        for session_id, session in _chat_state.get("sessions", {}).items():
+            visitor = session.get("visitor", {})
+            if visitor.get("ip") != ip_str:
+                continue
+
+            last_seen = session.get("last_seen") or session.get("created_at") or ""
+            if not best_id or (last_seen and last_seen > best_last_seen):
+                best_id = session_id
+                best_last_seen = last_seen
+
+    return best_id
+
+
 # --- Live chat endpoints ---
 
 
@@ -427,6 +448,9 @@ def chat_send():
         user_agent=user_agent,
     )
 
+    if not session_id:
+        return jsonify({"message": "Unable to create chat session."}), 500
+
     with _chat_state_lock:
         session = _chat_state.get("sessions", {}).get(session_id)
         if not session:
@@ -543,6 +567,65 @@ def admin_chat_send():
 
     _save_chat_state()
     return jsonify({"message": "Message sent.", "entry": entry, "session_id": session_id})
+
+
+@app.route("/admin/chat/invite", methods=["POST"])
+def admin_chat_invite():
+    payload = request.get_json(silent=True) or {}
+    ip_str = (payload.get("ip") or "").strip()
+    message = (payload.get("message") or "").strip()
+
+    if not ip_str:
+        return jsonify({"message": "IP address is required."}), 400
+
+    if not message:
+        message = "Hello! We're online if you have any questions about our services."
+
+    page = ""
+    location = ""
+    user_agent = ""
+    with _presence_lock:
+        visitor_entry = _active_visitors.get(ip_str)
+        if visitor_entry:
+            page = visitor_entry.get("page", "")
+            location = visitor_entry.get("location", "")
+            user_agent = visitor_entry.get("user_agent", "")
+
+    if not location:
+        location = _lookup_location(ip_str)
+
+    session_id = _get_session_id_for_ip(ip_str)
+    session_id, _ = _ensure_chat_session(
+        session_id,
+        page=page,
+        ip_str=ip_str,
+        location=location,
+        user_agent=user_agent,
+    )
+
+    if not session_id:
+        return jsonify({"message": "Unable to create chat session."}), 500
+
+    with _chat_state_lock:
+        session = _chat_state.get("sessions", {}).get(session_id)
+        if not session:
+            return jsonify({"message": "Session not found."}), 404
+
+        try:
+            entry = _append_chat_message(session, "admin", message)
+        except ValueError:
+            return jsonify({"message": "Message text is required."}), 400
+
+        session["last_admin_read"] = entry["id"]
+        visitor = session.setdefault("visitor", {})
+        visitor.setdefault("ip", ip_str)
+        if location:
+            visitor["location"] = location
+        if page:
+            visitor["last_page"] = page
+
+    _save_chat_state()
+    return jsonify({"message": "Invite sent.", "entry": entry, "session_id": session_id})
 
 def _read_text_file(path: str) -> str:
     if not os.path.exists(path):
