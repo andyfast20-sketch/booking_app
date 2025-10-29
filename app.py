@@ -239,7 +239,12 @@ with _chat_state_lock:
     _chat_state.update(stored_chat_state)
 
 
-def _append_chat_message(session: dict, sender: str, text: str) -> dict:
+def _append_chat_message(
+    session: dict,
+    sender: str,
+    text: str,
+    message_type: str = "message",
+) -> dict:
     clean_text = (text or "").strip()
     if not clean_text:
         raise ValueError("Message text is required")
@@ -251,6 +256,7 @@ def _append_chat_message(session: dict, sender: str, text: str) -> dict:
         "sender": sender,
         "text": clean_text,
         "timestamp": timestamp,
+        "type": message_type or "message",
     }
 
     session.setdefault("messages", []).append(entry)
@@ -612,7 +618,7 @@ def admin_chat_invite():
             return jsonify({"message": "Session not found."}), 404
 
         try:
-            entry = _append_chat_message(session, "admin", message)
+            entry = _append_chat_message(session, "admin", message, message_type="invite")
         except ValueError:
             return jsonify({"message": "Message text is required."}), 400
 
