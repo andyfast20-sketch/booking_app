@@ -674,13 +674,22 @@
             }
 
             .live-chat-widget {
-                right: 18px;
-                bottom: 18px;
+                right: 16px;
+                bottom: 16px;
             }
 
             .live-chat-window {
-                width: min(320px, calc(100vw - 24px));
-                bottom: 86px;
+                position: fixed;
+                bottom: 96px;
+                right: auto;
+                left: 50%;
+                width: min(340px, calc(100vw - 28px));
+                max-width: calc(100vw - 28px);
+                transform: translate(-50%, 20px);
+            }
+
+            .live-chat-window.visible {
+                transform: translate(-50%, 0);
             }
 
             .chat-invite-overlay {
@@ -1037,21 +1046,26 @@
             width: 100%;
             padding-top: 62%;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .service-image img {
             position: absolute;
-            top: 0;
-            left: 0;
+            top: 50%;
+            left: 50%;
             width: 100%;
             height: 100%;
+            transform: translate(-50%, -50%) scale(1);
             object-fit: cover;
+            object-position: center;
             filter: saturate(1.05);
             transition: transform 0.5s ease;
         }
 
         .service-card:hover .service-image img {
-            transform: scale(1.05);
+            transform: translate(-50%, -50%) scale(1.05);
         }
 
         .service-content {
@@ -2202,12 +2216,35 @@
             }
 
             .hero {
-                min-height: auto;
+                min-height: 100vh;
+                overflow: visible;
+            }
+
+            .hero-slide {
+                align-items: flex-start;
+                justify-content: center;
+                background-position: center 22%;
             }
 
             .hero-slide .container {
-                padding-top: 140px;
-                padding-bottom: 120px;
+                padding-top: 170px;
+                padding-bottom: 140px;
+            }
+
+            .hero-content {
+                background: linear-gradient(188deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.55));
+                padding: 32px 24px;
+                border-radius: 24px;
+                box-shadow: 0 22px 52px rgba(0, 0, 0, 0.4);
+                max-width: 420px;
+                width: 100%;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .hero-content h1,
+            .hero-content p {
+                color: var(--white);
             }
 
             .hero-content {
@@ -2223,7 +2260,8 @@
             }
 
             .hero h1 {
-                font-size: 2.5rem;
+                font-size: 2.4rem;
+                line-height: 1.25;
             }
 
             .about-content {
@@ -2362,9 +2400,18 @@
         }
 
         @media (max-width: 576px) {
+            .hero-slide {
+                background-position: center 18%;
+            }
+
             .hero-slide .container {
-                padding-top: 150px;
-                padding-bottom: 110px;
+                padding-top: 180px;
+                padding-bottom: 120px;
+            }
+
+            .hero-content {
+                padding: 28px 20px;
+                border-radius: 20px;
             }
 
             .hero-content {
@@ -2378,11 +2425,12 @@
             }
 
             .hero h1 {
-                font-size: 2rem;
+                font-size: 2.1rem;
             }
 
             .hero p {
-                font-size: 1rem;
+                font-size: 1.05rem;
+                line-height: 1.7;
             }
 
             .btn {
@@ -2440,9 +2488,7 @@
 
             .live-chat-window {
                 width: calc(100vw - 24px);
-                right: 0;
-                left: 0;
-                margin: 0 auto;
+                max-width: calc(100vw - 24px);
             }
         }
     </style>
