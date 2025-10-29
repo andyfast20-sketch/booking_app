@@ -4,7 +4,11 @@ from uuid import uuid4
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
+from threading import Lock
+from ipaddress import ip_address
+from urllib.request import Request, urlopen
+from urllib.error import URLError, HTTPError
 
 app = Flask(__name__)
 
@@ -18,6 +22,115 @@ CORS(app, resources={r"/*": {"origins": [
 BOOKINGS_FILE = "bookings.txt"
 AVAIL_FILE = "availability.txt"
 CONTACTS_FILE = "contacts.json"
+
+VISITOR_TIMEOUT = timedelta(minutes=3)
+LOCATION_CACHE_TTL = timedelta(hours=6)
+
+_active_visitors = {}
+_presence_lock = Lock()
+_location_cache = {}
+
+
+def _is_private_ip(ip_str: str) -> bool:
+    if not ip_str:
+        return True
+    try:
+        ip_obj = ip_address(ip_str)
+    except ValueError:
+        return True
+    return any(
+        [
+            ip_obj.is_private,
+            ip_obj.is_loopback,
+            ip_obj.is_reserved,
+            ip_obj.is_unspecified,
+        ]
+    )
+
+
+def _lookup_location(ip_str: str) -> str:
+    if not ip_str:
+        return "Unknown location"
+    if _is_private_ip(ip_str):
+        return "Local network"
+
+    now = datetime.utcnow()
+    cached = _location_cache.get(ip_str)
+    if cached and now - cached["timestamp"] < LOCATION_CACHE_TTL:
+        return cached["location"]
+
+    location = "Unknown location"
+    try:
+        request = Request(
+            f"https://ipapi.co/{ip_str}/json/",
+            headers={"User-Agent": "booking-app-presence/1.0"},
+        )
+        with urlopen(request, timeout=3) as response:
+            if response.status == 200:
+                payload = json.loads(response.read().decode("utf-8"))
+                pieces = [
+                    (payload.get("city") or "").strip(),
+                    (payload.get("region") or "").strip(),
+                    (payload.get("country_name") or "").strip(),
+                ]
+                location = ", ".join([piece for piece in pieces if piece]) or (
+                    (payload.get("country_name") or "").strip() or "Unknown location"
+                )
+    except (HTTPError, URLError, TimeoutError, ValueError, OSError):
+        location = "Unknown location"
+
+    _location_cache[ip_str] = {"location": location, "timestamp": now}
+    return location
+
+
+def _client_ip() -> str:
+    forwarded_for = request.headers.get("X-Forwarded-For", "")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    remote_addr = request.remote_addr
+    if remote_addr:
+        return remote_addr
+    return "unknown"
+
+
+def _prune_visitors(now: datetime) -> None:
+    with _presence_lock:
+        stale_keys = [
+            key
+            for key, details in _active_visitors.items()
+            if now - details["last_seen"] > VISITOR_TIMEOUT
+        ]
+        for key in stale_keys:
+            _active_visitors.pop(key, None)
+
+
+def _record_presence(data: dict) -> None:
+    ip_str = _client_ip()
+    now = datetime.utcnow()
+    location = _lookup_location(ip_str)
+    page = (data.get("page") or "").strip()
+    user_agent = (request.headers.get("User-Agent") or "").strip()
+
+    with _presence_lock:
+        entry = _active_visitors.get(ip_str)
+        if entry:
+            entry["last_seen"] = now
+            if page:
+                entry["page"] = page
+            if location and location != "Unknown location":
+                entry["location"] = location
+            if user_agent:
+                entry["user_agent"] = user_agent
+            _active_visitors[ip_str] = entry
+        else:
+            _active_visitors[ip_str] = {
+                "ip": ip_str,
+                "location": location,
+                "page": page,
+                "user_agent": user_agent,
+                "first_seen": now,
+                "last_seen": now,
+            }
 
 
 def _read_text_file(path: str) -> str:
@@ -419,6 +532,35 @@ def delete_availability_slot():
     slots.remove(slot)
     save_availability(slots)
     return jsonify({"message": "Slot removed."})
+
+
+@app.route("/presence", methods=["GET", "POST"])
+def presence():
+    if request.method == "POST":
+        payload = request.get_json(silent=True) or {}
+        try:
+            _record_presence(payload)
+        finally:
+            _prune_visitors(datetime.utcnow())
+        return jsonify({"status": "ok"})
+
+    now = datetime.utcnow()
+    _prune_visitors(now)
+    with _presence_lock:
+        visitors = [
+            {
+                "ip": details["ip"],
+                "location": details.get("location", "Unknown location"),
+                "page": details.get("page", ""),
+                "user_agent": details.get("user_agent", ""),
+                "first_seen": details["first_seen"].isoformat() + "Z",
+                "last_seen": details["last_seen"].isoformat() + "Z",
+            }
+            for details in _active_visitors.values()
+        ]
+
+    visitors.sort(key=lambda entry: entry["last_seen"], reverse=True)
+    return jsonify({"visitors": visitors, "generated_at": now.isoformat() + "Z"})
 # --- Serve admin.html file ---
 @app.route("/admin")
 def admin_page():
