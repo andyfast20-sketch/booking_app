@@ -3,186 +3,395 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Booking Admin</title>
+  <title>Booking Admin Dashboard</title>
   <style>
     :root {
       color-scheme: light dark;
+      --bg: linear-gradient(135deg, #1b2735, #090a0f 60%, #12345b);
+      --panel-bg: rgba(255, 255, 255, 0.12);
+      --panel-border: rgba(255, 255, 255, 0.18);
+      --text-primary: #f8fbff;
+      --text-muted: rgba(248, 251, 255, 0.7);
+      --accent: #30c3a6;
+      --accent-strong: #1da488;
+      --danger: #ff6b6b;
+      --warning: #ffd166;
+      --shadow: 0 18px 40px rgba(8, 16, 44, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #74abe2, #5563de);
-      color: #f6f8ff;
       min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 2.5rem 1rem 4rem;
-      box-sizing: border-box;
+      padding: 3rem 1.5rem 4rem;
     }
 
-    h1 {
-      margin-bottom: 0.5rem;
+    .page-header {
+      text-align: center;
+      max-width: 960px;
     }
 
-    p.lead {
+    .page-header h1 {
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      margin-bottom: 0.25rem;
+      letter-spacing: 0.02em;
+    }
+
+    .page-header p {
       margin-top: 0;
-      opacity: 0.85;
+      color: var(--text-muted);
+      font-size: 1.05rem;
     }
 
-    section {
-      width: min(960px, 100%);
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 18px;
-      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.25);
-      padding: 2rem;
+    main {
       margin-top: 2rem;
-      backdrop-filter: blur(10px);
+      width: min(1080px, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
     }
 
-    section:first-of-type {
-      margin-top: 1.5rem;
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      padding: clamp(1.5rem, 2vw, 2rem);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .panel-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    .panel-header p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .panel-header .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 0.65rem 1.3rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      background: rgba(255, 255, 255, 0.14);
+      color: var(--text-primary);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #031621;
+      font-weight: 600;
+      box-shadow: 0 14px 30px rgba(48, 195, 166, 0.45);
+    }
+
+    button.danger {
+      background: rgba(255, 107, 107, 0.18);
+      color: #ffd3d3;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 26px rgba(3, 9, 24, 0.35);
+    }
+
+    button.danger:hover {
+      box-shadow: 0 12px 26px rgba(255, 107, 107, 0.35);
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+      margin-top: 1.25rem;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 1rem;
-      overflow: hidden;
-      border-radius: 12px;
+      min-width: 640px;
+      color: var(--text-primary);
+    }
+
+    thead {
+      background: rgba(255, 255, 255, 0.12);
     }
 
     th,
     td {
-      padding: 0.85rem 1rem;
+      padding: 0.95rem 1.15rem;
       text-align: left;
-      background: rgba(0, 0, 0, 0.15);
     }
 
     th {
-      background: rgba(255, 255, 255, 0.2);
-      letter-spacing: 0.05em;
+      font-size: 0.75rem;
       text-transform: uppercase;
-      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      color: rgba(248, 251, 255, 0.75);
     }
 
-    tr:nth-child(even) td {
-      background: rgba(0, 0, 0, 0.25);
+    tbody tr:nth-child(even) td {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    tbody tr:nth-child(odd) td {
+      background: rgba(0, 0, 0, 0.28);
+    }
+
+    .cell-main {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .cell-main strong {
+      font-size: 1.05rem;
+    }
+
+    .cell-muted {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(48, 195, 166, 0.18);
+      color: var(--accent);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .badge.new {
+      background: rgba(255, 209, 102, 0.2);
+      color: var(--warning);
+    }
+
+    .badge.done {
+      background: rgba(48, 195, 166, 0.22);
+      color: var(--accent);
     }
 
     .empty-state {
-      padding: 1rem;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 12px;
+      margin-top: 1.5rem;
+      padding: 2rem;
       text-align: center;
+      border-radius: 16px;
+      border: 1px dashed rgba(255, 255, 255, 0.3);
+      color: rgba(248, 251, 255, 0.8);
       font-style: italic;
-      margin-top: 1rem;
     }
 
-    form {
-      display: flex;
-      flex-wrap: wrap;
+    form.grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 1rem;
-      margin-top: 1.5rem;
-      align-items: center;
+      margin-top: 1.25rem;
     }
 
     label {
       display: flex;
       flex-direction: column;
+      gap: 0.45rem;
       font-weight: 600;
+      color: var(--text-muted);
       font-size: 0.9rem;
     }
 
     input,
     select,
-    button {
-      margin-top: 0.4rem;
-      border: none;
-      border-radius: 10px;
-      padding: 0.8rem 1rem;
-      font-size: 1rem;
-      font-family: inherit;
+    textarea {
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 0.75rem 0.9rem;
+      background: rgba(255, 255, 255, 0.15);
+      color: var(--text-primary);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
-    input,
-    select {
-      min-width: 180px;
-      background: rgba(255, 255, 255, 0.9);
-      color: #1c1c1c;
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(48, 195, 166, 0.35);
     }
 
-    button {
-      cursor: pointer;
-      background: #00c9a7;
-      color: #fff;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    textarea {
+      resize: vertical;
+      min-height: 120px;
     }
 
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
-    }
-
-    .actions {
-      display: flex;
+    .availability-list {
+      margin-top: 1.25rem;
+      display: grid;
       gap: 0.75rem;
-      margin-top: 1rem;
+    }
+
+    .availability-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    dialog {
+      border: none;
+      border-radius: 20px;
+      padding: clamp(1.5rem, 3vw, 2.25rem);
+      background: rgba(12, 22, 38, 0.92);
+      color: var(--text-primary);
+      width: min(520px, 90vw);
+      box-shadow: 0 30px 80px rgba(6, 10, 30, 0.55);
+    }
+
+    dialog::backdrop {
+      background: rgba(3, 6, 16, 0.75);
+      backdrop-filter: blur(4px);
+    }
+
+    dialog h3 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+    }
+
+    .dialog-actions {
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
       flex-wrap: wrap;
     }
 
-    .actions button.secondary {
-      background: rgba(0, 0, 0, 0.35);
+    .dialog-actions .right {
+      display: flex;
+      gap: 0.75rem;
     }
 
-    footer {
-      margin-top: auto;
-      padding: 2rem 1rem 1rem;
-      opacity: 0.8;
-      font-size: 0.85rem;
+    .form-feedback {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      background: rgba(255, 107, 107, 0.18);
+      color: #ffd3d3;
+      display: none;
     }
 
-    @media (max-width: 640px) {
-      form {
+    .form-feedback.visible {
+      display: block;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 2rem 1rem 3rem;
+      }
+
+      table {
+        min-width: 540px;
+      }
+
+      .panel-header {
         flex-direction: column;
-        align-items: stretch;
+        align-items: flex-start;
       }
 
-      input,
-      select,
-      button,
-      label {
+      .panel-actions {
         width: 100%;
-      }
-
-      section {
-        padding: 1.5rem;
+        justify-content: flex-start;
       }
     }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Booking Admin</h1>
-    <p class="lead">Review confirmed bookings and set new availability slots.</p>
+  <header class="page-header">
+    <h1>Booking Operations Hub</h1>
+    <p>Review, edit or remove bookings, manage available slots and keep on top of new enquiries.</p>
+  </header>
 
-    <section aria-labelledby="bookings-heading">
-      <header>
-        <h2 id="bookings-heading">Current Bookings</h2>
-      </header>
-      <div id="bookings-container" class="empty-state">Loading bookings…</div>
-      <div class="actions">
-        <button id="refresh-bookings" type="button" class="secondary">Refresh bookings</button>
+  <main>
+    <section class="panel" aria-labelledby="bookings-heading">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="bookings-heading">Confirmed bookings</h2>
+          <p>Live feed of every booking submitted via your website.</p>
+        </div>
+        <div class="panel-actions">
+          <button id="refreshBookings" type="button">Refresh</button>
+        </div>
       </div>
+      <div id="bookingsTable" class="empty-state">Loading bookings…</div>
     </section>
 
-    <section aria-labelledby="availability-heading">
-      <header>
-        <h2 id="availability-heading">Set Available Times</h2>
-      </header>
-      <form id="availability-form" autocomplete="off">
+    <div class="panel" aria-labelledby="availability-heading">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="availability-heading">Availability slots</h2>
+          <p>Add or remove booking slots that show on the website.</p>
+        </div>
+        <div class="panel-actions">
+          <button id="refreshAvailability" type="button">Refresh</button>
+        </div>
+      </div>
+      <form id="availabilityForm" class="grid" autocomplete="off">
         <label>
           Date
           <input type="date" name="date" required />
@@ -191,141 +400,545 @@
           Time
           <select name="time" required>
             <option value="">Select time…</option>
-            <option value="18:00">6:00 PM</option>
-            <option value="20:00">8:00 PM</option>
+            <option value="18:00">18:00</option>
+            <option value="19:00">19:00</option>
+            <option value="20:00">20:00</option>
           </select>
         </label>
-        <button type="submit">Add slot</button>
+        <button type="submit" class="primary">Add slot</button>
       </form>
-      <div id="availability-container" class="empty-state">Loading availability…</div>
-      <div class="actions">
-        <button id="refresh-availability" type="button" class="secondary">Refresh availability</button>
+      <div id="availabilityList" class="empty-state">Loading availability…</div>
+    </div>
+
+    <section class="panel" aria-labelledby="enquiries-heading">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="enquiries-heading">Contact enquiries</h2>
+          <p>Messages sent from the contact form instead of email.</p>
+        </div>
+        <div class="panel-actions">
+          <button id="refreshContacts" type="button">Refresh</button>
+        </div>
       </div>
+      <div id="contactsTable" class="empty-state">Waiting for enquiries…</div>
     </section>
   </main>
 
-  <footer>
-    This page uses the same API as <code>/bookings</code>, wrapped in a static dashboard for convenience.
-  </footer>
+  <dialog id="bookingDialog" aria-labelledby="bookingDialogTitle">
+    <form id="bookingEditForm" method="dialog">
+      <h3 id="bookingDialogTitle">Edit booking</h3>
+      <p class="cell-muted" id="bookingDialogSubtitle">Update customer details and appointment slot.</p>
+      <div class="form-feedback" id="bookingFormFeedback"></div>
+      <div class="grid" style="margin-top: 1.25rem;">
+        <label>
+          Name
+          <input type="text" id="bookingName" name="name" required />
+        </label>
+        <label>
+          Email
+          <input type="email" id="bookingEmail" name="email" required />
+        </label>
+        <label>
+          Phone
+          <input type="tel" id="bookingPhone" name="phone" required />
+        </label>
+        <label>
+          Location
+          <select id="bookingLocation" name="location">
+            <option value="">Select area…</option>
+            <option value="Audenshaw">Audenshaw</option>
+            <option value="Denton">Denton</option>
+            <option value="Dukinfield">Dukinfield</option>
+          </select>
+        </label>
+        <label style="grid-column: 1 / -1;">
+          Appointment slot
+          <input type="text" id="bookingTime" name="time" required />
+        </label>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" id="closeBookingDialog">Cancel</button>
+        <div class="right">
+          <button type="submit" class="primary">Save changes</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="contactDialog" aria-labelledby="contactDialogTitle">
+    <div>
+      <h3 id="contactDialogTitle">Enquiry details</h3>
+      <p class="cell-muted" id="contactDialogMeta"></p>
+      <p id="contactDialogMessage" style="white-space: pre-line; margin-top: 1.2rem;"></p>
+      <div class="form-feedback" id="contactDialogFeedback"></div>
+      <div class="dialog-actions">
+        <button type="button" id="closeContactDialog">Close</button>
+        <div class="right">
+          <button type="button" id="toggleContactStatus" class="primary"></button>
+          <button type="button" id="deleteContact" class="danger">Delete</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
 
   <script>
-    const bookingsContainer = document.getElementById("bookings-container");
-    const availabilityContainer = document.getElementById("availability-container");
-    const form = document.getElementById("availability-form");
-    const refreshBookingsBtn = document.getElementById("refresh-bookings");
-    const refreshAvailabilityBtn = document.getElementById("refresh-availability");
+    const bookingsTable = document.getElementById('bookingsTable');
+    const availabilityList = document.getElementById('availabilityList');
+    const contactsTable = document.getElementById('contactsTable');
 
-    function createTable(headers, rows) {
-      const table = document.createElement("table");
-      const thead = document.createElement("thead");
-      const headerRow = document.createElement("tr");
+    const availabilityForm = document.getElementById('availabilityForm');
+    const refreshAvailabilityBtn = document.getElementById('refreshAvailability');
+    const refreshBookingsBtn = document.getElementById('refreshBookings');
+    const refreshContactsBtn = document.getElementById('refreshContacts');
 
-      headers.forEach((header) => {
-        const th = document.createElement("th");
-        th.textContent = header;
-        headerRow.appendChild(th);
-      });
-      thead.appendChild(headerRow);
-      table.appendChild(thead);
+    const bookingDialog = document.getElementById('bookingDialog');
+    const bookingEditForm = document.getElementById('bookingEditForm');
+    const bookingFormFeedback = document.getElementById('bookingFormFeedback');
+    const bookingNameInput = document.getElementById('bookingName');
+    const bookingEmailInput = document.getElementById('bookingEmail');
+    const bookingPhoneInput = document.getElementById('bookingPhone');
+    const bookingLocationInput = document.getElementById('bookingLocation');
+    const bookingTimeInput = document.getElementById('bookingTime');
+    const closeBookingDialogBtn = document.getElementById('closeBookingDialog');
 
-      const tbody = document.createElement("tbody");
-      rows.forEach((cells) => {
-        const tr = document.createElement("tr");
-        cells.forEach((cell) => {
-          const td = document.createElement("td");
-          td.textContent = cell;
-          tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
-      });
+    const contactDialog = document.getElementById('contactDialog');
+    const contactDialogMeta = document.getElementById('contactDialogMeta');
+    const contactDialogMessage = document.getElementById('contactDialogMessage');
+    const contactDialogFeedback = document.getElementById('contactDialogFeedback');
+    const toggleContactStatusBtn = document.getElementById('toggleContactStatus');
+    const deleteContactBtn = document.getElementById('deleteContact');
+    const closeContactDialogBtn = document.getElementById('closeContactDialog');
 
-      table.appendChild(tbody);
-      return table;
+    let bookingsCache = [];
+    let contactsCache = [];
+
+    const supportsDialog = typeof HTMLDialogElement === 'function';
+
+    function showDialog(dialog) {
+      if (supportsDialog && typeof dialog.showModal === 'function') {
+        dialog.showModal();
+      } else {
+        dialog.setAttribute('open', '');
+      }
+    }
+
+    function closeDialog(dialog) {
+      if (supportsDialog && typeof dialog.close === 'function') {
+        dialog.close();
+      } else {
+        dialog.removeAttribute('open');
+      }
+    }
+
+    function escapeHtml(str) {
+      if (typeof str !== 'string') return '';
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatDate(value) {
+      if (!value) return '—';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return value;
+      }
+      return date.toLocaleString();
     }
 
     async function loadBookings() {
-      bookingsContainer.textContent = "Loading bookings…";
+      bookingsTable.className = 'empty-state';
+      bookingsTable.textContent = 'Loading bookings…';
       try {
-        const response = await fetch("/bookings_json");
-        if (!response.ok) throw new Error("Failed to fetch bookings");
-        const data = await response.json();
-        const bookings = data.bookings || [];
-
-        if (bookings.length === 0) {
-          bookingsContainer.className = "empty-state";
-          bookingsContainer.textContent = "No bookings yet.";
-          return;
-        }
-
-        bookingsContainer.className = "table-wrapper";
-        bookingsContainer.innerHTML = "";
-        bookingsContainer.appendChild(
-          createTable(
-            ["Name", "Time"],
-            bookings.map(({ name, time }) => [name || "—", time || "—"])
-          )
-        );
+        const res = await fetch('/api/bookings');
+        if (!res.ok) throw new Error('Unable to fetch bookings');
+        const data = await res.json();
+        bookingsCache = Array.isArray(data.bookings) ? data.bookings : [];
+        renderBookings();
       } catch (error) {
-        bookingsContainer.className = "empty-state";
-        bookingsContainer.textContent = error.message;
+        bookingsTable.textContent = error.message || 'Failed to load bookings';
       }
     }
+
+    function renderBookings() {
+      if (!bookingsCache.length) {
+        bookingsTable.className = 'empty-state';
+        bookingsTable.textContent = 'No bookings recorded yet.';
+        return;
+      }
+
+      bookingsTable.className = 'table-scroll';
+      bookingsTable.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Contact</th>
+              <th>Appointment</th>
+              <th style="width: 180px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${bookingsCache
+              .map((booking) => {
+                const name = escapeHtml(booking.name || '—');
+                const location = escapeHtml(booking.location || '');
+                const phone = escapeHtml(booking.phone || '—');
+                const email = escapeHtml(booking.email || '—');
+                const time = escapeHtml(booking.time || '—');
+                const created = formatDate(booking.created_at);
+                const id = escapeHtml(booking.id || '');
+                return `
+                  <tr>
+                    <td>
+                      <div class="cell-main">
+                        <strong>${name}</strong>
+                        <span class="cell-muted">${location || 'No location set'}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="cell-main">
+                        <span>${phone}</span>
+                        <span class="cell-muted">${email}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="cell-main">
+                        <span class="chip">${time}</span>
+                        <span class="cell-muted">Added ${created}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="panel-actions">
+                        <button type="button" data-action="edit" data-id="${id}" class="primary">Edit</button>
+                        <button type="button" data-action="delete" data-id="${id}" class="danger">Delete</button>
+                      </div>
+                    </td>
+                  </tr>`;
+              })
+              .join('')}
+          </tbody>
+        </table>
+      `;
+
+      bookingsTable.querySelectorAll('[data-action="edit"]').forEach((button) => {
+        button.addEventListener('click', () => openBookingDialog(button.dataset.id));
+      });
+      bookingsTable.querySelectorAll('[data-action="delete"]').forEach((button) => {
+        button.addEventListener('click', () => deleteBooking(button.dataset.id));
+      });
+    }
+
+    async function deleteBooking(id) {
+      if (!id) return;
+      const confirmed = window.confirm('Delete this booking?');
+      if (!confirmed) return;
+      try {
+        const res = await fetch(`/api/bookings/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.message || 'Unable to delete booking');
+        }
+        await loadBookings();
+        await loadAvailability();
+      } catch (error) {
+        alert(error.message || 'Unable to delete booking');
+      }
+    }
+
+    function openBookingDialog(id) {
+      const booking = bookingsCache.find((item) => item.id === id);
+      if (!booking) return;
+
+      bookingEditForm.dataset.id = id;
+      bookingNameInput.value = booking.name || '';
+      bookingEmailInput.value = booking.email || '';
+      bookingPhoneInput.value = booking.phone || '';
+      bookingLocationInput.value = booking.location || '';
+      bookingTimeInput.value = booking.time || '';
+      bookingFormFeedback.classList.remove('visible');
+      bookingFormFeedback.textContent = '';
+      showDialog(bookingDialog);
+      setTimeout(() => bookingNameInput.focus(), 50);
+    }
+
+    bookingEditForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const id = bookingEditForm.dataset.id;
+      if (!id) return;
+      bookingFormFeedback.classList.remove('visible');
+      bookingFormFeedback.textContent = '';
+
+      const payload = {
+        name: bookingNameInput.value.trim(),
+        email: bookingEmailInput.value.trim(),
+        phone: bookingPhoneInput.value.trim(),
+        location: bookingLocationInput.value,
+        time: bookingTimeInput.value.trim(),
+      };
+
+      try {
+        const res = await fetch(`/api/bookings/${encodeURIComponent(id)}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || 'Unable to update booking');
+        }
+        closeDialog(bookingDialog);
+        await loadBookings();
+        await loadAvailability();
+      } catch (error) {
+        bookingFormFeedback.textContent = error.message || 'Unable to update booking.';
+        bookingFormFeedback.classList.add('visible');
+      }
+    });
+
+    closeBookingDialogBtn.addEventListener('click', () => closeDialog(bookingDialog));
 
     async function loadAvailability() {
-      availabilityContainer.textContent = "Loading availability…";
+      availabilityList.className = 'empty-state';
+      availabilityList.textContent = 'Loading availability…';
       try {
-        const response = await fetch("/availability");
-        if (!response.ok) throw new Error("Failed to fetch availability");
-        const slots = await response.json();
-
-        if (!Array.isArray(slots) || slots.length === 0) {
-          availabilityContainer.className = "empty-state";
-          availabilityContainer.textContent = "No availability set yet.";
-          return;
-        }
-
-        availabilityContainer.className = "table-wrapper";
-        availabilityContainer.innerHTML = "";
-        availabilityContainer.appendChild(
-          createTable(["Available Slot"], slots.map((slot) => [slot]))
-        );
+        const res = await fetch('/availability');
+        if (!res.ok) throw new Error('Unable to fetch availability');
+        const slots = await res.json();
+        renderAvailability(Array.isArray(slots) ? slots : []);
       } catch (error) {
-        availabilityContainer.className = "empty-state";
-        availabilityContainer.textContent = error.message;
+        availabilityList.textContent = error.message || 'Failed to load availability';
       }
     }
 
-    async function handleSubmit(event) {
-      event.preventDefault();
-      const formData = new FormData(form);
-      const body = new URLSearchParams(formData);
+    function renderAvailability(slots) {
+      if (!slots.length) {
+        availabilityList.className = 'empty-state';
+        availabilityList.textContent = 'No free slots available.';
+        return;
+      }
 
+      availabilityList.className = 'availability-list';
+      availabilityList.innerHTML = slots
+        .map((slot) => `
+          <div class="availability-item">
+            <span>${escapeHtml(slot)}</span>
+            <button type="button" class="danger" data-slot="${escapeHtml(slot)}">Remove</button>
+          </div>
+        `)
+        .join('');
+
+      availabilityList.querySelectorAll('[data-slot]').forEach((button) => {
+        button.addEventListener('click', () => removeAvailability(button.dataset.slot));
+      });
+    }
+
+    async function removeAvailability(slot) {
+      if (!slot) return;
+      const confirmed = window.confirm(`Remove slot "${slot}"?`);
+      if (!confirmed) return;
       try {
-        const response = await fetch("/bookings", {
-          method: "POST",
+        const res = await fetch('/availability', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slot }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || 'Unable to remove slot');
+        }
+        await loadAvailability();
+      } catch (error) {
+        alert(error.message || 'Unable to remove slot');
+      }
+    }
+
+    availabilityForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(availabilityForm);
+      const body = new URLSearchParams(formData);
+      try {
+        const res = await fetch('/bookings', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            'Content-Type': 'application/x-www-form-urlencoded',
           },
           body: body.toString(),
         });
-
-        if (!response.ok) {
-          throw new Error("Unable to add slot. Please try again.");
+        if (!res.ok) {
+          throw new Error('Unable to add slot. Please try again.');
         }
-
-        form.reset();
+        availabilityForm.reset();
         await loadAvailability();
       } catch (error) {
-        alert(error.message);
+        alert(error.message || 'Unable to add slot');
+      }
+    });
+
+    async function loadContacts() {
+      contactsTable.className = 'empty-state';
+      contactsTable.textContent = 'Loading enquiries…';
+      try {
+        const res = await fetch('/api/contacts');
+        if (!res.ok) throw new Error('Unable to fetch enquiries');
+        const data = await res.json();
+        contactsCache = Array.isArray(data.contacts) ? data.contacts : [];
+        renderContacts();
+      } catch (error) {
+        contactsTable.textContent = error.message || 'Failed to load enquiries';
       }
     }
 
-    refreshBookingsBtn.addEventListener("click", loadBookings);
-    refreshAvailabilityBtn.addEventListener("click", loadAvailability);
-    form.addEventListener("submit", handleSubmit);
+    function renderContacts() {
+      if (!contactsCache.length) {
+        contactsTable.className = 'empty-state';
+        contactsTable.textContent = 'No enquiries yet.';
+        return;
+      }
+
+      contactsTable.className = 'table-scroll';
+      contactsTable.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>From</th>
+              <th>Contact</th>
+              <th>Received</th>
+              <th style="width: 180px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${contactsCache
+              .map((contact) => {
+                const name = escapeHtml(contact.name || '—');
+                const phone = escapeHtml(contact.phone || '—');
+                const email = escapeHtml(contact.email || '—');
+                const status = escapeHtml(contact.status || 'new');
+                const created = formatDate(contact.created_at);
+                const id = escapeHtml(contact.id || '');
+                return `
+                  <tr>
+                    <td>
+                      <div class="cell-main">
+                        <strong>${name}</strong>
+                        <span class="badge ${status === 'new' ? 'new' : 'done'}">${status === 'new' ? 'New' : 'Reviewed'}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="cell-main">
+                        <span>${phone}</span>
+                        <span class="cell-muted">${email}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="cell-main">
+                        <span>${created}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="panel-actions">
+                        <button type="button" data-action="view" data-id="${id}" class="primary">View</button>
+                        <button type="button" data-action="remove" data-id="${id}" class="danger">Delete</button>
+                      </div>
+                    </td>
+                  </tr>`;
+              })
+              .join('')}
+          </tbody>
+        </table>
+      `;
+
+      contactsTable.querySelectorAll('[data-action="view"]').forEach((button) => {
+        button.addEventListener('click', () => openContactDialog(button.dataset.id));
+      });
+      contactsTable.querySelectorAll('[data-action="remove"]').forEach((button) => {
+        button.addEventListener('click', () => deleteContact(button.dataset.id));
+      });
+    }
+
+    function openContactDialog(id) {
+      const contact = contactsCache.find((item) => item.id === id);
+      if (!contact) return;
+      contactDialog.dataset.id = id;
+      contactDialogMeta.textContent = `${contact.email || '—'} · ${contact.phone || '—'} · ${formatDate(contact.created_at)}`;
+      contactDialogMessage.textContent = contact.enquiry || '';
+      contactDialogFeedback.classList.remove('visible');
+      contactDialogFeedback.textContent = '';
+      toggleContactStatusBtn.textContent = contact.status === 'new' ? 'Mark as reviewed' : 'Mark as new';
+      showDialog(contactDialog);
+    }
+
+    async function updateContactStatus(id, status) {
+      try {
+        const res = await fetch(`/api/contacts/${encodeURIComponent(id)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || 'Unable to update enquiry');
+        }
+        await loadContacts();
+        const updated = contactsCache.find((item) => item.id === id);
+        if (updated) {
+          toggleContactStatusBtn.textContent = updated.status === 'new' ? 'Mark as reviewed' : 'Mark as new';
+        }
+      } catch (error) {
+        contactDialogFeedback.textContent = error.message || 'Unable to update enquiry.';
+        contactDialogFeedback.classList.add('visible');
+      }
+    }
+
+    async function deleteContact(id) {
+      if (!id) return;
+      const confirmed = window.confirm('Delete this enquiry?');
+      if (!confirmed) return;
+      try {
+        const res = await fetch(`/api/contacts/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || 'Unable to delete enquiry');
+        }
+        await loadContacts();
+      } catch (error) {
+        alert(error.message || 'Unable to delete enquiry');
+      }
+    }
+
+    toggleContactStatusBtn.addEventListener('click', () => {
+      const id = contactDialog.dataset.id;
+      if (!id) return;
+      const contact = contactsCache.find((item) => item.id === id);
+      if (!contact) return;
+      const nextStatus = contact.status === 'new' ? 'reviewed' : 'new';
+      updateContactStatus(id, nextStatus);
+    });
+
+    deleteContactBtn.addEventListener('click', () => {
+      const id = contactDialog.dataset.id;
+      if (!id) return;
+      deleteContact(id).then(() => closeDialog(contactDialog));
+    });
+
+    closeContactDialogBtn.addEventListener('click', () => closeDialog(contactDialog));
+
+    refreshBookingsBtn.addEventListener('click', loadBookings);
+    refreshAvailabilityBtn.addEventListener('click', loadAvailability);
+    refreshContactsBtn.addEventListener('click', loadContacts);
 
     loadBookings();
     loadAvailability();
+    loadContacts();
   </script>
 </body>
 </html>

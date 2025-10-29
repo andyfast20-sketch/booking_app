@@ -1,3 +1,6 @@
+import json
+from uuid import uuid4
+
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
 import os
@@ -14,6 +17,108 @@ CORS(app, resources={r"/*": {"origins": [
 
 BOOKINGS_FILE = "bookings.txt"
 AVAIL_FILE = "availability.txt"
+CONTACTS_FILE = "contacts.json"
+
+
+def _read_text_file(path: str) -> str:
+    if not os.path.exists(path):
+        return ""
+    with open(path, "r", encoding="utf-8") as file:
+        return file.read()
+
+
+def load_bookings():
+    raw = _read_text_file(BOOKINGS_FILE).strip()
+    if not raw:
+        return []
+    try:
+        data = json.loads(raw)
+        if isinstance(data, list):
+            return data
+    except json.JSONDecodeError:
+        pass
+
+    bookings = []
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        parts = [segment.strip() for segment in line.split(",") if segment.strip()]
+        entry = {}
+        for segment in parts:
+            if ":" in segment:
+                key, value = segment.split(":", 1)
+                entry[key.strip().lower()] = value.strip()
+        if entry:
+            entry.setdefault("name", "")
+            entry.setdefault("time", "")
+            entry.setdefault("location", "")
+            entry.setdefault("email", "")
+            entry.setdefault("phone", "")
+            entry.setdefault("id", str(uuid4()))
+            entry.setdefault("created_at", datetime.utcnow().isoformat())
+            bookings.append(entry)
+    if bookings:
+        save_bookings(bookings)
+    return bookings
+
+
+def save_bookings(bookings):
+    with open(BOOKINGS_FILE, "w", encoding="utf-8") as file:
+        json.dump(bookings, file, indent=2)
+
+
+def load_contacts():
+    raw = _read_text_file(CONTACTS_FILE).strip()
+    if not raw:
+        return []
+    try:
+        data = json.loads(raw)
+        if isinstance(data, list):
+            return data
+    except json.JSONDecodeError:
+        pass
+    return []
+
+
+def save_contacts(contacts):
+    with open(CONTACTS_FILE, "w", encoding="utf-8") as file:
+        json.dump(contacts, file, indent=2)
+
+
+def load_availability():
+    if not os.path.exists(AVAIL_FILE):
+        return []
+    with open(AVAIL_FILE, "r", encoding="utf-8") as file:
+        return [line.strip() for line in file if line.strip()]
+
+
+def save_availability(slots):
+    with open(AVAIL_FILE, "w", encoding="utf-8") as file:
+        file.write("\n".join(slots) + ("\n" if slots else ""))
+
+
+def remove_availability_slot(slot):
+    slots = load_availability()
+    if slot in slots:
+        slots.remove(slot)
+        save_availability(slots)
+
+
+def add_availability_slot(slot):
+    slots = load_availability()
+    if slot not in slots:
+        slots.append(slot)
+        save_availability(slots)
+
+
+def reinstate_availability(slot):
+    if not slot:
+        return
+    slots = load_availability()
+    if slot not in slots:
+        slots.append(slot)
+        save_availability(slots)
 
 
 @app.route("/")
@@ -24,7 +129,7 @@ def home():
 # --- Handle booking submissions ---
 @app.route("/book", methods=["POST"])
 def book():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     allowed_locations = {"Audenshaw", "Denton", "Dukinfield"}
 
     name = data.get("name", "").strip()
@@ -36,29 +141,25 @@ def book():
     if not name or not time or not email or not phone:
         return jsonify({"message": "❌ Please complete all booking details."}), 400
 
-    if location not in allowed_locations:
+    if location and location not in allowed_locations:
         return jsonify({"message": "❌ Please choose a valid service location."}), 400
 
-    # Save booking
-    with open(BOOKINGS_FILE, "a") as f:
-        f.write(
-            "Name: {name}, Time: {time}, Location: {location}, Email: {email}, Phone: {phone}\n".format(
-                name=name,
-                time=time,
-                location=location,
-                email=email,
-                phone=phone,
-            )
-        )
+    bookings = load_bookings()
+    booking_entry = {
+        "id": str(uuid4()),
+        "name": name,
+        "time": time,
+        "location": location,
+        "email": email,
+        "phone": phone,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    bookings.append(booking_entry)
+    save_bookings(bookings)
 
     # Remove the booked slot from available times
-    if os.path.exists(AVAIL_FILE):
-        with open(AVAIL_FILE) as f:
-            slots = [line.strip() for line in f if line.strip()]
-        if time in slots:
-            slots.remove(time)
-        with open(AVAIL_FILE, "w") as f:
-            f.write("\n".join(slots) + ("\n" if slots else ""))
+    if time:
+        remove_availability_slot(time)
 
     return jsonify({"message": f"✅ Booking confirmed for {name} at {time}!"})
 
@@ -66,11 +167,7 @@ def book():
 # --- Get available times for dropdown ---
 @app.route("/availability")
 def get_availability():
-    if not os.path.exists(AVAIL_FILE):
-        return jsonify([])
-    with open(AVAIL_FILE) as f:
-        times = [line.strip() for line in f if line.strip()]
-    return jsonify(times)
+    return jsonify(load_availability())
 
 
 # --- Admin page: manage bookings + set available times ---
@@ -84,33 +181,12 @@ def view_bookings():
             try:
                 datetime.strptime(date, "%Y-%m-%d")
                 slot = f"{date} {time}"
-                with open(AVAIL_FILE, "a") as f:
-                    f.write(slot + "\n")
+                add_availability_slot(slot)
             except ValueError:
                 pass
 
-    # Read bookings
-    bookings = []
-    if os.path.exists(BOOKINGS_FILE):
-        with open(BOOKINGS_FILE) as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                parts = [segment.strip() for segment in line.split(",") if segment.strip()]
-                entry = {}
-                for segment in parts:
-                    if ":" in segment:
-                        key, value = segment.split(":", 1)
-                        entry[key.strip().lower()] = value.strip()
-                if entry:
-                    bookings.append(entry)
-
-    # Read available times
-    avail = []
-    if os.path.exists(AVAIL_FILE):
-        with open(AVAIL_FILE) as f:
-            avail = [line.strip() for line in f if line.strip()]
+    bookings = load_bookings()
+    avail = load_availability()
 
     # --- Pretty Admin Page ---
     html = """
@@ -200,32 +276,149 @@ def view_bookings():
 # --- NEW: JSON endpoint for bookings dashboard ---
 @app.route("/bookings_json", methods=["GET"])
 def get_bookings_json():
-    bookings = []
-    try:
-        with open(BOOKINGS_FILE, "r") as file:
-            for line in file:
-                line = line.strip()
-                if not line:
-                    continue
-                parts = [segment.strip() for segment in line.split(",") if segment.strip()]
-                entry = {}
-                for segment in parts:
-                    if ":" in segment:
-                        key, value = segment.split(":", 1)
-                        entry[key.strip().lower()] = value.strip()
-                if entry:
-                    bookings.append(
-                        {
-                            "name": entry.get("name", ""),
-                            "time": entry.get("time", ""),
-                            "location": entry.get("location", ""),
-                            "email": entry.get("email", ""),
-                            "phone": entry.get("phone", ""),
-                        }
-                    )
-    except FileNotFoundError:
-        return jsonify({"bookings": []})
-    return jsonify({"bookings": bookings})
+    bookings = load_bookings()
+    simplified = [
+        {
+            "id": booking.get("id", ""),
+            "name": booking.get("name", ""),
+            "time": booking.get("time", ""),
+            "location": booking.get("location", ""),
+            "email": booking.get("email", ""),
+            "phone": booking.get("phone", ""),
+            "created_at": booking.get("created_at", ""),
+        }
+        for booking in bookings
+    ]
+    return jsonify({"bookings": simplified})
+
+
+@app.route("/api/bookings", methods=["GET"])
+def api_get_bookings():
+    return jsonify({"bookings": load_bookings()})
+
+
+@app.route("/api/bookings/<booking_id>", methods=["PUT", "DELETE"])
+def api_update_booking(booking_id):
+    bookings = load_bookings()
+    for index, booking in enumerate(bookings):
+        if booking.get("id") != booking_id:
+            continue
+
+        if request.method == "DELETE":
+            removed = bookings.pop(index)
+            save_bookings(bookings)
+            reinstate_availability(removed.get("time", ""))
+            return jsonify({"message": "Booking deleted."})
+
+        data = request.get_json(silent=True) or {}
+
+        name = data.get("name", booking.get("name", ""))
+        time = data.get("time", booking.get("time", ""))
+        location = data.get("location", booking.get("location", ""))
+        email = data.get("email", booking.get("email", ""))
+        phone = data.get("phone", booking.get("phone", ""))
+
+        cleaned = {
+            "name": name.strip() if isinstance(name, str) else booking.get("name", ""),
+            "time": time.strip() if isinstance(time, str) else booking.get("time", ""),
+            "location": location.strip() if isinstance(location, str) else booking.get("location", ""),
+            "email": email.strip() if isinstance(email, str) else booking.get("email", ""),
+            "phone": phone.strip() if isinstance(phone, str) else booking.get("phone", ""),
+        }
+
+        allowed_locations = {"Audenshaw", "Denton", "Dukinfield"}
+        if cleaned["location"] and cleaned["location"] not in allowed_locations:
+            return jsonify({"message": "❌ Please choose a valid service location."}), 400
+
+        previous_time = booking.get("time", "")
+
+        booking.update(cleaned)
+        booking["updated_at"] = datetime.utcnow().isoformat()
+        bookings[index] = booking
+        save_bookings(bookings)
+        if previous_time and previous_time != booking.get("time", ""):
+            reinstate_availability(previous_time)
+        if booking.get("time"):
+            remove_availability_slot(booking["time"])
+        return jsonify({"message": "Booking updated.", "booking": booking})
+
+    return jsonify({"message": "Booking not found."}), 404
+
+
+@app.route("/contact", methods=["POST"])
+def submit_contact():
+    data = request.get_json(silent=True) or {}
+
+    name = data.get("name", "").strip()
+    phone = data.get("phone", "").strip()
+    email = data.get("email", "").strip()
+    enquiry = data.get("enquiry", "").strip()
+
+    if not name or not phone or not email or not enquiry:
+        return (
+            jsonify({"message": "❌ Please provide your name, phone, email and enquiry."}),
+            400,
+        )
+
+    contacts = load_contacts()
+    entry = {
+        "id": str(uuid4()),
+        "name": name,
+        "phone": phone,
+        "email": email,
+        "enquiry": enquiry,
+        "created_at": datetime.utcnow().isoformat(),
+        "status": "new",
+    }
+    contacts.append(entry)
+    save_contacts(contacts)
+
+    return jsonify({"message": "✅ Thanks! We'll be in touch shortly."})
+
+
+@app.route("/api/contacts", methods=["GET"])
+def api_get_contacts():
+    return jsonify({"contacts": load_contacts()})
+
+
+@app.route("/api/contacts/<contact_id>", methods=["PATCH", "DELETE"])
+def api_modify_contact(contact_id):
+    contacts = load_contacts()
+    for index, contact in enumerate(contacts):
+        if contact.get("id") != contact_id:
+            continue
+
+        if request.method == "DELETE":
+            contacts.pop(index)
+            save_contacts(contacts)
+            return jsonify({"message": "Enquiry removed."})
+
+        data = request.get_json(silent=True) or {}
+        status = data.get("status")
+        if status:
+            contact["status"] = status
+            contact["updated_at"] = datetime.utcnow().isoformat()
+            contacts[index] = contact
+            save_contacts(contacts)
+        return jsonify({"message": "Enquiry updated.", "contact": contact})
+
+    return jsonify({"message": "Enquiry not found."}), 404
+
+
+@app.route("/availability", methods=["DELETE"])
+def delete_availability_slot():
+    data = request.get_json(silent=True) or {}
+    slot = (data.get("slot") or "").strip()
+    if not slot:
+        return jsonify({"message": "Slot is required."}), 400
+
+    slots = load_availability()
+    if slot not in slots:
+        return jsonify({"message": "Slot not found."}), 404
+
+    slots.remove(slot)
+    save_availability(slots)
+    return jsonify({"message": "Slot removed."})
 # --- Serve admin.html file ---
 @app.route("/admin")
 def admin_page():
