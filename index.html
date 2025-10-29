@@ -630,7 +630,6 @@
             position: relative;
             background: radial-gradient(circle at top left, rgba(37, 68, 35, 0.35), rgba(37, 68, 35, 0.15) 45%, rgba(0, 0, 0, 0) 75%);
             isolation: isolate;
-            aspect-ratio: 16 / 9;
         }
 
         .about-video::before {
@@ -643,13 +642,12 @@
             z-index: 1;
         }
 
-        .about-video iframe {
-            position: absolute;
-            inset: 0;
+        .about-video .video-frame {
             width: 100%;
             height: 100%;
-            border: 0;
             border-radius: inherit;
+            position: relative;
+            z-index: 2;
         }
 
         /* FAQ Section */
@@ -1869,7 +1867,7 @@
                     </svg>
                 </span>
                 <span class="logo-wordmark">
-                    <strong>Tailored Lawn Care</strong>
+                    <strong>Garden Maintenance</strong>
                     <span class="logo-title">Pay As You <span class="highlight">Mow</span></span>
                 </span>
             </a>
@@ -1882,7 +1880,6 @@
                     <li><a href="#services">Services</a></li>
                     <li><a href="#about">About</a></li>
                     <li><a href="#faq">FAQ</a></li>
-                    <li><a href="#voices">Voices</a></li>
                     <li><a href="#testimonials">Testimonials</a></li>
                     <li><a href="#booking">Book</a></li>
                 </ul>
@@ -1972,7 +1969,9 @@
                     <a href="#booking" class="btn btn-quote">Arrange a Free Quote</a>
                 </div>
                 <div class="about-video">
-                    <iframe src="https://www.youtube.com/embed/oJrPPeow__s?si=4qciSvhRowzZ9yMh" title="Pay As You Mow introduction video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    <div class="video-frame" data-video-id="oJrPPeow__s">
+                        <iframe src="https://www.youtube.com/embed/oJrPPeow__s?si=4qciSvhRowzZ9yMh&amp;rel=0&amp;modestbranding=1&amp;enablejsapi=1" title="Pay As You Mow introduction video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2113,7 +2112,7 @@
                         </div>
                         <div class="assurance-item">
                             <strong>Service area</strong>
-                            <span>Greater London &amp; Surrey</span>
+                            <span>Tameside</span>
                         </div>
                     </div>
                 </div>
@@ -2136,8 +2135,8 @@
             <div class="booking-support">
                 <div class="support-card">
                     <h3>Prefer to speak first?</h3>
-                    <p>Call our garden specialist team and we'll lock in a quote visit for you.</p>
-                    <a class="btn" href="tel:+441234567890"><i class="fas fa-phone" aria-hidden="true"></i>&nbsp; Call 01234 567 890</a>
+                    <p>Call Andy and he will arrange a free quote for you.</p>
+                    <a class="btn" href="tel:+447595289669"><i class="fas fa-phone" aria-hidden="true"></i>&nbsp; Call 07595 289 669</a>
                 </div>
                 <div class="support-card">
                     <h3>Need a different time?</h3>
@@ -2358,8 +2357,8 @@
             });
         });
 
-        // YouTube community video thumbnails
-        const communityVideoFrames = Array.from(document.querySelectorAll('.video-showcase .video-frame'));
+        // YouTube video thumbnails
+        const youtubeVideoFrames = Array.from(document.querySelectorAll('.video-frame[data-video-id]'));
         const youtubePlayers = [];
         const youtubeOverlays = [];
 
@@ -2407,23 +2406,26 @@
             youtubeOverlays[index] = overlay;
         }
 
-        function handleCommunityVideoState(event, overlay) {
+        function handleYouTubeVideoState(event, overlay) {
             if (!overlay || typeof YT === 'undefined' || !YT.PlayerState) return;
 
             if (event.data === YT.PlayerState.ENDED) {
+                if (event.target && typeof event.target.stopVideo === 'function') {
+                    event.target.stopVideo();
+                }
                 overlay.classList.add('visible');
             } else if (event.data === YT.PlayerState.PLAYING) {
                 overlay.classList.remove('visible');
             }
         }
 
-        if (communityVideoFrames.length > 0) {
-            communityVideoFrames.forEach((frame, index) => {
+        if (youtubeVideoFrames.length > 0) {
+            youtubeVideoFrames.forEach((frame, index) => {
                 addThumbnailOverlay(frame, index);
             });
 
             window.onYouTubeIframeAPIReady = function() {
-                communityVideoFrames.forEach((frame, index) => {
+                youtubeVideoFrames.forEach((frame, index) => {
                     const iframe = frame.querySelector('iframe');
                     if (!iframe) return;
 
@@ -2431,7 +2433,7 @@
 
                     youtubePlayers[index] = new YT.Player(iframe.id, {
                         events: {
-                            onStateChange: event => handleCommunityVideoState(event, overlay)
+                            onStateChange: event => handleYouTubeVideoState(event, overlay)
                         }
                     });
                 });
@@ -2472,9 +2474,10 @@
 
                 if (slots.length === 0) {
                     const opt = document.createElement("option");
-                    opt.text = "No available times";
+                    opt.text = "Sorry no slots available at the moment";
                     opt.disabled = true;
                     opt.selected = true;
+                    opt.value = "";
                     timeSelect.add(opt);
                 } else {
                     const defaultOpt = document.createElement("option");
