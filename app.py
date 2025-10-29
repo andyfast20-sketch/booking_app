@@ -534,12 +534,23 @@ def delete_availability_slot():
     return jsonify({"message": "Slot removed."})
 
 
+def _remove_visitor(ip_str: str) -> None:
+    if not ip_str:
+        return
+    with _presence_lock:
+        _active_visitors.pop(ip_str, None)
+
+
 @app.route("/presence", methods=["GET", "POST"])
 def presence():
     if request.method == "POST":
         payload = request.get_json(silent=True) or {}
+        status = (payload.get("status") or "online").strip().lower()
         try:
-            _record_presence(payload)
+            if status == "offline":
+                _remove_visitor(_client_ip())
+            else:
+                _record_presence(payload)
         finally:
             _prune_visitors(datetime.utcnow())
         return jsonify({"status": "ok"})
