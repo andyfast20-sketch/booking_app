@@ -23,6 +23,18 @@
       box-sizing: border-box;
     }
 
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
@@ -219,6 +231,296 @@
       border: 1px solid rgba(48, 195, 166, 0.35);
     }
 
+    .chat-dashboard {
+      display: grid;
+      grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+      gap: 1.75rem;
+      margin-top: 1.5rem;
+    }
+
+    .chat-session-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      min-height: 420px;
+    }
+
+    .chat-session-list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .chat-session-scroll {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding-right: 6px;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+
+    .chat-sessions-empty {
+      border: 1px dashed rgba(255, 255, 255, 0.3);
+      border-radius: 16px;
+      padding: 1.4rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 220px;
+    }
+
+    .chat-session {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+      color: var(--text-primary);
+      padding: 0.9rem 1rem;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .chat-session:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(3, 9, 24, 0.35);
+      border-color: rgba(48, 195, 166, 0.45);
+    }
+
+    .chat-session.active {
+      border-color: rgba(48, 195, 166, 0.7);
+      background: rgba(48, 195, 166, 0.18);
+      box-shadow: 0 18px 36px rgba(48, 195, 166, 0.3);
+    }
+
+    .chat-session-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .chat-session-title span {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .chat-session-preview {
+      margin-top: 0.45rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .chat-session-meta {
+      margin-top: 0.6rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      color: rgba(248, 251, 255, 0.65);
+    }
+
+    .badge-unread {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: rgba(255, 209, 102, 0.25);
+      color: var(--warning);
+    }
+
+    .chat-thread {
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(0, 0, 0, 0.28);
+      display: flex;
+      flex-direction: column;
+      min-height: 420px;
+    }
+
+    .chat-thread[hidden] {
+      display: none;
+    }
+
+    .chat-thread-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .chat-thread-header {
+      padding: 1.15rem 1.4rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .chat-thread-header h3 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .chat-thread-header p {
+      margin: 0.35rem 0 0;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    .chat-thread-messages {
+      padding: 1.25rem 1.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .chat-thread-empty {
+      border: 1px dashed rgba(255, 255, 255, 0.25);
+      border-radius: 16px;
+      padding: 2.2rem 1.5rem;
+      text-align: center;
+      color: rgba(248, 251, 255, 0.7);
+      font-size: 0.95rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      align-items: center;
+      justify-content: center;
+      min-height: 280px;
+    }
+
+    .chat-thread-empty i {
+      font-size: 2rem;
+      color: var(--accent);
+    }
+
+    .thread-message {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      max-width: 78%;
+    }
+
+    .thread-message.from-visitor {
+      align-self: flex-start;
+    }
+
+    .thread-message.from-admin {
+      align-self: flex-end;
+    }
+
+    .thread-message-bubble {
+      padding: 0.85rem 1rem;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .thread-message.from-admin .thread-message-bubble {
+      background: linear-gradient(135deg, rgba(48, 195, 166, 0.72), rgba(29, 164, 136, 0.9));
+      color: #031621;
+      border-color: rgba(48, 195, 166, 0.65);
+      box-shadow: 0 14px 32px rgba(48, 195, 166, 0.35);
+    }
+
+    .thread-message-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .chat-reply-form {
+      margin-top: auto;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 1.1rem 1.4rem 1.3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .chat-reply-form textarea {
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(0, 0, 0, 0.35);
+      color: var(--text-primary);
+      padding: 0.75rem 0.9rem;
+      font-size: 0.95rem;
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .chat-reply-form textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(48, 195, 166, 0.35);
+    }
+
+    .chat-reply-form.disabled textarea,
+    .chat-reply-form.disabled button {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .chat-reply-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .chat-reply-status {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .chat-status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      background: rgba(48, 195, 166, 0.22);
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+    }
+
+    .chat-status-indicator::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 6px rgba(48, 195, 166, 0.28);
+    }
+
+    .chat-status-indicator.offline {
+      background: rgba(255, 107, 107, 0.22);
+      color: var(--danger);
+    }
+
+    .chat-status-indicator.offline::before {
+      background: var(--danger);
+      box-shadow: 0 0 0 6px rgba(255, 107, 107, 0.28);
+    }
+
     .badge {
       display: inline-flex;
       align-items: center;
@@ -370,6 +672,18 @@
         width: 100%;
         justify-content: flex-start;
       }
+
+      .chat-dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-session-list {
+        min-height: auto;
+      }
+
+      .chat-thread {
+        min-height: 360px;
+      }
     }
   </style>
 </head>
@@ -404,6 +718,51 @@
         </div>
       </div>
       <div id="onlineVisitors" class="empty-state">Checking for active visitors…</div>
+    </section>
+
+    <section class="panel" aria-labelledby="chat-heading">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="chat-heading">Live chat</h2>
+          <p>Manage real-time conversations from the website chat button.</p>
+        </div>
+        <div class="panel-actions" style="gap: 0.75rem;">
+          <span class="chat-status-indicator" id="chatStatusIndicator">Chat online</span>
+          <button id="toggleChatStatus" type="button">Go offline</button>
+        </div>
+      </div>
+      <div class="chat-dashboard">
+        <aside class="chat-session-list" aria-label="Website chat sessions">
+          <div class="chat-session-list-header">
+            <h3 style="margin: 0; font-size: 1rem;">Visitors</h3>
+            <button type="button" id="refreshChatSessions">Refresh</button>
+          </div>
+          <div id="chatSessionsContainer" class="chat-sessions-empty">Loading conversations…</div>
+        </aside>
+        <div class="chat-thread-wrapper">
+          <div class="chat-thread-empty" id="chatThreadEmpty">
+            <i class="fas fa-comments"></i>
+            <p>Select a visitor on the left to open their conversation.</p>
+          </div>
+          <div class="chat-thread" id="chatThread" hidden>
+            <div class="chat-thread-header">
+              <div>
+                <h3 id="chatThreadTitle">Visitor</h3>
+                <p id="chatThreadMeta"></p>
+              </div>
+            </div>
+            <div class="chat-thread-messages" id="chatThreadMessages"></div>
+            <form class="chat-reply-form" id="chatReplyForm" novalidate>
+              <label for="chatReplyInput" class="sr-only">Type your reply</label>
+              <textarea id="chatReplyInput" rows="3" placeholder="Write a reply…" required></textarea>
+              <div class="chat-reply-actions">
+                <span id="chatReplyStatus" class="chat-reply-status"></span>
+                <button type="submit" class="primary">Send reply</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </section>
 
     <div class="panel" aria-labelledby="availability-heading">
@@ -517,6 +876,27 @@
     const refreshAvailabilityBtn = document.getElementById('refreshAvailability');
     const refreshBookingsBtn = document.getElementById('refreshBookings');
     const refreshContactsBtn = document.getElementById('refreshContacts');
+
+    const chatStatusIndicator = document.getElementById('chatStatusIndicator');
+    const toggleChatStatusBtn = document.getElementById('toggleChatStatus');
+    const refreshChatSessionsBtn = document.getElementById('refreshChatSessions');
+    const chatSessionsContainer = document.getElementById('chatSessionsContainer');
+    const chatThread = document.getElementById('chatThread');
+    const chatThreadEmpty = document.getElementById('chatThreadEmpty');
+    const chatThreadTitle = document.getElementById('chatThreadTitle');
+    const chatThreadMeta = document.getElementById('chatThreadMeta');
+    const chatThreadMessages = document.getElementById('chatThreadMessages');
+    const chatReplyForm = document.getElementById('chatReplyForm');
+    const chatReplyInput = document.getElementById('chatReplyInput');
+    const chatReplyStatus = document.getElementById('chatReplyStatus');
+    const chatReplySubmit = chatReplyForm ? chatReplyForm.querySelector('button[type="submit"]') : null;
+
+    const CHAT_POLL_INTERVAL = 4000;
+    let chatSessionsCache = [];
+    let selectedChatSessionId = null;
+    let chatMessagePollHandle = null;
+    let chatLastMessageId = 0;
+    let chatOnline = true;
 
     const bookingDialog = document.getElementById('bookingDialog');
     const bookingEditForm = document.getElementById('bookingEditForm');
@@ -1078,7 +1458,389 @@
       deleteContact(id).then(() => closeDialog(contactDialog));
     });
 
+    function truncateText(value, limit = 90) {
+      if (typeof value !== 'string') return '';
+      if (value.length <= limit) return value;
+      return `${value.slice(0, limit - 1)}…`;
+    }
+
+    function formatRelativeTime(value) {
+      if (!value) return 'Just now';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      const diffSeconds = (Date.now() - date.getTime()) / 1000;
+      if (diffSeconds < 60) return 'Just now';
+      if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
+      if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h ago`;
+      return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    }
+
+    function formatChatTimestamp(value) {
+      if (!value) return '';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      const datePart = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const timePart = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return `${datePart} ${timePart}`;
+    }
+
+    function updateChatStatusIndicator(online) {
+      chatOnline = Boolean(online);
+      if (chatStatusIndicator) {
+        chatStatusIndicator.textContent = chatOnline ? 'Chat online' : 'Chat offline';
+        chatStatusIndicator.classList.toggle('offline', !chatOnline);
+      }
+      if (toggleChatStatusBtn) {
+        toggleChatStatusBtn.textContent = chatOnline ? 'Go offline' : 'Go online';
+      }
+      const disableReply = !selectedChatSessionId;
+      if (chatReplyForm) {
+        chatReplyForm.classList.toggle('disabled', disableReply);
+      }
+      if (chatReplyInput) {
+        chatReplyInput.disabled = disableReply;
+        if (!selectedChatSessionId) {
+          chatReplyInput.value = '';
+        }
+        chatReplyInput.placeholder = selectedChatSessionId
+          ? (chatOnline ? 'Write a reply…' : 'Reply to this visitor (chat is offline)')
+          : 'Select a conversation to reply';
+      }
+      if (chatReplySubmit) {
+        chatReplySubmit.disabled = disableReply;
+      }
+      if (chatReplyStatus) {
+        chatReplyStatus.textContent = chatOnline
+          ? ''
+          : 'Website visitors currently see an offline notice.';
+      }
+    }
+
+    function renderChatSessions() {
+      if (!chatSessionsContainer) return;
+      if (!chatSessionsCache.length) {
+        chatSessionsContainer.className = 'chat-sessions-empty';
+        chatSessionsContainer.textContent = chatOnline
+          ? 'No live conversations yet.'
+          : 'Chat is offline. Visitors cannot start new chats.';
+        return;
+      }
+
+      chatSessionsContainer.className = 'chat-session-scroll';
+      chatSessionsContainer.innerHTML = '';
+
+      chatSessionsCache.forEach((session) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'chat-session';
+        if (session.session_id === selectedChatSessionId) {
+          button.classList.add('active');
+        }
+        button.dataset.sessionId = session.session_id;
+
+        const title = document.createElement('div');
+        title.className = 'chat-session-title';
+        const label = document.createElement('span');
+        label.textContent = session.visitor && session.visitor.location
+          ? session.visitor.location
+          : 'Website visitor';
+        title.appendChild(label);
+        const lastSeen = document.createElement('span');
+        lastSeen.textContent = formatRelativeTime(session.last_seen);
+        title.appendChild(lastSeen);
+        button.appendChild(title);
+
+        const preview = document.createElement('div');
+        preview.className = 'chat-session-preview';
+        preview.textContent = session.last_message
+          ? truncateText(session.last_message, 90)
+          : 'No messages yet.';
+        button.appendChild(preview);
+
+        const meta = document.createElement('div');
+        meta.className = 'chat-session-meta';
+        if (session.visitor && session.visitor.last_page) {
+          const page = document.createElement('span');
+          page.textContent = `Page: ${session.visitor.last_page}`;
+          meta.appendChild(page);
+        }
+        if (session.visitor && session.visitor.ip) {
+          const ip = document.createElement('span');
+          ip.textContent = `IP ${session.visitor.ip}`;
+          meta.appendChild(ip);
+        }
+        const total = document.createElement('span');
+        total.textContent = `${session.message_count || 0} messages`;
+        meta.appendChild(total);
+        if (session.unread_from_visitor) {
+          const unread = document.createElement('span');
+          unread.className = 'badge-unread';
+          unread.textContent = `${session.unread_from_visitor} new`;
+          meta.appendChild(unread);
+        }
+
+        button.appendChild(meta);
+        chatSessionsContainer.appendChild(button);
+      });
+    }
+
+    function stopChatPolling() {
+      if (chatMessagePollHandle) {
+        clearInterval(chatMessagePollHandle);
+        chatMessagePollHandle = null;
+      }
+    }
+
+    function clearChatThread() {
+      selectedChatSessionId = null;
+      chatLastMessageId = 0;
+      stopChatPolling();
+      if (chatThread) {
+        chatThread.hidden = true;
+      }
+      if (chatThreadMessages) {
+        chatThreadMessages.innerHTML = '';
+      }
+      if (chatThreadMeta) {
+        chatThreadMeta.textContent = '';
+      }
+      if (chatThreadEmpty) {
+        chatThreadEmpty.style.display = 'flex';
+      }
+      updateChatStatusIndicator(chatOnline);
+    }
+
+    function appendChatThreadMessage(message) {
+      if (!message || !chatThreadMessages) return;
+      const messageId = Number(message.id);
+      if (Number.isFinite(messageId) && messageId <= chatLastMessageId) {
+        return;
+      }
+      if (Number.isFinite(messageId)) {
+        chatLastMessageId = messageId;
+      }
+
+      const wrapper = document.createElement('div');
+      wrapper.className = `thread-message ${message.sender === 'admin' ? 'from-admin' : 'from-visitor'}`;
+
+      const bubble = document.createElement('div');
+      bubble.className = 'thread-message-bubble';
+      bubble.textContent = message.text || '';
+      wrapper.appendChild(bubble);
+
+      const meta = document.createElement('span');
+      meta.className = 'thread-message-meta';
+      meta.textContent = `${message.sender === 'admin' ? 'You' : 'Visitor'} • ${formatChatTimestamp(message.timestamp)}`;
+      wrapper.appendChild(meta);
+
+      chatThreadMessages.appendChild(wrapper);
+      chatThreadMessages.scrollTop = chatThreadMessages.scrollHeight;
+    }
+
+    async function loadChatSessions() {
+      if (!chatSessionsContainer) return;
+      chatSessionsContainer.className = 'chat-sessions-empty';
+      chatSessionsContainer.textContent = 'Loading conversations…';
+      try {
+        const res = await fetch('/admin/chat/sessions');
+        if (!res.ok) {
+          throw new Error('Unable to load conversations.');
+        }
+        const data = await res.json();
+        chatSessionsCache = Array.isArray(data.sessions) ? data.sessions : [];
+        chatOnline = typeof data.online === 'boolean' ? data.online : true;
+        if (selectedChatSessionId) {
+          const stillExists = chatSessionsCache.some((session) => session.session_id === selectedChatSessionId);
+          if (!stillExists) {
+            clearChatThread();
+          }
+        }
+        updateChatStatusIndicator(chatOnline);
+        renderChatSessions();
+      } catch (error) {
+        chatSessionsContainer.className = 'chat-sessions-empty';
+        chatSessionsContainer.textContent = error.message || 'Unable to load conversations.';
+      }
+    }
+
+    function startChatPolling() {
+      stopChatPolling();
+      chatMessagePollHandle = setInterval(() => {
+        loadChatMessages(false);
+      }, CHAT_POLL_INTERVAL);
+    }
+
+    async function loadChatMessages(reset = false) {
+      if (!selectedChatSessionId) return;
+      const params = new URLSearchParams();
+      if (!reset && chatLastMessageId) {
+        params.set('after', String(chatLastMessageId));
+      }
+      const query = params.toString();
+      const url = query
+        ? `/admin/chat/messages/${encodeURIComponent(selectedChatSessionId)}?${query}`
+        : `/admin/chat/messages/${encodeURIComponent(selectedChatSessionId)}`;
+
+      try {
+        const res = await fetch(url);
+        if (res.status === 404) {
+          await loadChatSessions();
+          clearChatThread();
+          return;
+        }
+        if (!res.ok) {
+          throw new Error('Unable to fetch conversation.');
+        }
+        const data = await res.json();
+        if (Array.isArray(data.messages)) {
+          data.messages.forEach((message) => appendChatThreadMessage(message));
+        }
+        if (typeof data.online === 'boolean') {
+          updateChatStatusIndicator(data.online);
+        }
+        const session = chatSessionsCache.find((item) => item.session_id === selectedChatSessionId);
+        if (session) {
+          session.unread_from_visitor = 0;
+        }
+        renderChatSessions();
+      } catch (error) {
+        if (chatReplyStatus) {
+          chatReplyStatus.textContent = error.message || 'Unable to refresh conversation.';
+        }
+      }
+    }
+
+    function selectChatSession(sessionId) {
+      if (!sessionId) return;
+      if (sessionId === selectedChatSessionId) {
+        if (chatThreadMessages) {
+          chatThreadMessages.scrollTop = chatThreadMessages.scrollHeight;
+        }
+        return;
+      }
+
+      selectedChatSessionId = sessionId;
+      chatLastMessageId = 0;
+      if (chatThreadEmpty) {
+        chatThreadEmpty.style.display = 'none';
+      }
+      if (chatThread) {
+        chatThread.hidden = false;
+      }
+      if (chatThreadMessages) {
+        chatThreadMessages.innerHTML = '';
+      }
+
+      const session = chatSessionsCache.find((item) => item.session_id === sessionId);
+      if (session) {
+        chatThreadTitle.textContent = session.visitor && session.visitor.location
+          ? session.visitor.location
+          : 'Website visitor';
+        const details = [];
+        if (session.visitor && session.visitor.last_page) {
+          details.push(`Viewing ${session.visitor.last_page}`);
+        }
+        if (session.visitor && session.visitor.ip) {
+          details.push(`IP ${session.visitor.ip}`);
+        }
+        details.push(`Last active ${formatRelativeTime(session.last_seen)}`);
+        chatThreadMeta.textContent = details.join(' • ');
+        session.unread_from_visitor = 0;
+      } else if (chatThreadMeta) {
+        chatThreadMeta.textContent = '';
+      }
+
+      updateChatStatusIndicator(chatOnline);
+      renderChatSessions();
+      loadChatMessages(true);
+      startChatPolling();
+    }
+
     closeContactDialogBtn.addEventListener('click', () => closeDialog(contactDialog));
+
+    if (chatSessionsContainer) {
+      chatSessionsContainer.addEventListener('click', (event) => {
+        const target = event.target.closest('.chat-session');
+        if (!target || !target.dataset.sessionId) return;
+        selectChatSession(target.dataset.sessionId);
+      });
+    }
+
+    if (refreshChatSessionsBtn) {
+      refreshChatSessionsBtn.addEventListener('click', loadChatSessions);
+    }
+
+    if (toggleChatStatusBtn) {
+      toggleChatStatusBtn.addEventListener('click', async () => {
+        toggleChatStatusBtn.disabled = true;
+        try {
+          const res = await fetch('/admin/chat/status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ online: !chatOnline }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            throw new Error(data.message || 'Unable to update chat status.');
+          }
+          updateChatStatusIndicator(Boolean(data.online));
+          await loadChatSessions();
+        } catch (error) {
+          alert(error.message || 'Unable to update chat status');
+        } finally {
+          toggleChatStatusBtn.disabled = false;
+        }
+      });
+    }
+
+    if (chatReplyForm) {
+      chatReplyForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!selectedChatSessionId || !chatReplyInput) return;
+        const message = chatReplyInput.value.trim();
+        if (!message) {
+          chatReplyInput.focus();
+          return;
+        }
+        if (chatReplyStatus) {
+          chatReplyStatus.textContent = '';
+        }
+        if (chatReplySubmit) {
+          chatReplySubmit.disabled = true;
+        }
+        try {
+          const res = await fetch('/admin/chat/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: selectedChatSessionId, message }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            throw new Error(data.message || 'Unable to send message.');
+          }
+          if (chatReplyInput) {
+            chatReplyInput.value = '';
+            chatReplyInput.focus();
+          }
+          if (data.entry) {
+            appendChatThreadMessage(data.entry);
+          }
+          await loadChatSessions();
+        } catch (error) {
+          if (chatReplyStatus) {
+            chatReplyStatus.textContent = error.message || 'Unable to send message.';
+          }
+        } finally {
+          if (chatReplySubmit) {
+            chatReplySubmit.disabled = !selectedChatSessionId;
+          }
+        }
+      });
+    }
+
+    updateChatStatusIndicator(chatOnline);
+    renderChatSessions();
+    loadChatSessions();
 
     if (refreshPresenceBtn) {
       refreshPresenceBtn.addEventListener('click', loadOnlineVisitors);

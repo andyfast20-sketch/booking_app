@@ -22,6 +22,7 @@ CORS(app, resources={r"/*": {"origins": [
 BOOKINGS_FILE = "bookings.txt"
 AVAIL_FILE = "availability.txt"
 CONTACTS_FILE = "contacts.json"
+CHAT_STATE_FILE = "chat_state.json"
 
 VISITOR_TIMEOUT = timedelta(minutes=3)
 LOCATION_CACHE_TTL = timedelta(hours=6)
@@ -29,6 +30,8 @@ LOCATION_CACHE_TTL = timedelta(hours=6)
 _active_visitors = {}
 _presence_lock = Lock()
 _location_cache = {}
+_chat_state_lock = Lock()
+_chat_state = {"online": True, "sessions": {}}
 
 
 def _is_private_ip(ip_str: str) -> bool:
@@ -132,6 +135,414 @@ def _record_presence(data: dict) -> None:
                 "last_seen": now,
             }
 
+
+def _safe_int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _load_chat_state_from_disk():
+    if not os.path.exists(CHAT_STATE_FILE):
+        return {"online": True, "sessions": {}}
+
+    try:
+        with open(CHAT_STATE_FILE, "r", encoding="utf-8") as file:
+            payload = json.load(file)
+    except (OSError, json.JSONDecodeError):
+        return {"online": True, "sessions": {}}
+
+    sessions_payload = payload.get("sessions")
+    sessions = {}
+    if isinstance(sessions_payload, dict):
+        for key, raw_session in sessions_payload.items():
+            if not isinstance(raw_session, dict):
+                continue
+
+            session_id = str(raw_session.get("session_id") or key)
+            created_at = raw_session.get("created_at") or datetime.utcnow().isoformat()
+            last_seen = raw_session.get("last_seen") or created_at
+            visitor = raw_session.get("visitor") if isinstance(raw_session.get("visitor"), dict) else {}
+
+            messages = []
+            raw_messages = raw_session.get("messages")
+            if isinstance(raw_messages, list):
+                for raw_message in raw_messages:
+                    if not isinstance(raw_message, dict):
+                        continue
+
+                    text = raw_message.get("text")
+                    if text is None:
+                        continue
+
+                    message_id = _safe_int(raw_message.get("id"), default=None)
+                    if message_id is None:
+                        continue
+
+                    timestamp = raw_message.get("timestamp") or datetime.utcnow().isoformat()
+                    sender = "admin" if raw_message.get("sender") == "admin" else "visitor"
+                    messages.append(
+                        {
+                            "id": message_id,
+                            "sender": sender,
+                            "text": str(text),
+                            "timestamp": timestamp,
+                        }
+                    )
+
+            messages.sort(key=lambda entry: entry["id"])
+            next_id = messages[-1]["id"] + 1 if messages else 1
+
+            sessions[session_id] = {
+                "session_id": session_id,
+                "created_at": created_at,
+                "last_seen": last_seen,
+                "visitor": visitor,
+                "messages": messages,
+                "next_id": next_id,
+                "last_admin_read": _safe_int(raw_session.get("last_admin_read"), 0),
+                "last_visitor_read": _safe_int(raw_session.get("last_visitor_read"), 0),
+            }
+
+    return {"online": bool(payload.get("online", True)), "sessions": sessions}
+
+
+def _save_chat_state():
+    with _chat_state_lock:
+        payload = {
+            "online": bool(_chat_state.get("online", True)),
+            "sessions": {},
+        }
+
+        for session_id, session in _chat_state.get("sessions", {}).items():
+            payload["sessions"][session_id] = {
+                "session_id": session.get("session_id", session_id),
+                "created_at": session.get("created_at"),
+                "last_seen": session.get("last_seen"),
+                "visitor": session.get("visitor", {}),
+                "messages": list(session.get("messages", [])),
+                "next_id": session.get("next_id", 1),
+                "last_admin_read": session.get("last_admin_read", 0),
+                "last_visitor_read": session.get("last_visitor_read", 0),
+            }
+
+    try:
+        with open(CHAT_STATE_FILE, "w", encoding="utf-8") as file:
+            json.dump(payload, file, indent=2)
+    except OSError:
+        pass
+
+
+with _chat_state_lock:
+    stored_chat_state = _load_chat_state_from_disk()
+    _chat_state.update(stored_chat_state)
+
+
+def _append_chat_message(session: dict, sender: str, text: str) -> dict:
+    clean_text = (text or "").strip()
+    if not clean_text:
+        raise ValueError("Message text is required")
+
+    timestamp = datetime.utcnow().isoformat()
+    message_id = session.get("next_id", 1)
+    entry = {
+        "id": message_id,
+        "sender": sender,
+        "text": clean_text,
+        "timestamp": timestamp,
+    }
+
+    session.setdefault("messages", []).append(entry)
+    session["next_id"] = message_id + 1
+    session["last_seen"] = timestamp
+    return entry
+
+
+def _ensure_chat_session(session_id: str = "", *, page: str = "", ip_str: str = "", location: str = "", user_agent: str = ""):
+    cleaned_id = (session_id or "").strip()
+    now_iso = datetime.utcnow().isoformat()
+    with _chat_state_lock:
+        sessions = _chat_state.setdefault("sessions", {})
+        session = sessions.get(cleaned_id)
+        if not session:
+            cleaned_id = cleaned_id or str(uuid4())
+            session = {
+                "session_id": cleaned_id,
+                "created_at": now_iso,
+                "last_seen": now_iso,
+                "visitor": {},
+                "messages": [],
+                "next_id": 1,
+                "last_admin_read": 0,
+                "last_visitor_read": 0,
+            }
+            sessions[cleaned_id] = session
+        else:
+            session.setdefault("created_at", now_iso)
+            session["last_seen"] = now_iso
+
+        visitor = session.setdefault("visitor", {})
+        if ip_str:
+            visitor["ip"] = ip_str
+        if location:
+            visitor["location"] = location
+        if user_agent:
+            visitor["user_agent"] = user_agent[:280]
+        if page:
+            visitor["last_page"] = page
+
+        snapshot = {
+            "session_id": session.get("session_id", cleaned_id),
+            "created_at": session.get("created_at", now_iso),
+            "last_seen": session.get("last_seen", now_iso),
+            "visitor": dict(session.get("visitor", {})),
+            "messages": list(session.get("messages", [])),
+            "next_id": session.get("next_id", 1),
+            "last_admin_read": session.get("last_admin_read", 0),
+            "last_visitor_read": session.get("last_visitor_read", 0),
+        }
+
+    return cleaned_id, snapshot
+
+
+# --- Live chat endpoints ---
+
+
+@app.route("/chat/status", methods=["GET"])
+def chat_status():
+    with _chat_state_lock:
+        online = bool(_chat_state.get("online", True))
+    return jsonify({"online": online})
+
+
+@app.route("/chat/session", methods=["POST"])
+def chat_session():
+    payload = request.get_json(silent=True) or {}
+    requested_id = (payload.get("session_id") or "").strip()
+    page = (payload.get("page") or "").strip()
+    user_agent = (request.headers.get("User-Agent") or "").strip()
+    ip_str = _client_ip()
+
+    with _chat_state_lock:
+        existing_session = _chat_state.get("sessions", {}).get(requested_id)
+
+    location = _lookup_location(ip_str) if not existing_session else existing_session.get("visitor", {}).get("location", "")
+
+    session_id, _ = _ensure_chat_session(
+        requested_id,
+        page=page,
+        ip_str=ip_str,
+        location=location,
+        user_agent=user_agent,
+    )
+
+    with _chat_state_lock:
+        session = _chat_state.get("sessions", {}).get(session_id)
+        if not session:
+            return jsonify({"message": "Unable to create chat session."}), 500
+
+        messages = list(session.get("messages", []))
+        if messages:
+            session["last_visitor_read"] = max(session.get("last_visitor_read", 0), messages[-1]["id"])
+        online = bool(_chat_state.get("online", True))
+
+    _save_chat_state()
+    return jsonify({"session_id": session_id, "online": online, "messages": messages[-50:]})
+
+
+@app.route("/chat/messages", methods=["GET"])
+def chat_messages():
+    session_id = (request.args.get("session_id") or "").strip()
+    if not session_id:
+        return jsonify({"message": "Session ID is required."}), 400
+
+    after_id = _safe_int(request.args.get("after"), 0)
+    page = (request.args.get("page") or "").strip()
+    user_agent = (request.headers.get("User-Agent") or "").strip()
+    ip_str = _client_ip()
+
+    with _chat_state_lock:
+        session_exists = session_id in _chat_state.get("sessions", {})
+
+    location = _lookup_location(ip_str) if not session_exists else ""
+
+    session_id, _ = _ensure_chat_session(
+        session_id,
+        page=page,
+        ip_str=ip_str,
+        location=location,
+        user_agent=user_agent,
+    )
+
+    response_payload = {"session_id": session_id, "messages": [], "online": True}
+
+    with _chat_state_lock:
+        session = _chat_state.get("sessions", {}).get(session_id)
+        if not session:
+            return jsonify({"message": "Session not found."}), 404
+
+        messages = [message for message in session.get("messages", []) if message.get("id", 0) > after_id]
+        response_payload["messages"] = messages
+        response_payload["online"] = bool(_chat_state.get("online", True))
+
+        if messages:
+            session["last_visitor_read"] = max(session.get("last_visitor_read", 0), messages[-1]["id"])
+        session["last_seen"] = datetime.utcnow().isoformat()
+
+    _save_chat_state()
+    return jsonify(response_payload)
+
+
+@app.route("/chat/send", methods=["POST"])
+def chat_send():
+    payload = request.get_json(silent=True) or {}
+    session_id = (payload.get("session_id") or "").strip()
+    message = (payload.get("message") or "").strip()
+    page = (payload.get("page") or "").strip()
+
+    if not session_id:
+        return jsonify({"message": "Session ID is required."}), 400
+    if not message:
+        return jsonify({"message": "Message text is required."}), 400
+
+    user_agent = (request.headers.get("User-Agent") or "").strip()
+    ip_str = _client_ip()
+
+    with _chat_state_lock:
+        online = bool(_chat_state.get("online", True))
+    if not online:
+        return jsonify({"message": "Live chat is currently offline."}), 503
+
+    with _chat_state_lock:
+        existing_session = _chat_state.get("sessions", {}).get(session_id)
+
+    location = _lookup_location(ip_str) if not existing_session else ""
+
+    session_id, _ = _ensure_chat_session(
+        session_id,
+        page=page,
+        ip_str=ip_str,
+        location=location,
+        user_agent=user_agent,
+    )
+
+    with _chat_state_lock:
+        session = _chat_state.get("sessions", {}).get(session_id)
+        if not session:
+            return jsonify({"message": "Session not found."}), 404
+
+        try:
+            entry = _append_chat_message(session, "visitor", message)
+        except ValueError:
+            return jsonify({"message": "Message text is required."}), 400
+
+        session["last_visitor_read"] = entry["id"]
+        visitor = session.setdefault("visitor", {})
+        visitor["ip"] = ip_str
+        if location:
+            visitor["location"] = location
+        if user_agent:
+            visitor["user_agent"] = user_agent[:280]
+        if page:
+            visitor["last_page"] = page
+
+    _save_chat_state()
+    return jsonify({"message": "Message sent.", "entry": entry, "session_id": session_id})
+
+
+@app.route("/admin/chat/status", methods=["POST"])
+def admin_chat_status():
+    payload = request.get_json(silent=True) or {}
+    requested_state = payload.get("online")
+    if isinstance(requested_state, str):
+        requested_state = requested_state.strip().lower() in {"1", "true", "yes", "on"}
+    else:
+        requested_state = bool(requested_state)
+
+    with _chat_state_lock:
+        _chat_state["online"] = bool(requested_state)
+        online = bool(_chat_state["online"])
+
+    _save_chat_state()
+    return jsonify({"message": "Chat status updated.", "online": online})
+
+
+@app.route("/admin/chat/sessions", methods=["GET"])
+def admin_chat_sessions():
+    with _chat_state_lock:
+        online = bool(_chat_state.get("online", True))
+        sessions = []
+        for session in _chat_state.get("sessions", {}).values():
+            messages = list(session.get("messages", []))
+            last_message = messages[-1] if messages else {}
+            last_admin_read = _safe_int(session.get("last_admin_read"), 0)
+            unread = sum(
+                1
+                for message in messages
+                if message.get("sender") == "visitor" and _safe_int(message.get("id"), 0) > last_admin_read
+            )
+
+            sessions.append(
+                {
+                    "session_id": session.get("session_id"),
+                    "created_at": session.get("created_at"),
+                    "last_seen": session.get("last_seen"),
+                    "visitor": session.get("visitor", {}),
+                    "last_message": last_message.get("text", ""),
+                    "last_message_timestamp": last_message.get("timestamp", session.get("last_seen")),
+                    "unread_from_visitor": unread,
+                    "message_count": len(messages),
+                }
+            )
+
+    sessions.sort(key=lambda entry: entry.get("last_message_timestamp") or entry.get("last_seen") or "", reverse=True)
+    return jsonify({"online": online, "sessions": sessions})
+
+
+@app.route("/admin/chat/messages/<session_id>", methods=["GET"])
+def admin_chat_messages(session_id):
+    after_id = _safe_int(request.args.get("after"), 0)
+
+    with _chat_state_lock:
+        session = _chat_state.get("sessions", {}).get(session_id)
+        if not session:
+            return jsonify({"message": "Session not found."}), 404
+
+        messages = [message for message in session.get("messages", []) if message.get("id", 0) > after_id]
+        if messages:
+            session["last_admin_read"] = max(session.get("last_admin_read", 0), messages[-1]["id"])
+        online = bool(_chat_state.get("online", True))
+
+    _save_chat_state()
+    return jsonify({"session_id": session_id, "messages": messages, "online": online})
+
+
+@app.route("/admin/chat/send", methods=["POST"])
+def admin_chat_send():
+    payload = request.get_json(silent=True) or {}
+    session_id = (payload.get("session_id") or "").strip()
+    message = (payload.get("message") or "").strip()
+
+    if not session_id:
+        return jsonify({"message": "Session ID is required."}), 400
+    if not message:
+        return jsonify({"message": "Message text is required."}), 400
+
+    with _chat_state_lock:
+        session = _chat_state.get("sessions", {}).get(session_id)
+        if not session:
+            return jsonify({"message": "Session not found."}), 404
+
+        try:
+            entry = _append_chat_message(session, "admin", message)
+        except ValueError:
+            return jsonify({"message": "Message text is required."}), 400
+
+        session["last_admin_read"] = entry["id"]
+
+    _save_chat_state()
+    return jsonify({"message": "Message sent.", "entry": entry, "session_id": session_id})
 
 def _read_text_file(path: str) -> str:
     if not os.path.exists(path):
