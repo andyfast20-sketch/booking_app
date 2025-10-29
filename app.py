@@ -25,12 +25,31 @@ def home():
 @app.route("/book", methods=["POST"])
 def book():
     data = request.json
-    name = data.get("name")
-    time = data.get("time")
+    allowed_locations = {"Audenshaw", "Denton", "Dukinfield"}
+
+    name = data.get("name", "").strip()
+    time = data.get("time", "").strip()
+    location = data.get("location", "").strip()
+    email = data.get("email", "").strip()
+    phone = data.get("phone", "").strip()
+
+    if not name or not time or not email or not phone:
+        return jsonify({"message": "❌ Please complete all booking details."}), 400
+
+    if location not in allowed_locations:
+        return jsonify({"message": "❌ Please choose a valid service location."}), 400
 
     # Save booking
     with open(BOOKINGS_FILE, "a") as f:
-        f.write(f"Name: {name}, Time: {time}\n")
+        f.write(
+            "Name: {name}, Time: {time}, Location: {location}, Email: {email}, Phone: {phone}\n".format(
+                name=name,
+                time=time,
+                location=location,
+                email=email,
+                phone=phone,
+            )
+        )
 
     # Remove the booked slot from available times
     if os.path.exists(AVAIL_FILE):
@@ -74,7 +93,18 @@ def view_bookings():
     bookings = []
     if os.path.exists(BOOKINGS_FILE):
         with open(BOOKINGS_FILE) as f:
-            bookings = [line.strip().split(",") for line in f if line.strip()]
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                parts = [segment.strip() for segment in line.split(",") if segment.strip()]
+                entry = {}
+                for segment in parts:
+                    if ":" in segment:
+                        key, value = segment.split(":", 1)
+                        entry[key.strip().lower()] = value.strip()
+                if entry:
+                    bookings.append(entry)
 
     # Read available times
     avail = []
@@ -123,9 +153,15 @@ def view_bookings():
       <h1>📘 Current Bookings</h1>
       {% if bookings %}
       <table>
-        <tr><th>Name</th><th>Time</th></tr>
-        {% for name, time in bookings %}
-        <tr><td>{{ name }}</td><td>{{ time }}</td></tr>
+        <tr><th>Name</th><th>Time</th><th>Location</th><th>Email</th><th>Phone</th></tr>
+        {% for booking in bookings %}
+        <tr>
+          <td>{{ booking.get('name', '') }}</td>
+          <td>{{ booking.get('time', '') }}</td>
+          <td>{{ booking.get('location', '') }}</td>
+          <td>{{ booking.get('email', '') }}</td>
+          <td>{{ booking.get('phone', '') }}</td>
+        </tr>
         {% endfor %}
       </table>
       {% else %}
@@ -169,12 +205,24 @@ def get_bookings_json():
         with open(BOOKINGS_FILE, "r") as file:
             for line in file:
                 line = line.strip()
-                if line:
-                    # Example: "Name: Fred, Time: 12.44"
-                    parts = line.split(",")
-                    name = parts[0].split(":")[1].strip() if len(parts) > 0 else ""
-                    time = parts[1].split(":")[1].strip() if len(parts) > 1 else ""
-                    bookings.append({"name": name, "time": time})
+                if not line:
+                    continue
+                parts = [segment.strip() for segment in line.split(",") if segment.strip()]
+                entry = {}
+                for segment in parts:
+                    if ":" in segment:
+                        key, value = segment.split(":", 1)
+                        entry[key.strip().lower()] = value.strip()
+                if entry:
+                    bookings.append(
+                        {
+                            "name": entry.get("name", ""),
+                            "time": entry.get("time", ""),
+                            "location": entry.get("location", ""),
+                            "email": entry.get("email", ""),
+                            "phone": entry.get("phone", ""),
+                        }
+                    )
     except FileNotFoundError:
         return jsonify({"bookings": []})
     return jsonify({"bookings": bookings})
