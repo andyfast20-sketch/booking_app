@@ -2322,15 +2322,16 @@
 
         const PRESENCE_ENDPOINT = `${API_BASE}/presence`;
 
-        function buildPresencePayload() {
+        function buildPresencePayload(status = 'online') {
             return {
                 page: window.location.pathname || '/',
                 timestamp: new Date().toISOString(),
+                status,
             };
         }
 
         async function reportPresence() {
-            const payload = buildPresencePayload();
+            const payload = buildPresencePayload('online');
             try {
                 await fetch(PRESENCE_ENDPOINT, {
                     method: 'POST',
@@ -2343,8 +2344,8 @@
             }
         }
 
-        function sendPresenceBeacon() {
-            const payload = JSON.stringify(buildPresencePayload());
+        function sendPresenceBeacon(status = 'online') {
+            const payload = JSON.stringify(buildPresencePayload(status));
             if (navigator.sendBeacon) {
                 try {
                     const blob = new Blob([payload], { type: 'application/json' });
@@ -2366,10 +2367,15 @@
         setInterval(reportPresence, 60000);
         window.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden') {
-                sendPresenceBeacon();
+                sendPresenceBeacon('online');
             }
         });
-        window.addEventListener('beforeunload', sendPresenceBeacon);
+        window.addEventListener('pagehide', (event) => {
+            if (!event.persisted) {
+                sendPresenceBeacon('offline');
+            }
+        });
+        window.addEventListener('beforeunload', () => sendPresenceBeacon('offline'));
 
         // Mobile Menu Toggle
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');

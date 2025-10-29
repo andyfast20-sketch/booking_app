@@ -207,6 +207,18 @@
       font-weight: 600;
     }
 
+    .presence-note {
+      margin-bottom: 1rem;
+      padding: 0.85rem 1.1rem;
+      border-radius: 12px;
+      background: rgba(48, 195, 166, 0.16);
+      color: var(--text-primary);
+      text-align: left;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      border: 1px solid rgba(48, 195, 166, 0.35);
+    }
+
     .badge {
       display: inline-flex;
       align-items: center;
@@ -651,6 +663,9 @@
 
       onlineVisitorsContainer.className = 'table-scroll';
       onlineVisitorsContainer.innerHTML = `
+        <div class="presence-note">
+          Invite active visitors to join your live chat so you can offer help in real time.
+        </div>
         <table>
           <thead>
             <tr>
