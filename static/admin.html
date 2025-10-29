@@ -231,6 +231,31 @@
       border: 1px solid rgba(48, 195, 166, 0.35);
     }
 
+    .visitor-invite-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 0.45rem 1.1rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+      color: #ffffff;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+      box-shadow: 0 10px 18px rgba(46, 125, 50, 0.25);
+    }
+
+    .visitor-invite-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%);
+      transform: translateY(-1px);
+    }
+
+    .visitor-invite-btn:disabled {
+      background: linear-gradient(135deg, #bdbdbd 0%, #9e9e9e 100%);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
     .chat-dashboard {
       display: grid;
       grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
@@ -892,6 +917,7 @@
     const chatReplySubmit = chatReplyForm ? chatReplyForm.querySelector('button[type="submit"]') : null;
 
     const CHAT_POLL_INTERVAL = 4000;
+    const DEFAULT_CHAT_INVITE_MESSAGE = 'Hi there! We\'re online if you need a hand with anything.';
     let chatSessionsCache = [];
     let selectedChatSessionId = null;
     let chatMessagePollHandle = null;
@@ -1053,6 +1079,7 @@
               <th>Location</th>
               <th>Last seen</th>
               <th>Page</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -1068,13 +1095,88 @@
                     <td>${location}</td>
                     <td>${lastSeen}</td>
                     <td>${page}</td>
+                    <td>
+                      <button type="button" class="visitor-invite-btn" data-ip="${ip}">
+                        Invite to chat
+                      </button>
+                    </td>
                   </tr>
-                `;
-              })
-              .join('')}
-          </tbody>
-        </table>
+              `;
+            })
+            .join('')}
+        </tbody>
+      </table>
       `;
+    }
+
+    if (onlineVisitorsContainer) {
+      onlineVisitorsContainer.addEventListener('click', async (event) => {
+        const target = event.target instanceof HTMLElement ? event.target : null;
+        if (!target) return;
+
+        const button = target.closest('.visitor-invite-btn');
+        if (!(button instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        const ip = button.getAttribute('data-ip');
+        if (!ip) {
+          return;
+        }
+
+        const promptMessage = prompt('Message to display to the visitor:', DEFAULT_CHAT_INVITE_MESSAGE);
+        if (promptMessage === null) {
+          return;
+        }
+
+        const message = promptMessage.trim();
+        if (!message) {
+          button.textContent = 'Message required';
+          setTimeout(() => {
+            button.textContent = 'Invite to chat';
+          }, 2200);
+          return;
+        }
+
+        const originalText = button.dataset.originalText || button.textContent || 'Invite to chat';
+        if (!button.dataset.originalText) {
+          button.dataset.originalText = originalText;
+        }
+
+        button.disabled = true;
+        button.textContent = 'Sending…';
+
+        try {
+          const res = await fetch('/admin/chat/invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ip, message }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.message || 'Unable to send invite.');
+          }
+
+          button.textContent = 'Invite sent';
+          setTimeout(() => {
+            button.textContent = originalText;
+            button.disabled = false;
+          }, 2400);
+
+          await loadChatSessions();
+          const session = chatSessionsCache.find((item) => item.visitor && item.visitor.ip === ip);
+          if (session) {
+            selectChatSession(session.session_id);
+          }
+        } catch (error) {
+          console.error('Unable to send invite.', error);
+          button.textContent = error.message || 'Failed to send';
+          setTimeout(() => {
+            button.textContent = originalText;
+            button.disabled = false;
+          }, 2600);
+        }
+      });
     }
 
     async function loadBookings() {

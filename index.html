@@ -204,69 +204,108 @@
 
         .live-chat-widget {
             position: fixed;
-            bottom: 28px;
+            bottom: 32px;
             right: 32px;
             z-index: 1250;
             display: flex;
             flex-direction: column;
             align-items: flex-end;
-            gap: 16px;
+            gap: 14px;
             font-family: 'Montserrat', sans-serif;
         }
 
         .live-chat-toggle {
             border: none;
-            border-radius: 999px;
-            padding: 12px 24px;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            padding: 0;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: var(--white);
-            font-weight: 600;
-            letter-spacing: 0.5px;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            justify-content: center;
             cursor: pointer;
-            box-shadow: 0 18px 35px rgba(27, 94, 32, 0.35);
+            box-shadow: 0 20px 36px rgba(27, 94, 32, 0.3);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
         }
 
         .live-chat-toggle:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 22px 40px rgba(27, 94, 32, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 24px 42px rgba(27, 94, 32, 0.38);
+        }
+
+        .live-chat-toggle:focus-visible {
+            outline: 3px solid rgba(255, 255, 255, 0.85);
+            outline-offset: 3px;
         }
 
         .live-chat-toggle .live-chat-indicator {
-            width: 10px;
-            height: 10px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             background: #66bb6a;
-            box-shadow: 0 0 0 6px rgba(102, 187, 106, 0.25);
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 0 6px rgba(102, 187, 106, 0.2);
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .live-chat-toggle .live-chat-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            font-size: 1.45rem;
+            pointer-events: none;
         }
 
         .live-chat-toggle .live-chat-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.95rem;
-        }
-
-        .live-chat-toggle .live-chat-label i {
-            font-size: 1.05rem;
+            display: none;
         }
 
         .live-chat-toggle.is-offline {
             background: linear-gradient(135deg, #9e9e9e 0%, #616161 100%);
-            box-shadow: 0 18px 35px rgba(66, 66, 66, 0.3);
+            box-shadow: 0 18px 32px rgba(66, 66, 66, 0.28);
         }
 
         .live-chat-toggle.is-offline .live-chat-indicator {
             background: #ff6b6b;
-            box-shadow: 0 0 0 6px rgba(255, 107, 107, 0.25);
+            box-shadow: 0 0 0 6px rgba(255, 107, 107, 0.2);
+        }
+
+        .live-chat-toggle.has-unread::after {
+            content: '';
+            position: absolute;
+            inset: -12px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.75);
+            animation: live-chat-pulse 2.6s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes live-chat-pulse {
+            0% {
+                opacity: 0.75;
+                transform: scale(0.85);
+            }
+            60% {
+                opacity: 0;
+                transform: scale(1.35);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1.35);
+            }
         }
 
         .live-chat-window {
             position: absolute;
-            bottom: 68px;
+            bottom: 88px;
             right: 0;
             width: 360px;
             max-width: calc(100vw - 32px);
@@ -506,7 +545,7 @@
 
             .live-chat-window {
                 width: min(320px, calc(100vw - 24px));
-                bottom: 62px;
+                bottom: 86px;
             }
         }
 
@@ -2576,7 +2615,8 @@
     <div class="live-chat-widget" id="liveChatWidget">
         <button type="button" class="live-chat-toggle" id="liveChatToggle" aria-expanded="false">
             <span class="live-chat-indicator" id="liveChatIndicator" aria-hidden="true"></span>
-            <span class="live-chat-label"><i class="fas fa-comments"></i> Live chat</span>
+            <span class="live-chat-icon" aria-hidden="true"><i class="fas fa-comments"></i></span>
+            <span class="sr-only">Open live chat</span>
         </button>
         <div class="live-chat-window" id="liveChatWindow" aria-hidden="true">
             <div class="live-chat-header">
@@ -2768,12 +2808,21 @@
             let liveChatPollingTimer = null;
             let liveChatOnline = true;
             let liveChatWindowOpen = false;
+            let liveChatInitialized = false;
+            let liveChatHasUnread = false;
 
             function formatLiveChatTime(value) {
                 if (!value) return '';
                 const parsed = new Date(value);
                 if (Number.isNaN(parsed.getTime())) return '';
                 return parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+
+            function setChatUnreadIndicator(isActive) {
+                liveChatHasUnread = Boolean(isActive);
+                if (liveChatToggle) {
+                    liveChatToggle.classList.toggle('has-unread', liveChatHasUnread);
+                }
             }
 
             function setChatOnlineState(isOnline) {
@@ -2860,6 +2909,8 @@
                 } else if (liveChatEmptyState) {
                     liveChatEmptyState.classList.remove('hidden');
                 }
+                liveChatInitialized = true;
+                setChatUnreadIndicator(false);
             }
 
             function toggleLiveChatWindow(forceOpen) {
@@ -2870,6 +2921,7 @@
                 liveChatWindow.setAttribute('aria-hidden', String(!shouldOpen));
                 liveChatToggle.setAttribute('aria-expanded', String(shouldOpen));
                 if (shouldOpen) {
+                    setChatUnreadIndicator(false);
                     fetchLiveChatMessages(true);
                     setTimeout(() => {
                         if (liveChatInput && !liveChatInput.disabled) {
@@ -2910,7 +2962,19 @@
                         setChatOnlineState(data.online);
                     }
                     if (Array.isArray(data.messages)) {
-                        data.messages.forEach((entry) => renderLiveChatMessage(entry));
+                        let hasAdminMessage = false;
+                        data.messages.forEach((entry) => {
+                            if (entry && entry.sender === 'admin') {
+                                hasAdminMessage = true;
+                            }
+                            renderLiveChatMessage(entry);
+                        });
+                        if (hasAdminMessage && !liveChatWindowOpen) {
+                            setChatUnreadIndicator(true);
+                            if (liveChatInitialized) {
+                                toggleLiveChatWindow(true);
+                            }
+                        }
                     }
                 } catch (error) {
                     console.warn('Live chat polling failed.', error);
