@@ -381,6 +381,19 @@
       <div id="bookingsTable" class="empty-state">Loading bookings…</div>
     </section>
 
+    <section class="panel" aria-labelledby="presence-heading">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="presence-heading">Live visitors</h2>
+          <p>See who is currently browsing and where they are connecting from.</p>
+        </div>
+        <div class="panel-actions">
+          <button id="refreshPresence" type="button">Refresh</button>
+        </div>
+      </div>
+      <div id="onlineVisitors" class="empty-state">Checking for active visitors…</div>
+    </section>
+
     <div class="panel" aria-labelledby="availability-heading">
       <div class="panel-header">
         <div class="meta">
@@ -483,10 +496,12 @@
 
   <script>
     const bookingsTable = document.getElementById('bookingsTable');
+    const onlineVisitorsContainer = document.getElementById('onlineVisitors');
     const availabilityList = document.getElementById('availabilityList');
     const contactsTable = document.getElementById('contactsTable');
 
     const availabilityForm = document.getElementById('availabilityForm');
+    const refreshPresenceBtn = document.getElementById('refreshPresence');
     const refreshAvailabilityBtn = document.getElementById('refreshAvailability');
     const refreshBookingsBtn = document.getElementById('refreshBookings');
     const refreshContactsBtn = document.getElementById('refreshContacts');
@@ -511,6 +526,9 @@
 
     let bookingsCache = [];
     let contactsCache = [];
+    let previousVisitorIps = new Set();
+    let onlinePresenceInitialised = false;
+    let audioContextInstance = null;
 
     const supportsDialog = typeof HTMLDialogElement === 'function';
 
@@ -547,6 +565,121 @@
         return value;
       }
       return date.toLocaleString();
+    }
+
+    function formatTime(value) {
+      if (!value) return '—';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return value;
+      }
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function getAudioContext() {
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextCtor) {
+        return null;
+      }
+      if (!audioContextInstance) {
+        audioContextInstance = new AudioContextCtor();
+      }
+      return audioContextInstance;
+    }
+
+    function unlockAudioContext() {
+      const ctx = getAudioContext();
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+    }
+
+    function beepOnce() {
+      const ctx = getAudioContext();
+      if (!ctx) {
+        return;
+      }
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 880;
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+      const now = ctx.currentTime;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.15, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+      oscillator.start(now);
+      oscillator.stop(now + 0.35);
+    }
+
+    document.addEventListener('click', unlockAudioContext, { once: true });
+
+    async function loadOnlineVisitors() {
+      if (!onlineVisitorsContainer) return;
+      onlineVisitorsContainer.className = 'empty-state';
+      onlineVisitorsContainer.textContent = 'Checking for active visitors…';
+      try {
+        const res = await fetch('/presence');
+        if (!res.ok) throw new Error('Unable to fetch online visitors');
+        const data = await res.json();
+        const visitors = Array.isArray(data.visitors) ? data.visitors : [];
+        renderOnlineVisitors(visitors);
+      } catch (error) {
+        onlineVisitorsContainer.textContent = error.message || 'Failed to load visitors';
+      }
+    }
+
+    function renderOnlineVisitors(visitors) {
+      if (!onlineVisitorsContainer) return;
+      const list = Array.isArray(visitors) ? visitors : [];
+      const currentIps = new Set(list.map((visitor) => visitor.ip));
+      if (onlinePresenceInitialised) {
+        const hasNewVisitor = list.some((visitor) => !previousVisitorIps.has(visitor.ip));
+        if (hasNewVisitor) {
+          beepOnce();
+        }
+      }
+      previousVisitorIps = currentIps;
+      onlinePresenceInitialised = true;
+
+      if (!list.length) {
+        onlineVisitorsContainer.className = 'empty-state';
+        onlineVisitorsContainer.textContent = 'No active visitors at the moment.';
+        return;
+      }
+
+      onlineVisitorsContainer.className = 'table-scroll';
+      onlineVisitorsContainer.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>IP address</th>
+              <th>Location</th>
+              <th>Last seen</th>
+              <th>Page</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list
+              .map((visitor) => {
+                const ip = escapeHtml(visitor.ip || '—');
+                const location = escapeHtml(visitor.location || 'Unknown location');
+                const lastSeen = escapeHtml(formatTime(visitor.last_seen));
+                const page = escapeHtml(visitor.page || '/');
+                return `
+                  <tr>
+                    <td>${ip}</td>
+                    <td>${location}</td>
+                    <td>${lastSeen}</td>
+                    <td>${page}</td>
+                  </tr>
+                `;
+              })
+              .join('')}
+          </tbody>
+        </table>
+      `;
     }
 
     async function loadBookings() {
@@ -932,13 +1065,19 @@
 
     closeContactDialogBtn.addEventListener('click', () => closeDialog(contactDialog));
 
+    if (refreshPresenceBtn) {
+      refreshPresenceBtn.addEventListener('click', loadOnlineVisitors);
+    }
     refreshBookingsBtn.addEventListener('click', loadBookings);
     refreshAvailabilityBtn.addEventListener('click', loadAvailability);
     refreshContactsBtn.addEventListener('click', loadContacts);
 
+    loadOnlineVisitors();
     loadBookings();
     loadAvailability();
     loadContacts();
+
+    setInterval(loadOnlineVisitors, 15000);
   </script>
 </body>
 </html>

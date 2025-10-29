@@ -2320,6 +2320,57 @@
     <script>
         const API_BASE = "https://booking-app-p8q8.onrender.com";
 
+        const PRESENCE_ENDPOINT = `${API_BASE}/presence`;
+
+        function buildPresencePayload() {
+            return {
+                page: window.location.pathname || '/',
+                timestamp: new Date().toISOString(),
+            };
+        }
+
+        async function reportPresence() {
+            const payload = buildPresencePayload();
+            try {
+                await fetch(PRESENCE_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    keepalive: true,
+                });
+            } catch (error) {
+                console.warn('Unable to notify presence.', error);
+            }
+        }
+
+        function sendPresenceBeacon() {
+            const payload = JSON.stringify(buildPresencePayload());
+            if (navigator.sendBeacon) {
+                try {
+                    const blob = new Blob([payload], { type: 'application/json' });
+                    navigator.sendBeacon(PRESENCE_ENDPOINT, blob);
+                    return;
+                } catch (error) {
+                    console.warn('Presence beacon failed, retrying with fetch.', error);
+                }
+            }
+            fetch(PRESENCE_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload,
+                keepalive: true,
+            }).catch(() => {});
+        }
+
+        reportPresence();
+        setInterval(reportPresence, 60000);
+        window.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                sendPresenceBeacon();
+            }
+        });
+        window.addEventListener('beforeunload', sendPresenceBeacon);
+
         // Mobile Menu Toggle
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const nav = document.getElementById('nav');
