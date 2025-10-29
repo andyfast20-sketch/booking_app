@@ -670,15 +670,7 @@
 
         @media (max-width: 768px) {
             .whatsapp-button {
-                bottom: 106px;
-                right: 18px;
-                left: auto;
-                padding: 10.5px 18px;
-                gap: 9px;
-            }
-
-            .whatsapp-button .whatsapp-text span:last-child {
-                font-size: 0.71rem;
+                display: none;
             }
 
             .live-chat-widget {
@@ -2201,6 +2193,23 @@
         }
 
         @media (max-width: 768px) {
+            header {
+                overflow: visible;
+            }
+
+            nav {
+                z-index: 1050;
+            }
+
+            .hero {
+                min-height: auto;
+            }
+
+            .hero-slide .container {
+                padding-top: 140px;
+                padding-bottom: 120px;
+            }
+
             .hero h1 {
                 font-size: 2.5rem;
             }
@@ -2341,6 +2350,16 @@
         }
 
         @media (max-width: 576px) {
+            .hero-slide .container {
+                padding-top: 150px;
+                padding-bottom: 110px;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+                gap: 12px;
+            }
+
             .hero h1 {
                 font-size: 2rem;
             }
