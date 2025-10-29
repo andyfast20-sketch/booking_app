@@ -2207,6 +2207,11 @@
         }
 
         @media (max-width: 768px) {
+            .container {
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+
             header {
                 overflow: visible;
             }
@@ -2223,7 +2228,7 @@
             .hero-slide {
                 align-items: flex-start;
                 justify-content: center;
-                background-position: center 22%;
+                background-position: center 58%;
             }
 
             .hero-slide .container {
@@ -2237,7 +2242,7 @@
                 border-radius: 24px;
                 box-shadow: 0 22px 52px rgba(0, 0, 0, 0.4);
                 max-width: 420px;
-                width: 100%;
+                width: min(420px, calc(100% - 32px));
                 margin-left: auto;
                 margin-right: auto;
             }
@@ -2401,7 +2406,7 @@
 
         @media (max-width: 576px) {
             .hero-slide {
-                background-position: center 18%;
+                background-position: center 68%;
             }
 
             .hero-slide .container {
