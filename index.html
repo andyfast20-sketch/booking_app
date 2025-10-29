@@ -1255,6 +1255,17 @@
             cursor: pointer;
         }
 
+        .form-hint {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.82);
+            margin-top: 8px;
+        }
+
+        .form-hint i {
+            margin-right: 6px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
         .booking-submit {
             width: 100%;
             padding: 14px;
@@ -1295,15 +1306,193 @@
         }
 
         .booking-response.success {
-            background: rgba(76, 175, 80, 0.2);
-            border: 1px solid rgba(76, 175, 80, 0.4);
-            color: #c8e6c9;
+            background: rgba(76, 175, 80, 0.12);
+            border: 1px solid rgba(76, 175, 80, 0.35);
+            color: #1b5e20;
         }
 
         .booking-response.error {
-            background: rgba(244, 67, 54, 0.2);
-            border: 1px solid rgba(244, 67, 54, 0.4);
-            color: #ffcdd2;
+            background: rgba(244, 67, 54, 0.12);
+            border: 1px solid rgba(244, 67, 54, 0.35);
+            color: #b71c1c;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 2000;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            position: relative;
+            width: min(520px, 100%);
+            background: var(--white);
+            border-radius: 28px;
+            box-shadow: 0 40px 70px rgba(15, 23, 42, 0.25);
+            padding: 40px;
+            overflow: hidden;
+        }
+
+        .modal-card::before {
+            content: "";
+            position: absolute;
+            inset: -80px -120px auto auto;
+            width: 240px;
+            height: 240px;
+            background: radial-gradient(circle at center, rgba(76, 175, 80, 0.18), transparent 60%);
+            z-index: 0;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(46, 125, 50, 0.08);
+            color: var(--primary-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease, transform 0.3s ease;
+            z-index: 2;
+        }
+
+        .modal-close:hover {
+            background: rgba(46, 125, 50, 0.18);
+            transform: rotate(90deg);
+        }
+
+        .modal-header {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 24px;
+        }
+
+        .modal-header .modal-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(46, 125, 50, 0.12);
+            color: var(--primary-dark);
+            font-weight: 600;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .modal-header h3 {
+            font-size: 1.8rem;
+            margin-top: 18px;
+            margin-bottom: 10px;
+        }
+
+        .modal-header p {
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        .modal-header p strong {
+            color: var(--primary-dark);
+        }
+
+        .modal-form {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: 18px;
+        }
+
+        .modal-feedback {
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: none;
+        }
+
+        .modal-feedback.visible {
+            display: block;
+        }
+
+        .modal-feedback.error {
+            background: rgba(244, 67, 54, 0.12);
+            color: #b71c1c;
+        }
+
+        .modal-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .modal-group input,
+        .modal-group select {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(46, 125, 50, 0.18);
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .modal-group input:focus,
+        .modal-group select:focus {
+            outline: none;
+            border-color: rgba(46, 125, 50, 0.55);
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.15);
+        }
+
+        .modal-submit {
+            margin-top: 10px;
+            padding: 16px;
+            border-radius: 16px;
+            border: none;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+            font-weight: 700;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .modal-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 28px rgba(46, 125, 50, 0.25);
+        }
+
+        .modal-submit[disabled] {
+            opacity: 0.7;
+            cursor: not-allowed;
+            box-shadow: none;
         }
 
         .booking-support {
@@ -1561,6 +1750,32 @@
 
             .booking-form-wrapper {
                 padding: 30px;
+            }
+
+            .modal-card {
+                padding: 30px 24px;
+                border-radius: 22px;
+            }
+
+            .modal-header h3 {
+                font-size: 1.55rem;
+            }
+
+            .modal-header p {
+                font-size: 0.95rem;
+            }
+
+            .modal-group input,
+            .modal-group select {
+                padding: 12px 14px;
+            }
+
+            .modal-feedback {
+                font-size: 0.9rem;
+            }
+
+            .form-hint {
+                font-size: 0.85rem;
             }
         }
 
@@ -1906,18 +2121,15 @@
                 <div class="booking-form-wrapper">
                     <form class="booking-form" id="bookingForm">
                         <div class="form-group">
-                            <label for="customerName">Your Name</label>
-                            <input type="text" id="customerName" name="name" placeholder="Enter your full name" required />
-                        </div>
-                        <div class="form-group">
                             <label for="customerTime">Available Time Slots</label>
                             <select id="customerTime" name="time" required>
                                 <option value="">Loading available times...</option>
                             </select>
                         </div>
+                        <p class="form-hint"><i class="fas fa-clipboard-check" aria-hidden="true"></i>Choose a time and we'll open a quick contact form to confirm.</p>
                         <button type="submit" class="booking-submit">Book Now</button>
                     </form>
-                    <div class="booking-response" id="bookingResponse"></div>
+                    <div class="booking-response" id="bookingResponse" role="alert" aria-live="assertive"></div>
                 </div>
             </div>
 
@@ -1935,6 +2147,48 @@
             </div>
         </div>
     </section>
+
+    <div class="modal-overlay" id="bookingModal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
+            <button type="button" class="modal-close" id="closeBookingModal" aria-label="Close booking details form">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+            <div class="modal-header">
+                <span class="modal-eyebrow"><i class="fas fa-user-check" aria-hidden="true"></i> Booking contact</span>
+                <h3 id="bookingModalTitle">Tell us how to reach you</h3>
+                <p>We'll confirm your appointment for <strong id="selectedSlotDisplay" aria-live="polite">your chosen slot</strong>.</p>
+            </div>
+            <form class="modal-form" id="bookingDetailsForm">
+                <input type="hidden" id="modalTimeInput" name="time" />
+                <div class="modal-group">
+                    <label for="modalCustomerName">Name</label>
+                    <input type="text" id="modalCustomerName" name="name" placeholder="Full name" autocomplete="name" required />
+                </div>
+                <div class="modal-group">
+                    <label for="modalLocation">Service location</label>
+                    <select id="modalLocation" name="location" required>
+                        <option value="">Select a location</option>
+                        <option value="Audenshaw">Audenshaw</option>
+                        <option value="Denton">Denton</option>
+                        <option value="Dukinfield">Dukinfield</option>
+                    </select>
+                </div>
+                <div class="modal-group">
+                    <label for="modalEmail">Email address</label>
+                    <input type="email" id="modalEmail" name="email" placeholder="name@example.com" autocomplete="email" required />
+                </div>
+                <div class="modal-group">
+                    <label for="modalPhone">Telephone number</label>
+                    <input type="tel" id="modalPhone" name="phone" placeholder="07xxx xxxxxx" autocomplete="tel" required />
+                </div>
+                <div class="modal-feedback" id="modalFeedback" role="alert"></div>
+                <button type="submit" class="modal-submit" id="modalSubmitButton">
+                    <span class="modal-submit-text">Confirm booking</span>
+                    <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </button>
+            </form>
+        </div>
+    </div>
 
     <a href="https://wa.me/447595289669" class="whatsapp-button" target="_blank" rel="noopener" aria-label="Chat with Pay As You Mow on WhatsApp">
         <span class="icon"><i class="fa-brands fa-whatsapp"></i></span>
@@ -2191,7 +2445,22 @@
         // Booking System
         const timeSelect = document.getElementById('customerTime');
         const bookingForm = document.getElementById('bookingForm');
+        const bookingSubmitButton = bookingForm.querySelector('.booking-submit');
         const bookingResponse = document.getElementById('bookingResponse');
+        const bookingModal = document.getElementById('bookingModal');
+        const bookingDetailsForm = document.getElementById('bookingDetailsForm');
+        const closeBookingModalBtn = document.getElementById('closeBookingModal');
+        const modalTimeInput = document.getElementById('modalTimeInput');
+        const selectedSlotDisplay = document.getElementById('selectedSlotDisplay');
+        const modalFeedback = document.getElementById('modalFeedback');
+        const modalSubmitButton = document.getElementById('modalSubmitButton');
+        const modalSubmitText = modalSubmitButton.querySelector('.modal-submit-text');
+        const modalCustomerName = document.getElementById('modalCustomerName');
+        const modalLocation = document.getElementById('modalLocation');
+        const modalEmail = document.getElementById('modalEmail');
+        const modalPhone = document.getElementById('modalPhone');
+
+        let lastFocusedElement = null;
 
         // Load available times
         async function loadAvailability() {
@@ -2226,24 +2495,105 @@
             }
         }
 
-        // Handle booking submission
-        bookingForm.addEventListener('submit', async (e) => {
+        function openBookingDetailsModal() {
+            lastFocusedElement = document.activeElement;
+            bookingModal.classList.add('visible');
+            bookingModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            modalFeedback.classList.remove('visible', 'error');
+            modalFeedback.textContent = '';
+            setTimeout(() => modalCustomerName.focus(), 50);
+        }
+
+        function closeBookingDetailsModal({ returnFocus = false, resetForm = false } = {}) {
+            bookingModal.classList.remove('visible');
+            bookingModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            modalFeedback.classList.remove('visible', 'error');
+            modalFeedback.textContent = '';
+            if (resetForm) {
+                bookingDetailsForm.reset();
+            }
+            if (returnFocus) {
+                (lastFocusedElement || bookingSubmitButton).focus();
+            }
+        }
+
+        // Handle booking submission (step 1: choose slot)
+        bookingForm.addEventListener('submit', (e) => {
             e.preventDefault();
 
-            const name = document.getElementById("customerName").value;
-            const time = document.getElementById("customerTime").value;
+            const chosenTime = timeSelect.value;
 
             bookingResponse.classList.remove('visible', 'success', 'error');
 
+            if (!chosenTime) {
+                bookingResponse.innerText = '❗ Please choose a booking date and time first.';
+                bookingResponse.classList.add('visible', 'error');
+                return;
+            }
+
+            modalTimeInput.value = chosenTime;
+            selectedSlotDisplay.textContent = chosenTime;
+            openBookingDetailsModal();
+        });
+
+        closeBookingModalBtn.addEventListener('click', () => {
+            closeBookingDetailsModal({ returnFocus: true });
+        });
+
+        bookingModal.addEventListener('click', (event) => {
+            if (event.target === bookingModal) {
+                closeBookingDetailsModal({ returnFocus: true });
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && bookingModal.classList.contains('visible')) {
+                closeBookingDetailsModal({ returnFocus: true });
+            }
+        });
+
+        // Handle contact details submission (step 2)
+        bookingDetailsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const payload = {
+                name: modalCustomerName.value.trim(),
+                location: modalLocation.value,
+                email: modalEmail.value.trim(),
+                phone: modalPhone.value.trim(),
+                time: modalTimeInput.value,
+            };
+
+            modalFeedback.classList.remove('visible', 'error');
+            modalFeedback.textContent = '';
+
+            if (!payload.time) {
+                modalFeedback.textContent = '❌ Please choose a booking slot again.';
+                modalFeedback.classList.add('visible', 'error');
+                return;
+            }
+
+            modalSubmitButton.disabled = true;
+            modalSubmitText.textContent = 'Booking...';
+
             try {
                 const res = await fetch(`${API_BASE}/book`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name, time })
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
 
                 const data = await res.json();
-                
+
+                if (!res.ok) {
+                    throw new Error(data.message || '❌ Error sending booking!');
+                }
+
+                closeBookingDetailsModal({ returnFocus: true, resetForm: true });
+
+                bookingResponse.classList.remove('visible', 'success', 'error');
                 bookingResponse.innerText = data.message;
                 bookingResponse.classList.add('visible', 'success');
 
@@ -2251,8 +2601,11 @@
                 await loadAvailability();
 
             } catch (error) {
-                bookingResponse.innerText = "❌ Error sending booking! Please try again.";
-                bookingResponse.classList.add('visible', 'error');
+                modalFeedback.textContent = error.message || '❌ Error sending booking! Please try again.';
+                modalFeedback.classList.add('visible', 'error');
+            } finally {
+                modalSubmitButton.disabled = false;
+                modalSubmitText.textContent = 'Confirm booking';
             }
         });
 
