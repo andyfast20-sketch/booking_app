@@ -959,8 +959,19 @@
         }
 
         .hero-content {
-            max-width: 800px;
-            margin: 0 auto;
+            max-width: 680px;
+            margin: 0;
+            padding: 44px 48px;
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: linear-gradient(150deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.45));
+            box-shadow: 0 30px 70px rgba(3, 20, 9, 0.55);
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 24px;
+            text-align: left;
             opacity: 0;
             transform: translateY(30px);
             transition: opacity 0.8s ease, transform 0.8s ease;
@@ -972,24 +983,32 @@
         }
 
         .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+            font-size: 3.1rem;
+            margin: 0;
+            text-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+            letter-spacing: -0.01em;
         }
 
         .hero p {
-            font-size: 1.2rem;
-            margin-bottom: 30px;
-            max-width: 650px;
-            margin-left: auto;
-            margin-right: auto;
+            font-size: 1.15rem;
+            margin: 0;
+            max-width: 480px;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.92);
         }
 
         .hero-actions {
             display: flex;
-            justify-content: center;
-            gap: 15px;
+            justify-content: flex-start;
+            align-items: stretch;
+            gap: 12px;
             flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .hero-actions .btn {
+            min-width: 180px;
+            text-align: center;
         }
 
         /* Services Section */
@@ -2184,6 +2203,19 @@
 
         /* Responsive Styles */
         @media (max-width: 992px) {
+            .hero-content {
+                padding: 36px 36px;
+                max-width: 620px;
+            }
+
+            .hero h1 {
+                font-size: 2.9rem;
+            }
+
+            .hero-actions .btn {
+                min-width: 160px;
+            }
+
             .about-content {
                 padding: 40px;
             }
@@ -2208,8 +2240,12 @@
 
         @media (max-width: 768px) {
             .container {
-                padding-left: 24px;
-                padding-right: 24px;
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+
+            section {
+                padding: 60px 0;
             }
 
             header {
@@ -2223,50 +2259,50 @@
             .hero {
                 min-height: 100vh;
                 overflow: visible;
+                padding-top: 12px;
             }
 
             .hero-slide {
-                align-items: flex-start;
-                justify-content: center;
-                background-position: center 58%;
+                align-items: flex-end;
+                justify-content: flex-start;
+                background-position: center 62%;
             }
 
             .hero-slide .container {
-                padding-top: 170px;
-                padding-bottom: 140px;
+                padding-top: 140px;
+                padding-bottom: 90px;
             }
 
             .hero-content {
-                background: linear-gradient(188deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.55));
-                padding: 32px 24px;
+                max-width: 100%;
+                width: 100%;
+                margin: 0;
+                padding: 28px 24px;
                 border-radius: 24px;
-                box-shadow: 0 22px 52px rgba(0, 0, 0, 0.4);
-                max-width: 420px;
-                width: min(420px, calc(100% - 32px));
-                margin-left: auto;
-                margin-right: auto;
-            }
-
-            .hero-content h1,
-            .hero-content p {
-                color: var(--white);
-            }
-
-            .hero-content {
-                background: linear-gradient(180deg, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.35));
-                padding: 28px 22px;
-                border-radius: 22px;
-                box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
-            }
-
-            .hero-content h1,
-            .hero-content p {
-                color: var(--white);
+                gap: 18px;
+                box-shadow: 0 22px 52px rgba(0, 0, 0, 0.45);
             }
 
             .hero h1 {
-                font-size: 2.4rem;
+                font-size: 2.6rem;
                 line-height: 1.25;
+            }
+
+            .hero p {
+                font-size: 1.08rem;
+                line-height: 1.65;
+            }
+
+            .hero-actions {
+                gap: 14px;
+            }
+
+            .hero-actions .btn {
+                flex: 1 1 100%;
+                min-width: 0;
+                padding: 12px 18px;
+                font-size: 0.95rem;
+                border-radius: 20px;
             }
 
             .about-content {
@@ -2404,24 +2440,40 @@
             }
         }
 
+        @media (max-width: 640px) {
+            .logo-wordmark strong {
+                display: none;
+            }
+
+            .logo-wordmark .logo-title {
+                font-size: 1.05em;
+                letter-spacing: 0.8px;
+            }
+        }
+
         @media (max-width: 576px) {
+            .container {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            section {
+                padding: 48px 0;
+            }
+
             .hero-slide {
-                background-position: center 68%;
+                background-position: center 66%;
             }
 
             .hero-slide .container {
-                padding-top: 180px;
-                padding-bottom: 120px;
+                padding-top: 130px;
+                padding-bottom: 72px;
             }
 
             .hero-content {
-                padding: 28px 20px;
+                padding: 24px 20px;
                 border-radius: 20px;
-            }
-
-            .hero-content {
-                padding: 24px 18px;
-                border-radius: 18px;
+                gap: 16px;
             }
 
             .hero-actions {
@@ -2430,16 +2482,21 @@
             }
 
             .hero h1 {
-                font-size: 2.1rem;
+                font-size: 2.3rem;
             }
 
             .hero p {
-                font-size: 1.05rem;
-                line-height: 1.7;
+                font-size: 1rem;
+                line-height: 1.6;
+            }
+
+            .hero-actions .btn {
+                font-size: 0.93rem;
+                padding: 11px 16px;
             }
 
             .btn {
-                padding: 10px 25px;
+                padding: 11px 20px;
             }
 
             .service-content {

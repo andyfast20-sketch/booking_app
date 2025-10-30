@@ -64,21 +64,40 @@
       font-size: 1.05rem;
     }
 
-    main {
+    main.panel-grid {
       margin-top: 2rem;
-      width: min(1080px, 100%);
-      display: flex;
-      flex-direction: column;
-      gap: 2rem;
+      width: min(1100px, 100%);
+      display: grid;
+      gap: 1.75rem;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     }
 
     .panel {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
       background: var(--panel-bg);
       border: 1px solid var(--panel-border);
       border-radius: 20px;
       padding: clamp(1.5rem, 2vw, 2rem);
       box-shadow: var(--shadow);
       backdrop-filter: blur(16px);
+      min-height: 220px;
+      overflow: hidden;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .panel[data-expanded="true"] {
+      grid-column: 1 / -1;
+      transform: translateY(-4px);
+      box-shadow: 0 30px 60px rgba(8, 16, 44, 0.55);
+      overflow: visible;
+    }
+
+    .panel:not([data-expanded="true"]):hover {
+      transform: translateY(-3px);
+      box-shadow: 0 18px 45px rgba(8, 16, 44, 0.45);
     }
 
     .panel-header {
@@ -87,6 +106,46 @@
       justify-content: space-between;
       align-items: center;
       gap: 1rem;
+    }
+
+    .panel-summary {
+      margin-top: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .panel-summary-highlight {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: 0.01em;
+    }
+
+    .panel-summary-note {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .panel[data-expanded="true"] .panel-summary {
+      display: none;
+    }
+
+    .panel-body {
+      margin-top: 1.5rem;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .panel-body[hidden] {
+      display: none !important;
+    }
+
+    .panel[data-expanded="true"] .panel-body {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     .panel-header h2 {
@@ -110,6 +169,20 @@
       display: flex;
       gap: 0.75rem;
       flex-wrap: wrap;
+    }
+
+    .panel-toggle {
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.12);
+      font-weight: 600;
+      padding: 0.55rem 1.25rem;
+    }
+
+    .panel-toggle[data-state="expanded"] {
+      background: rgba(48, 195, 166, 0.2);
+      border-color: rgba(48, 195, 166, 0.45);
+      color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(48, 195, 166, 0.35);
     }
 
     button,
@@ -684,6 +757,14 @@
         padding: 2rem 1rem 3rem;
       }
 
+      main.panel-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        min-height: 200px;
+      }
+
       table {
         min-width: 540px;
       }
@@ -718,8 +799,8 @@
     <p>Review, edit or remove bookings, manage available slots and keep on top of new enquiries.</p>
   </header>
 
-  <main>
-    <section class="panel" aria-labelledby="bookings-heading">
+  <main class="panel-grid">
+    <section class="panel" aria-labelledby="bookings-heading" data-panel data-expanded="false">
       <div class="panel-header">
         <div class="meta">
           <h2 id="bookings-heading">Confirmed bookings</h2>
@@ -727,12 +808,19 @@
         </div>
         <div class="panel-actions">
           <button id="refreshBookings" type="button">Refresh</button>
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="bookingsPanelBody">Expand</button>
         </div>
       </div>
-      <div id="bookingsTable" class="empty-state">Loading bookings…</div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight" id="bookingsSummaryHighlight">Instantly view confirmed jobs as they land.</p>
+        <p class="panel-summary-note">Expand to review customer details, edit appointments and remove bookings.</p>
+      </div>
+      <div class="panel-body" id="bookingsPanelBody" hidden>
+        <div id="bookingsTable" class="empty-state">Loading bookings…</div>
+      </div>
     </section>
 
-    <section class="panel" aria-labelledby="presence-heading">
+    <section class="panel" aria-labelledby="presence-heading" data-panel data-expanded="false">
       <div class="panel-header">
         <div class="meta">
           <h2 id="presence-heading">Live visitors</h2>
@@ -740,12 +828,19 @@
         </div>
         <div class="panel-actions">
           <button id="refreshPresence" type="button">Refresh</button>
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="presencePanelBody">Expand</button>
         </div>
       </div>
-      <div id="onlineVisitors" class="empty-state">Checking for active visitors…</div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight" id="presenceSummaryHighlight">Track who is browsing in real time.</p>
+        <p class="panel-summary-note">Expand to see visitor locations, pages and invite them into a chat.</p>
+      </div>
+      <div class="panel-body" id="presencePanelBody" hidden>
+        <div id="onlineVisitors" class="empty-state">Checking for active visitors…</div>
+      </div>
     </section>
 
-    <section class="panel" aria-labelledby="chat-heading">
+    <section class="panel" aria-labelledby="chat-heading" data-panel data-expanded="false">
       <div class="panel-header">
         <div class="meta">
           <h2 id="chat-heading">Live chat</h2>
@@ -754,43 +849,50 @@
         <div class="panel-actions" style="gap: 0.75rem;">
           <span class="chat-status-indicator" id="chatStatusIndicator">Chat online</span>
           <button id="toggleChatStatus" type="button">Go offline</button>
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="chatPanelBody">Expand</button>
         </div>
       </div>
-      <div class="chat-dashboard">
-        <aside class="chat-session-list" aria-label="Website chat sessions">
-          <div class="chat-session-list-header">
-            <h3 style="margin: 0; font-size: 1rem;">Visitors</h3>
-            <button type="button" id="refreshChatSessions">Refresh</button>
-          </div>
-          <div id="chatSessionsContainer" class="chat-sessions-empty">Loading conversations…</div>
-        </aside>
-        <div class="chat-thread-wrapper">
-          <div class="chat-thread-empty" id="chatThreadEmpty">
-            <i class="fas fa-comments"></i>
-            <p>Select a visitor on the left to open their conversation.</p>
-          </div>
-          <div class="chat-thread" id="chatThread" hidden>
-            <div class="chat-thread-header">
-              <div>
-                <h3 id="chatThreadTitle">Visitor</h3>
-                <p id="chatThreadMeta"></p>
-              </div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight" id="chatSummaryHighlight">Respond instantly to new live chats.</p>
+        <p class="panel-summary-note">Expand to view conversation threads, unread messages and send replies.</p>
+      </div>
+      <div class="panel-body" id="chatPanelBody" hidden>
+        <div class="chat-dashboard">
+          <aside class="chat-session-list" aria-label="Website chat sessions">
+            <div class="chat-session-list-header">
+              <h3 style="margin: 0; font-size: 1rem;">Visitors</h3>
+              <button type="button" id="refreshChatSessions">Refresh</button>
             </div>
-            <div class="chat-thread-messages" id="chatThreadMessages"></div>
-            <form class="chat-reply-form" id="chatReplyForm" novalidate>
-              <label for="chatReplyInput" class="sr-only">Type your reply</label>
-              <textarea id="chatReplyInput" rows="3" placeholder="Write a reply…" required></textarea>
-              <div class="chat-reply-actions">
-                <span id="chatReplyStatus" class="chat-reply-status"></span>
-                <button type="submit" class="primary">Send reply</button>
+            <div id="chatSessionsContainer" class="chat-sessions-empty">Loading conversations…</div>
+          </aside>
+          <div class="chat-thread-wrapper">
+            <div class="chat-thread-empty" id="chatThreadEmpty">
+              <i class="fas fa-comments"></i>
+              <p>Select a visitor on the left to open their conversation.</p>
+            </div>
+            <div class="chat-thread" id="chatThread" hidden>
+              <div class="chat-thread-header">
+                <div>
+                  <h3 id="chatThreadTitle">Visitor</h3>
+                  <p id="chatThreadMeta"></p>
+                </div>
               </div>
-            </form>
+              <div class="chat-thread-messages" id="chatThreadMessages"></div>
+              <form class="chat-reply-form" id="chatReplyForm" novalidate>
+                <label for="chatReplyInput" class="sr-only">Type your reply</label>
+                <textarea id="chatReplyInput" rows="3" placeholder="Write a reply…" required></textarea>
+                <div class="chat-reply-actions">
+                  <span id="chatReplyStatus" class="chat-reply-status"></span>
+                  <button type="submit" class="primary">Send reply</button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <div class="panel" aria-labelledby="availability-heading">
+    <section class="panel" aria-labelledby="availability-heading" data-panel data-expanded="false">
       <div class="panel-header">
         <div class="meta">
           <h2 id="availability-heading">Availability slots</h2>
@@ -798,28 +900,35 @@
         </div>
         <div class="panel-actions">
           <button id="refreshAvailability" type="button">Refresh</button>
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="availabilityPanelBody">Expand</button>
         </div>
       </div>
-      <form id="availabilityForm" class="grid" autocomplete="off">
-        <label>
-          Date
-          <input type="date" name="date" required />
-        </label>
-        <label>
-          Time
-          <select name="time" required>
-            <option value="">Select time…</option>
-            <option value="18:00">18:00</option>
-            <option value="19:00">19:00</option>
-            <option value="20:00">20:00</option>
-          </select>
-        </label>
-        <button type="submit" class="primary">Add slot</button>
-      </form>
-      <div id="availabilityList" class="empty-state">Loading availability…</div>
-    </div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight" id="availabilitySummaryHighlight">Publish bookable slots when you're free.</p>
+        <p class="panel-summary-note">Expand to add new times or quickly remove ones that are no longer available.</p>
+      </div>
+      <div class="panel-body" id="availabilityPanelBody" hidden>
+        <form id="availabilityForm" class="grid" autocomplete="off">
+          <label>
+            Date
+            <input type="date" name="date" required />
+          </label>
+          <label>
+            Time
+            <select name="time" required>
+              <option value="">Select time…</option>
+              <option value="18:00">18:00</option>
+              <option value="19:00">19:00</option>
+              <option value="20:00">20:00</option>
+            </select>
+          </label>
+          <button type="submit" class="primary">Add slot</button>
+        </form>
+        <div id="availabilityList" class="empty-state">Loading availability…</div>
+      </div>
+    </section>
 
-    <section class="panel" aria-labelledby="enquiries-heading">
+    <section class="panel" aria-labelledby="enquiries-heading" data-panel data-expanded="false">
       <div class="panel-header">
         <div class="meta">
           <h2 id="enquiries-heading">Contact enquiries</h2>
@@ -827,9 +936,16 @@
         </div>
         <div class="panel-actions">
           <button id="refreshContacts" type="button">Refresh</button>
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="contactsPanelBody">Expand</button>
         </div>
       </div>
-      <div id="contactsTable" class="empty-state">Waiting for enquiries…</div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight" id="contactsSummaryHighlight">Keep enquiries organised in one place.</p>
+        <p class="panel-summary-note">Expand to read messages, update their status or delete spam in seconds.</p>
+      </div>
+      <div class="panel-body" id="contactsPanelBody" hidden>
+        <div id="contactsTable" class="empty-state">Waiting for enquiries…</div>
+      </div>
     </section>
   </main>
 
@@ -896,6 +1012,15 @@
     const availabilityList = document.getElementById('availabilityList');
     const contactsTable = document.getElementById('contactsTable');
 
+    const bookingsSummaryHighlight = document.getElementById('bookingsSummaryHighlight');
+    const presenceSummaryHighlight = document.getElementById('presenceSummaryHighlight');
+    const chatSummaryHighlight = document.getElementById('chatSummaryHighlight');
+    const availabilitySummaryHighlight = document.getElementById('availabilitySummaryHighlight');
+    const contactsSummaryHighlight = document.getElementById('contactsSummaryHighlight');
+
+    const panelToggles = Array.from(document.querySelectorAll('.panel-toggle'));
+    const panels = Array.from(document.querySelectorAll('[data-panel]'));
+
     const availabilityForm = document.getElementById('availabilityForm');
     const refreshPresenceBtn = document.getElementById('refreshPresence');
     const refreshAvailabilityBtn = document.getElementById('refreshAvailability');
@@ -923,6 +1048,8 @@
     let chatMessagePollHandle = null;
     let chatLastMessageId = 0;
     let chatOnline = true;
+    let onlineVisitorsCache = [];
+    let availabilityCache = [];
 
     const bookingDialog = document.getElementById('bookingDialog');
     const bookingEditForm = document.getElementById('bookingEditForm');
@@ -994,6 +1121,174 @@
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
 
+    function setSummaryText(element, text) {
+      if (element) {
+        element.textContent = text;
+      }
+    }
+
+    function updateBookingSummary() {
+      if (!bookingsSummaryHighlight) return;
+      if (!bookingsCache.length) {
+        setSummaryText(bookingsSummaryHighlight, 'No confirmed bookings yet.');
+        return;
+      }
+
+      const total = bookingsCache.length;
+      const nextBooking = bookingsCache[0] || {};
+      const name = typeof nextBooking.name === 'string' && nextBooking.name.trim()
+        ? nextBooking.name.trim()
+        : 'Upcoming visit';
+      const time = typeof nextBooking.time === 'string' && nextBooking.time.trim()
+        ? nextBooking.time.trim()
+        : '';
+      const location = typeof nextBooking.location === 'string' && nextBooking.location.trim()
+        ? nextBooking.location.trim()
+        : '';
+      const details = [time, location].filter(Boolean).join(' • ');
+      const detailText = details ? ` (${details})` : '';
+      setSummaryText(
+        bookingsSummaryHighlight,
+        `${total} ${total === 1 ? 'booking' : 'bookings'} scheduled. Next: ${name}${detailText}.`
+      );
+    }
+
+    function updatePresenceSummary(visitors = []) {
+      if (!presenceSummaryHighlight) return;
+      const list = Array.isArray(visitors) ? visitors : [];
+      if (!list.length) {
+        setSummaryText(presenceSummaryHighlight, 'No active visitors right now.');
+        return;
+      }
+
+      const locations = new Set(
+        list
+          .map((visitor) => (visitor && typeof visitor.location === 'string' ? visitor.location.trim() : ''))
+          .filter(Boolean)
+      );
+      const locationSuffix = locations.size
+        ? ` from ${locations.size} location${locations.size === 1 ? '' : 's'}`
+        : '';
+      setSummaryText(
+        presenceSummaryHighlight,
+        `${list.length} active ${list.length === 1 ? 'visitor' : 'visitors'} browsing${locationSuffix}.`
+      );
+    }
+
+    function updateAvailabilitySummary(slots = []) {
+      if (!availabilitySummaryHighlight) return;
+      const list = Array.isArray(slots) ? slots : [];
+      if (!list.length) {
+        setSummaryText(availabilitySummaryHighlight, 'No free slots published right now.');
+        return;
+      }
+
+      const nextSlot = list[0] || '';
+      const suffix = nextSlot ? ` • next ${nextSlot}` : '';
+      setSummaryText(
+        availabilitySummaryHighlight,
+        `${list.length} available ${list.length === 1 ? 'slot' : 'slots'} live on the site${suffix}.`
+      );
+    }
+
+    function updateContactSummary() {
+      if (!contactsSummaryHighlight) return;
+      if (!contactsCache.length) {
+        setSummaryText(contactsSummaryHighlight, 'No enquiries yet.');
+        return;
+      }
+
+      const newCount = contactsCache.filter((contact) => contact && contact.status === 'new').length;
+      const suffix = newCount ? ` • ${newCount} new` : '';
+      setSummaryText(
+        contactsSummaryHighlight,
+        `${contactsCache.length} contact ${contactsCache.length === 1 ? 'enquiry' : 'enquiries'}${suffix}.`
+      );
+    }
+
+    function updateChatSummary() {
+      if (!chatSummaryHighlight) return;
+      if (!chatSessionsCache.length) {
+        if (chatOnline) {
+          setSummaryText(chatSummaryHighlight, 'Online and ready for the next chat.');
+        } else {
+          setSummaryText(chatSummaryHighlight, 'Chat is offline. Visitors see an offline notice.');
+        }
+        return;
+      }
+
+      const unreadTotal = chatSessionsCache.reduce(
+        (total, session) => total + (Number(session && session.unread_from_visitor) || 0),
+        0
+      );
+      const unreadSuffix = unreadTotal
+        ? ` • ${unreadTotal} new message${unreadTotal === 1 ? '' : 's'}`
+        : '';
+      const descriptor = chatOnline ? 'live' : 'saved';
+      setSummaryText(
+        chatSummaryHighlight,
+        `${chatSessionsCache.length} ${descriptor} ${chatSessionsCache.length === 1 ? 'chat' : 'chats'} active${unreadSuffix}.`
+      );
+    }
+
+    function collapsePanel(panel, toggle, body) {
+      if (!panel || !toggle || !body) return;
+      panel.setAttribute('data-expanded', 'false');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.dataset.state = 'collapsed';
+      toggle.textContent = 'Expand';
+      body.hidden = true;
+    }
+
+    function expandPanel(panel, toggle, body) {
+      if (!panel || !toggle || !body) return;
+      body.hidden = false;
+      toggle.setAttribute('aria-expanded', 'true');
+      toggle.dataset.state = 'expanded';
+      toggle.textContent = 'Collapse';
+      requestAnimationFrame(() => {
+        panel.setAttribute('data-expanded', 'true');
+        panel.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      });
+    }
+
+    function initialisePanelToggles() {
+      panelToggles.forEach((toggle) => {
+        const panel = toggle.closest('[data-panel]');
+        const bodyId = toggle.getAttribute('aria-controls');
+        const body = bodyId ? document.getElementById(bodyId) : null;
+        if (!panel || !body) {
+          return;
+        }
+
+        collapsePanel(panel, toggle, body);
+
+        toggle.addEventListener('click', () => {
+          const isExpanded = panel.getAttribute('data-expanded') === 'true';
+          if (isExpanded) {
+            collapsePanel(panel, toggle, body);
+            return;
+          }
+
+          panels.forEach((otherPanel) => {
+            if (otherPanel === panel) return;
+            const bodyElement = otherPanel.querySelector('.panel-body');
+            if (!bodyElement) return;
+            const otherToggle = otherPanel.querySelector(
+              `.panel-toggle[aria-controls="${bodyElement.id}"]`
+            );
+            if (otherPanel.getAttribute('data-expanded') === 'true' && otherToggle) {
+              collapsePanel(otherPanel, otherToggle, bodyElement);
+            }
+          });
+
+          expandPanel(panel, toggle, body);
+        });
+      });
+    }
+
+    initialisePanelToggles();
+
     function getAudioContext() {
       const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextCtor) {
@@ -1037,6 +1332,7 @@
       if (!onlineVisitorsContainer) return;
       onlineVisitorsContainer.className = 'empty-state';
       onlineVisitorsContainer.textContent = 'Checking for active visitors…';
+      setSummaryText(presenceSummaryHighlight, 'Checking for active visitors…');
       try {
         const res = await fetch('/presence');
         if (!res.ok) throw new Error('Unable to fetch online visitors');
@@ -1045,12 +1341,16 @@
         renderOnlineVisitors(visitors);
       } catch (error) {
         onlineVisitorsContainer.textContent = error.message || 'Failed to load visitors';
+        onlineVisitorsCache = [];
+        setSummaryText(presenceSummaryHighlight, error.message || 'Unable to load visitors right now.');
       }
     }
 
     function renderOnlineVisitors(visitors) {
       if (!onlineVisitorsContainer) return;
       const list = Array.isArray(visitors) ? visitors : [];
+      onlineVisitorsCache = list;
+      updatePresenceSummary(list);
       const currentIps = new Set(list.map((visitor) => visitor.ip));
       if (onlinePresenceInitialised) {
         const hasNewVisitor = list.some((visitor) => !previousVisitorIps.has(visitor.ip));
@@ -1182,18 +1482,22 @@
     async function loadBookings() {
       bookingsTable.className = 'empty-state';
       bookingsTable.textContent = 'Loading bookings…';
+      setSummaryText(bookingsSummaryHighlight, 'Loading bookings…');
       try {
         const res = await fetch('/api/bookings');
         if (!res.ok) throw new Error('Unable to fetch bookings');
         const data = await res.json();
         bookingsCache = Array.isArray(data.bookings) ? data.bookings : [];
+        updateBookingSummary();
         renderBookings();
       } catch (error) {
         bookingsTable.textContent = error.message || 'Failed to load bookings';
+        setSummaryText(bookingsSummaryHighlight, error.message || 'Unable to load bookings.');
       }
     }
 
     function renderBookings() {
+      updateBookingSummary();
       if (!bookingsCache.length) {
         bookingsTable.className = 'empty-state';
         bookingsTable.textContent = 'No bookings recorded yet.';
@@ -1338,17 +1642,22 @@
     async function loadAvailability() {
       availabilityList.className = 'empty-state';
       availabilityList.textContent = 'Loading availability…';
+      setSummaryText(availabilitySummaryHighlight, 'Loading availability slots…');
       try {
         const res = await fetch('/availability');
         if (!res.ok) throw new Error('Unable to fetch availability');
         const slots = await res.json();
-        renderAvailability(Array.isArray(slots) ? slots : []);
+        availabilityCache = Array.isArray(slots) ? slots : [];
+        renderAvailability(availabilityCache);
       } catch (error) {
         availabilityList.textContent = error.message || 'Failed to load availability';
+        availabilityCache = [];
+        setSummaryText(availabilitySummaryHighlight, error.message || 'Unable to load availability slots.');
       }
     }
 
     function renderAvailability(slots) {
+      updateAvailabilitySummary(slots);
       if (!slots.length) {
         availabilityList.className = 'empty-state';
         availabilityList.textContent = 'No free slots available.';
@@ -1415,6 +1724,7 @@
     async function loadContacts() {
       contactsTable.className = 'empty-state';
       contactsTable.textContent = 'Loading enquiries…';
+      setSummaryText(contactsSummaryHighlight, 'Loading enquiries…');
       try {
         const res = await fetch('/api/contacts');
         if (!res.ok) throw new Error('Unable to fetch enquiries');
@@ -1423,10 +1733,13 @@
         renderContacts();
       } catch (error) {
         contactsTable.textContent = error.message || 'Failed to load enquiries';
+        contactsCache = [];
+        setSummaryText(contactsSummaryHighlight, error.message || 'Unable to load contact enquiries.');
       }
     }
 
     function renderContacts() {
+      updateContactSummary();
       if (!contactsCache.length) {
         contactsTable.className = 'empty-state';
         contactsTable.textContent = 'No enquiries yet.';
@@ -1616,10 +1929,13 @@
           ? ''
           : 'Website visitors currently see an offline notice.';
       }
+
+      updateChatSummary();
     }
 
     function renderChatSessions() {
       if (!chatSessionsContainer) return;
+      updateChatSummary();
       if (!chatSessionsCache.length) {
         chatSessionsContainer.className = 'chat-sessions-empty';
         chatSessionsContainer.textContent = chatOnline
@@ -1743,6 +2059,7 @@
       if (!chatSessionsContainer) return;
       chatSessionsContainer.className = 'chat-sessions-empty';
       chatSessionsContainer.textContent = 'Loading conversations…';
+      setSummaryText(chatSummaryHighlight, 'Loading conversations…');
       try {
         const res = await fetch('/admin/chat/sessions');
         if (!res.ok) {
@@ -1762,6 +2079,8 @@
       } catch (error) {
         chatSessionsContainer.className = 'chat-sessions-empty';
         chatSessionsContainer.textContent = error.message || 'Unable to load conversations.';
+        chatSessionsCache = [];
+        setSummaryText(chatSummaryHighlight, error.message || 'Unable to load conversations right now.');
       }
     }
 
