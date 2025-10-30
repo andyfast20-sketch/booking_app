@@ -172,6 +172,51 @@
       align-items: center;
     }
 
+    .autopilot-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
+      transition: background 0.2s ease, color 0.2s ease, border 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .status-pill.active {
+      background: rgba(48, 195, 166, 0.22);
+      border-color: rgba(48, 195, 166, 0.5);
+      color: var(--accent);
+      box-shadow: 0 8px 22px rgba(48, 195, 166, 0.28);
+    }
+
+    .status-pill.offline {
+      background: rgba(255, 107, 107, 0.18);
+      border-color: rgba(255, 107, 107, 0.45);
+      color: #ffd3d3;
+    }
+
+    .autopilot-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .autopilot-controls .panel-actions {
+      justify-content: flex-end;
+    }
+
     .panel-toggle {
       border: 1px solid rgba(255, 255, 255, 0.22);
       background: rgba(255, 255, 255, 0.12);
@@ -537,6 +582,17 @@
       box-shadow: 0 14px 32px rgba(48, 195, 166, 0.35);
     }
 
+    .thread-message.autopilot .thread-message-bubble {
+      background: linear-gradient(135deg, rgba(48, 195, 166, 0.3), rgba(29, 164, 136, 0.65));
+      color: var(--text-primary);
+      border-color: rgba(48, 195, 166, 0.48);
+      box-shadow: 0 16px 34px rgba(48, 195, 166, 0.32);
+    }
+
+    .thread-message.autopilot .thread-message-meta {
+      color: rgba(48, 195, 166, 0.85);
+    }
+
     .thread-message-meta {
       font-size: 0.78rem;
       color: var(--text-muted);
@@ -791,6 +847,11 @@
       display: block;
     }
 
+    .form-feedback.success {
+      background: rgba(48, 195, 166, 0.22);
+      color: #d2fff3;
+    }
+
     @media (max-width: 720px) {
       body {
         padding: 1.75rem 0.9rem 2.5rem;
@@ -940,6 +1001,49 @@
       </div>
     </section>
 
+    <section class="panel" aria-labelledby="autopilot-heading" data-panel data-expanded="false">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="autopilot-heading">Chat autopilot</h2>
+          <p>Let ChatGPT answer routine visitor questions using your business knowledge.</p>
+        </div>
+        <div class="panel-actions">
+          <button type="button" id="autopilotToggle">Enable autopilot</button>
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="autopilotPanelBody">Expand</button>
+        </div>
+      </div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight" id="autopilotSummaryHighlight">Automate FAQs with a tailored assistant.</p>
+        <p class="panel-summary-note">Expand to edit your business guide and control the chat autopilot.</p>
+      </div>
+      <div class="panel-body" id="autopilotPanelBody" hidden>
+        <div class="autopilot-status-row">
+          <span class="status-pill offline" id="autopilotStatusBadge">Autopilot paused</span>
+          <div class="panel-actions">
+            <button type="button" id="autopilotToggleSecondary">Enable autopilot</button>
+          </div>
+        </div>
+        <form id="autopilotForm" class="autopilot-controls">
+          <label for="autopilotPrompt">
+            Business knowledge base
+            <textarea
+              id="autopilotPrompt"
+              name="business_profile"
+              maxlength="4000"
+              placeholder="Describe your services, service area, pricing guidance, tone of voice and any FAQs you want the assistant to know."
+            ></textarea>
+          </label>
+          <p class="panel-summary-note">
+            Set the <code>OPENAI_API_KEY</code> environment variable with your ChatGPT API key before enabling autopilot.
+          </p>
+          <div class="form-feedback" id="autopilotFeedback"></div>
+          <div class="panel-actions">
+            <button type="submit" class="primary">Save autopilot settings</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
     <section class="panel" aria-labelledby="availability-heading" data-panel data-expanded="false">
       <div class="panel-header">
         <div class="meta">
@@ -1063,6 +1167,7 @@
     const bookingsSummaryHighlight = document.getElementById('bookingsSummaryHighlight');
     const presenceSummaryHighlight = document.getElementById('presenceSummaryHighlight');
     const chatSummaryHighlight = document.getElementById('chatSummaryHighlight');
+    const autopilotSummaryHighlight = document.getElementById('autopilotSummaryHighlight');
     const availabilitySummaryHighlight = document.getElementById('availabilitySummaryHighlight');
     const contactsSummaryHighlight = document.getElementById('contactsSummaryHighlight');
 
@@ -1090,6 +1195,16 @@
     const chatReplyStatus = document.getElementById('chatReplyStatus');
     const chatReplySubmit = chatReplyForm ? chatReplyForm.querySelector('button[type="submit"]') : null;
 
+    const autopilotStatusBadge = document.getElementById('autopilotStatusBadge');
+    const autopilotToggleButtons = [
+      document.getElementById('autopilotToggle'),
+      document.getElementById('autopilotToggleSecondary'),
+    ].filter((button) => button instanceof HTMLButtonElement);
+    const autopilotForm = document.getElementById('autopilotForm');
+    const autopilotPromptInput = document.getElementById('autopilotPrompt');
+    const autopilotFeedback = document.getElementById('autopilotFeedback');
+    const autopilotSaveButton = autopilotForm ? autopilotForm.querySelector('button[type="submit"]') : null;
+
     const CHAT_POLL_INTERVAL = 4000;
     const DEFAULT_CHAT_INVITE_MESSAGE = 'Hi there! We\'re online if you need a hand with anything.';
     let chatSessionsCache = [];
@@ -1102,6 +1217,14 @@
     let chatAttentionInitialised = false;
     let onlineVisitorsCache = [];
     let availabilityCache = [];
+    const AUTOPILOT_DEFAULTS = {
+      enabled: false,
+      business_profile: '',
+      model: 'gpt-3.5-turbo',
+      temperature: 0.3,
+    };
+    let autopilotConfig = { ...AUTOPILOT_DEFAULTS };
+    let autopilotBusy = false;
 
     const bookingDialog = document.getElementById('bookingDialog');
     const bookingEditForm = document.getElementById('bookingEditForm');
@@ -1309,6 +1432,119 @@
         `${chatSessionsCache.length} ${descriptor} ${chatSessionsCache.length === 1 ? 'chat' : 'chats'} active${unreadSuffix}.`
       );
       updateChatAttentionIndicator(unreadTotal);
+    }
+
+    function updateAutopilotSummary() {
+      if (!autopilotSummaryHighlight) return;
+      const enabled = Boolean(autopilotConfig.enabled);
+      const hasProfile =
+        typeof autopilotConfig.business_profile === 'string' && autopilotConfig.business_profile.trim().length > 0;
+
+      if (enabled && hasProfile) {
+        setSummaryText(
+          autopilotSummaryHighlight,
+          'Autopilot is answering chats using your saved business guide.'
+        );
+      } else if (enabled) {
+        setSummaryText(
+          autopilotSummaryHighlight,
+          'Autopilot is on. Add more business info so replies stay accurate.'
+        );
+      } else {
+        setSummaryText(autopilotSummaryHighlight, 'Autopilot is paused. You will reply to visitors manually.');
+      }
+    }
+
+    function setAutopilotBusy(isBusy) {
+      autopilotBusy = Boolean(isBusy);
+      autopilotToggleButtons.forEach((button) => {
+        if (button instanceof HTMLButtonElement) {
+          button.disabled = autopilotBusy;
+        }
+      });
+      if (autopilotSaveButton) {
+        autopilotSaveButton.disabled = autopilotBusy;
+      }
+    }
+
+    function renderAutopilotState() {
+      const enabled = Boolean(autopilotConfig.enabled);
+      if (autopilotStatusBadge) {
+        autopilotStatusBadge.textContent = enabled ? 'Autopilot active' : 'Autopilot paused';
+        autopilotStatusBadge.classList.toggle('active', enabled);
+        autopilotStatusBadge.classList.toggle('offline', !enabled);
+      }
+      autopilotToggleButtons.forEach((button) => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        button.textContent = enabled ? 'Disable autopilot' : 'Enable autopilot';
+        button.classList.toggle('primary', !enabled);
+        button.disabled = autopilotBusy;
+      });
+      if (autopilotPromptInput && typeof autopilotConfig.business_profile === 'string') {
+        autopilotPromptInput.value = autopilotConfig.business_profile;
+      }
+    }
+
+    async function loadAutopilotConfig() {
+      try {
+        const res = await fetch('/admin/autopilot/config');
+        if (!res.ok) {
+          throw new Error('Unable to load autopilot settings.');
+        }
+        const data = await res.json().catch(() => ({}));
+        const incoming = data && typeof data.config === 'object' ? data.config : {};
+        autopilotConfig = { ...AUTOPILOT_DEFAULTS, ...incoming };
+        renderAutopilotState();
+        updateAutopilotSummary();
+      } catch (error) {
+        console.error('Unable to load autopilot settings.', error);
+        if (autopilotSummaryHighlight) {
+          setSummaryText(autopilotSummaryHighlight, 'Unable to load autopilot settings right now.');
+        }
+      }
+    }
+
+    async function persistAutopilotConfig(payload, showSuccess = false) {
+      if (!payload || typeof payload !== 'object') {
+        return false;
+      }
+
+      if (autopilotFeedback) {
+        autopilotFeedback.classList.remove('visible', 'success');
+        autopilotFeedback.textContent = '';
+      }
+
+      setAutopilotBusy(true);
+      try {
+        const res = await fetch('/admin/autopilot/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || 'Unable to update autopilot settings.');
+        }
+        const incoming = data && typeof data.config === 'object' ? data.config : {};
+        autopilotConfig = { ...AUTOPILOT_DEFAULTS, ...incoming };
+        renderAutopilotState();
+        updateAutopilotSummary();
+        if (showSuccess && autopilotFeedback) {
+          autopilotFeedback.textContent = 'Autopilot settings saved.';
+          autopilotFeedback.classList.add('visible', 'success');
+        }
+        return true;
+      } catch (error) {
+        console.error('Unable to update autopilot settings.', error);
+        if (autopilotFeedback) {
+          autopilotFeedback.textContent = error.message || 'Unable to update autopilot settings.';
+          autopilotFeedback.classList.remove('success');
+          autopilotFeedback.classList.add('visible');
+        }
+        return false;
+      } finally {
+        setAutopilotBusy(false);
+      }
     }
 
     function collapsePanel(panel, toggle, body) {
@@ -2118,8 +2354,15 @@
         chatLastMessageId = messageId;
       }
 
+      const sender = typeof message.sender === 'string' ? message.sender : 'visitor';
+      const isAutopilot = sender === 'autopilot';
+      const isAdminMessage = sender === 'admin' || isAutopilot;
+
       const wrapper = document.createElement('div');
-      wrapper.className = `thread-message ${message.sender === 'admin' ? 'from-admin' : 'from-visitor'}`;
+      wrapper.className = `thread-message ${isAdminMessage ? 'from-admin' : 'from-visitor'}`;
+      if (isAutopilot) {
+        wrapper.classList.add('autopilot');
+      }
 
       const bubble = document.createElement('div');
       bubble.className = 'thread-message-bubble';
@@ -2128,7 +2371,8 @@
 
       const meta = document.createElement('span');
       meta.className = 'thread-message-meta';
-      meta.textContent = `${message.sender === 'admin' ? 'You' : 'Visitor'} • ${formatChatTimestamp(message.timestamp)}`;
+      const senderLabel = isAutopilot ? 'Autopilot' : isAdminMessage ? 'You' : 'Visitor';
+      meta.textContent = `${senderLabel} • ${formatChatTimestamp(message.timestamp)}`;
       wrapper.appendChild(meta);
 
       chatThreadMessages.appendChild(wrapper);
@@ -2369,9 +2613,45 @@
       });
     }
 
+    autopilotToggleButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const nextEnabled = !autopilotConfig.enabled;
+        const businessProfile = autopilotPromptInput
+          ? autopilotPromptInput.value.trim()
+          : autopilotConfig.business_profile || '';
+        persistAutopilotConfig({
+          enabled: nextEnabled,
+          business_profile: businessProfile,
+          model: autopilotConfig.model,
+          temperature: autopilotConfig.temperature,
+        });
+      });
+    });
+
+    if (autopilotForm) {
+      autopilotForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const businessProfile = autopilotPromptInput ? autopilotPromptInput.value.trim() : '';
+        persistAutopilotConfig(
+          {
+            enabled: autopilotConfig.enabled,
+            business_profile: businessProfile,
+            model: autopilotConfig.model,
+            temperature: autopilotConfig.temperature,
+          },
+          true
+        );
+      });
+    }
+
+    renderAutopilotState();
+    updateAutopilotSummary();
+
     updateChatStatusIndicator(chatOnline);
     renderChatSessions();
     loadChatSessions();
+
+    loadAutopilotConfig();
 
     if (refreshPresenceBtn) {
       refreshPresenceBtn.addEventListener('click', loadOnlineVisitors);

@@ -23,6 +23,12 @@ BOOKINGS_FILE = "bookings.txt"
 AVAIL_FILE = "availability.txt"
 CONTACTS_FILE = "contacts.json"
 CHAT_STATE_FILE = "chat_state.json"
+AUTOPILOT_FILE = "autopilot.json"
+
+DEFAULT_AUTOPILOT_MODEL = "gpt-3.5-turbo"
+DEFAULT_AUTOPILOT_TEMPERATURE = 0.3
+AUTOPILOT_PROFILE_LIMIT = 4000
+AUTOPILOT_HISTORY_LIMIT = 12
 
 VISITOR_TIMEOUT = timedelta(minutes=3)
 LOCATION_CACHE_TTL = timedelta(hours=6)
@@ -32,6 +38,13 @@ _presence_lock = Lock()
 _location_cache = {}
 _chat_state_lock = Lock()
 _chat_state = {"online": True, "sessions": {}}
+_autopilot_lock = Lock()
+_autopilot_config = {
+    "enabled": False,
+    "business_profile": "",
+    "model": DEFAULT_AUTOPILOT_MODEL,
+    "temperature": DEFAULT_AUTOPILOT_TEMPERATURE,
+}
 
 
 def _is_private_ip(ip_str: str) -> bool:
@@ -143,6 +156,81 @@ def _safe_int(value, default=0):
         return default
 
 
+def _coerce_autopilot_config(payload: dict, *, base=None) -> dict:
+    reference = dict(base or _autopilot_config)
+    result = {
+        "enabled": bool(reference.get("enabled", False)),
+        "business_profile": str(reference.get("business_profile", "") or ""),
+        "model": str(reference.get("model", DEFAULT_AUTOPILOT_MODEL) or DEFAULT_AUTOPILOT_MODEL),
+        "temperature": float(reference.get("temperature", DEFAULT_AUTOPILOT_TEMPERATURE)),
+    }
+
+    if payload is None:
+        payload = {}
+
+    if "enabled" in payload:
+        requested = payload.get("enabled")
+        if isinstance(requested, str):
+            requested = requested.strip().lower() in {"1", "true", "yes", "on"}
+        result["enabled"] = bool(requested)
+
+    if "business_profile" in payload:
+        text = str(payload.get("business_profile") or "").strip()
+        if len(text) > AUTOPILOT_PROFILE_LIMIT:
+            text = text[:AUTOPILOT_PROFILE_LIMIT]
+        result["business_profile"] = text
+
+    if "model" in payload:
+        model = str(payload.get("model") or "").strip() or DEFAULT_AUTOPILOT_MODEL
+        result["model"] = model
+
+    if "temperature" in payload:
+        temperature = payload.get("temperature")
+        try:
+            temperature = float(temperature)
+        except (TypeError, ValueError):
+            temperature = reference.get("temperature", DEFAULT_AUTOPILOT_TEMPERATURE)
+        temperature = max(0.0, min(2.0, temperature))
+        result["temperature"] = temperature
+
+    return result
+
+
+def _load_autopilot_config_from_disk() -> dict:
+    if not os.path.exists(AUTOPILOT_FILE):
+        return dict(_autopilot_config)
+
+    try:
+        with open(AUTOPILOT_FILE, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return dict(_autopilot_config)
+
+    if not isinstance(payload, dict):
+        return dict(_autopilot_config)
+
+    return _coerce_autopilot_config(payload, base=_autopilot_config)
+
+
+def _save_autopilot_config(config=None) -> None:
+    snapshot = dict(config or _autopilot_config)
+    try:
+        with open(AUTOPILOT_FILE, "w", encoding="utf-8") as handle:
+            json.dump(snapshot, handle, indent=2)
+    except OSError:
+        pass
+
+
+def _autopilot_config_snapshot() -> dict:
+    with _autopilot_lock:
+        return {
+            "enabled": bool(_autopilot_config.get("enabled", False)),
+            "business_profile": str(_autopilot_config.get("business_profile", "") or ""),
+            "model": str(_autopilot_config.get("model", DEFAULT_AUTOPILOT_MODEL) or DEFAULT_AUTOPILOT_MODEL),
+            "temperature": float(_autopilot_config.get("temperature", DEFAULT_AUTOPILOT_TEMPERATURE)),
+        }
+
+
 def _load_chat_state_from_disk():
     if not os.path.exists(CHAT_STATE_FILE):
         return {"online": True, "sessions": {}}
@@ -239,6 +327,11 @@ with _chat_state_lock:
     _chat_state.update(stored_chat_state)
 
 
+with _autopilot_lock:
+    stored_autopilot = _load_autopilot_config_from_disk()
+    _autopilot_config.update(stored_autopilot)
+
+
 def _append_chat_message(
     session: dict,
     sender: str,
@@ -331,6 +424,129 @@ def _get_session_id_for_ip(ip_str: str) -> str:
                 best_last_seen = last_seen
 
     return best_id
+
+
+# --- Autopilot helpers ---
+
+
+def _build_autopilot_messages(conversation, config: dict) -> list:
+    business_profile = str(config.get("business_profile", "") or "").strip()
+    if not business_profile:
+        business_profile = "No additional business context has been provided."
+
+    instructions = (
+        "You are Autopilot, a friendly live chat assistant for a gardening and maintenance business. "
+        "Answer website visitor questions using the business knowledge provided below and the ongoing conversation. "
+        "If you are unsure or the visitor asks for something that is not covered, politely let them know a member of the team will follow up. "
+        "Keep replies concise, helpful and avoid making up details."
+    )
+
+    messages = [
+        {
+            "role": "system",
+            "content": f"{instructions}\n\nBusiness knowledge:\n{business_profile}",
+        }
+    ]
+
+    history = list(conversation or [])[-AUTOPILOT_HISTORY_LIMIT:]
+    for entry in history:
+        if not isinstance(entry, dict):
+            continue
+        text = str(entry.get("text") or "").strip()
+        if not text:
+            continue
+        if str(entry.get("type") or "") == "invite":
+            continue
+        sender = entry.get("sender")
+        role = "assistant" if sender in {"admin", "autopilot"} else "user"
+        messages.append({"role": role, "content": text})
+
+    return messages
+
+
+def _request_autopilot_reply(messages, *, model: str, temperature: float, api_key: str) -> str:
+    if not api_key or not messages:
+        return ""
+
+    payload = {
+        "model": model or DEFAULT_AUTOPILOT_MODEL,
+        "messages": messages,
+        "temperature": float(temperature),
+        "max_tokens": 350,
+    }
+
+    request = Request(
+        "https://api.openai.com/v1/chat/completions",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
+    )
+
+    try:
+        with urlopen(request, timeout=15) as response:
+            if getattr(response, "status", 200) != 200:
+                return ""
+            raw = response.read().decode("utf-8")
+    except (HTTPError, URLError, TimeoutError, ValueError, OSError):
+        return ""
+
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return ""
+
+    choices = parsed.get("choices")
+    if not isinstance(choices, list) or not choices:
+        return ""
+
+    message_payload = choices[0].get("message") if isinstance(choices[0], dict) else {}
+    if not isinstance(message_payload, dict):
+        return ""
+
+    content = message_payload.get("content")
+    if isinstance(content, str):
+        return content.strip()
+
+    return ""
+
+
+def _maybe_send_autopilot_reply(session_id: str, conversation=None):
+    config = _autopilot_config_snapshot()
+    if not config.get("enabled"):
+        return None
+
+    api_key = (os.environ.get("OPENAI_API_KEY") or "").strip()
+    if not api_key:
+        return None
+
+    messages = _build_autopilot_messages(conversation or [], config)
+    if len(messages) <= 1:
+        return None
+
+    reply_text = _request_autopilot_reply(
+        messages,
+        model=config.get("model", DEFAULT_AUTOPILOT_MODEL),
+        temperature=config.get("temperature", DEFAULT_AUTOPILOT_TEMPERATURE),
+        api_key=api_key,
+    )
+
+    clean_reply = (reply_text or "").strip()
+    if not clean_reply:
+        return None
+
+    with _chat_state_lock:
+        session = _chat_state.get("sessions", {}).get(session_id)
+        if not session:
+            return None
+        try:
+            entry = _append_chat_message(session, "autopilot", clean_reply, message_type="autopilot")
+        except ValueError:
+            return None
+
+    _save_chat_state()
+    return entry
 
 
 # --- Live chat endpoints ---
@@ -457,6 +673,7 @@ def chat_send():
     if not session_id:
         return jsonify({"message": "Unable to create chat session."}), 500
 
+    conversation_snapshot = []
     with _chat_state_lock:
         session = _chat_state.get("sessions", {}).get(session_id)
         if not session:
@@ -476,9 +693,16 @@ def chat_send():
             visitor["user_agent"] = user_agent[:280]
         if page:
             visitor["last_page"] = page
+        conversation_snapshot = [dict(item) for item in session.get("messages", [])]
 
     _save_chat_state()
-    return jsonify({"message": "Message sent.", "entry": entry, "session_id": session_id})
+    autopilot_entry = _maybe_send_autopilot_reply(session_id, conversation_snapshot)
+
+    response_payload = {"message": "Message sent.", "entry": entry, "session_id": session_id}
+    if autopilot_entry:
+        response_payload["autopilot_entry"] = autopilot_entry
+
+    return jsonify(response_payload)
 
 
 @app.route("/admin/chat/status", methods=["POST"])
@@ -496,6 +720,22 @@ def admin_chat_status():
 
     _save_chat_state()
     return jsonify({"message": "Chat status updated.", "online": online})
+
+
+@app.route("/admin/autopilot/config", methods=["GET", "POST"])
+def admin_autopilot_config():
+    if request.method == "GET":
+        return jsonify({"config": _autopilot_config_snapshot()})
+
+    payload = request.get_json(silent=True) or {}
+
+    with _autopilot_lock:
+        updated = _coerce_autopilot_config(payload, base=_autopilot_config)
+        _autopilot_config.update(updated)
+        snapshot = dict(_autopilot_config)
+
+    _save_autopilot_config(snapshot)
+    return jsonify({"message": "Autopilot settings updated.", "config": _autopilot_config_snapshot()})
 
 
 @app.route("/admin/chat/sessions", methods=["GET"])
