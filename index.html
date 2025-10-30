@@ -224,236 +224,54 @@
 
         .chat-gardener {
             position: fixed;
-            right: 124px;
-            bottom: 36px;
-            width: 140px;
-            display: none;
+            right: 116px;
+            bottom: 34px;
+            width: 132px;
+            padding: 14px 16px 18px;
+            border-radius: 28px;
+            background: var(--white);
+            box-shadow: 0 24px 44px rgba(26, 54, 35, 0.28);
+            display: flex;
             flex-direction: column;
             align-items: center;
             gap: 12px;
             z-index: 1190;
-            transform-origin: bottom center;
-            animation: gardener-bob 4.6s ease-in-out infinite;
+            transform: translateY(12px) scale(0.92);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            overflow: hidden;
             pointer-events: none;
         }
 
         .chat-gardener.visible {
-            display: flex;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .chat-gardener::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(46, 125, 50, 0.06), rgba(255, 152, 0, 0.08));
+            pointer-events: none;
         }
 
         .chat-gardener-inner {
             position: relative;
-            width: 100px;
-            height: 150px;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
         }
 
-        .gardener-shadow {
-            position: absolute;
-            bottom: -18px;
-            left: 50%;
-            width: 90px;
-            height: 24px;
-            border-radius: 50%;
-            background: radial-gradient(circle at center, rgba(0, 0, 0, 0.25), transparent 65%);
-            transform: translateX(-50%);
-            filter: blur(2px);
-        }
-
-        .gardener-body {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 120px;
-            height: 180px;
-        }
-
-        .gardener-head {
-            position: relative;
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: #f7d7c4;
-            box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.08);
-        }
-
-        .gardener-hat {
-            position: absolute;
-            top: -18px;
-            left: 50%;
-            width: 90px;
-            height: 32px;
-            background: linear-gradient(135deg, #5a9532, #3f6f1d);
-            border-radius: 50% 50% 40% 40%;
-            transform: translateX(-50%);
-            box-shadow: 0 8px 16px rgba(47, 94, 27, 0.35);
-        }
-
-        .gardener-hat::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            width: 64px;
-            height: 24px;
-            background: linear-gradient(135deg, #86c06f, #4c8f2c);
-            border-radius: 40% 40% 55% 55%;
-            transform: translateX(-50%);
-        }
-
-        .gardener-eye {
-            position: absolute;
-            top: 32px;
-            width: 9px;
-            height: 12px;
-            border-radius: 50%;
-            background: #2f2f2f;
-        }
-
-        .gardener-eye--left {
-            left: 22px;
-        }
-
-        .gardener-eye--right {
-            right: 22px;
-        }
-
-        .gardener-smile {
-            position: absolute;
-            bottom: 18px;
-            left: 50%;
-            width: 32px;
-            height: 14px;
-            border-radius: 0 0 16px 16px;
-            border-bottom: 4px solid #b5651d;
-            transform: translateX(-50%);
-        }
-
-        .gardener-torso {
-            position: absolute;
-            top: 62px;
-            left: 50%;
-            width: 88px;
-            height: 72px;
-            border-radius: 40px 40px 18px 18px;
-            background: linear-gradient(135deg, #1d7a46, #145533);
-            transform: translateX(-50%);
-            box-shadow: 0 10px 18px rgba(18, 85, 51, 0.35);
-        }
-
-        .gardener-apron {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            width: 72px;
-            height: 56px;
-            background: linear-gradient(135deg, #f3b35a, #e38a21);
-            border-radius: 28px 28px 16px 16px;
-            transform: translateX(-50%);
-            box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.12);
-        }
-
-        .gardener-pocket {
-            position: absolute;
-            bottom: 14px;
-            left: 50%;
-            width: 32px;
-            height: 24px;
-            border-radius: 12px 12px 10px 10px;
-            background: rgba(255, 255, 255, 0.75);
-            transform: translateX(-50%);
-        }
-
-        .gardener-arm {
-            position: absolute;
-            top: 78px;
-            width: 20px;
-            height: 62px;
-            border-radius: 14px;
-            background: linear-gradient(135deg, #f8dcc9, #f0c8aa);
-            transform-origin: top center;
-            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
-            z-index: 2;
-        }
-
-        .gardener-arm--left {
-            left: -6px;
-            transform: rotate(24deg);
-        }
-
-        .gardener-arm--right {
-            right: -6px;
-            transform: rotate(-65deg);
-            animation: gardener-wave 3.6s ease-in-out infinite;
-        }
-
-        .gardener-hand {
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #f8dcc9, #f0c8aa);
-            transform: translateX(-50%);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-        }
-
-        .gardener-arm--right .gardener-hand::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 50%;
-            width: 34px;
-            height: 12px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #ffe082, #ffca28);
-            transform: translate(-10%, 40%) rotate(-12deg);
-            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.12);
-        }
-
-        .gardener-legs {
-            position: absolute;
-            top: 126px;
-            left: 50%;
-            width: 68px;
-            height: 52px;
-            transform: translateX(-50%);
-        }
-
-        .gardener-leg {
-            position: absolute;
-            bottom: 8px;
-            width: 24px;
-            height: 48px;
-            border-radius: 14px;
-            background: linear-gradient(135deg, #2f4c7a, #1f3656);
-            box-shadow: 0 10px 16px rgba(31, 54, 86, 0.35);
-        }
-
-        .gardener-leg--left {
-            left: 4px;
-        }
-
-        .gardener-leg--right {
-            right: 4px;
-        }
-
-        .gardener-boot {
-            position: absolute;
-            bottom: 0;
-            width: 36px;
-            height: 18px;
-            border-radius: 18px 18px 6px 6px;
-            background: linear-gradient(135deg, #3d2b1f, #2a1c13);
-        }
-
-        .gardener-boot--left {
-            left: -4px;
-        }
-
-        .gardener-boot--right {
-            right: -4px;
+        .chat-gardener-illustration {
+            width: 96px;
+            height: 96px;
+            border-radius: 24px;
+            object-fit: cover;
+            box-shadow: 0 14px 28px rgba(33, 64, 35, 0.28);
         }
 
         .chat-gardener-caption {
@@ -461,39 +279,19 @@
             align-items: center;
             gap: 8px;
             padding: 8px 16px;
-            background: var(--white);
             border-radius: 999px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
             color: var(--primary-dark);
-            box-shadow: 0 16px 28px rgba(0, 0, 0, 0.12);
+            background: rgba(76, 175, 80, 0.12);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+            z-index: 1;
         }
 
         .chat-gardener-caption::before {
             content: '\f0eb';
             font-family: 'Font Awesome 6 Free';
             font-weight: 900;
-        }
-
-        @keyframes gardener-bob {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-6px);
-            }
-        }
-
-        @keyframes gardener-wave {
-            0%, 100% {
-                transform: rotate(-65deg);
-            }
-            40% {
-                transform: rotate(-30deg);
-            }
-            60% {
-                transform: rotate(-75deg);
-            }
         }
 
         @media (min-width: 992px) {
@@ -3244,36 +3042,9 @@
         </button>
         <div class="chat-gardener" id="chatGardener" aria-hidden="true">
             <div class="chat-gardener-inner">
-                <div class="gardener-shadow"></div>
-                <div class="gardener-body">
-                    <div class="gardener-hat"></div>
-                    <div class="gardener-head">
-                        <span class="gardener-eye gardener-eye--left"></span>
-                        <span class="gardener-eye gardener-eye--right"></span>
-                        <span class="gardener-smile"></span>
-                    </div>
-                    <div class="gardener-torso">
-                        <div class="gardener-apron">
-                            <div class="gardener-pocket"></div>
-                        </div>
-                    </div>
-                    <div class="gardener-arm gardener-arm--left">
-                        <div class="gardener-hand"></div>
-                    </div>
-                    <div class="gardener-arm gardener-arm--right">
-                        <div class="gardener-hand"></div>
-                    </div>
-                    <div class="gardener-legs">
-                        <div class="gardener-leg gardener-leg--left">
-                            <div class="gardener-boot gardener-boot--left"></div>
-                        </div>
-                        <div class="gardener-leg gardener-leg--right">
-                            <div class="gardener-boot gardener-boot--right"></div>
-                        </div>
-                    </div>
-                </div>
+                <img src="/static/images/ai-gardener.svg" alt="AI-generated gardener assistant" class="chat-gardener-illustration" loading="lazy" decoding="async">
+                <span class="chat-gardener-caption">Help is here if you need it!</span>
             </div>
-            <span class="chat-gardener-caption">Help is here if you need it!</span>
         </div>
         <div class="live-chat-window" id="liveChatWindow" aria-hidden="true">
             <div class="live-chat-header">
@@ -3481,6 +3252,7 @@
             let liveChatActiveInviteId = null;
             let chatGardenerTimer = null;
             let chatGardenerShown = false;
+            let chatGardenerHideTimer = null;
 
             function isDesktopViewport() {
                 return window.matchMedia('(min-width: 992px)').matches;
@@ -3493,6 +3265,25 @@
                 chatGardenerShown = true;
                 chatGardener.classList.add('visible');
                 chatGardener.setAttribute('aria-hidden', 'false');
+                if (chatGardenerHideTimer) {
+                    clearTimeout(chatGardenerHideTimer);
+                }
+                chatGardenerHideTimer = window.setTimeout(() => {
+                    hideChatGardener();
+                }, 5000);
+            }
+
+            function hideChatGardener() {
+                if (!chatGardener) {
+                    return;
+                }
+                chatGardener.classList.remove('visible');
+                chatGardener.setAttribute('aria-hidden', 'true');
+                chatGardenerShown = false;
+                if (chatGardenerHideTimer) {
+                    clearTimeout(chatGardenerHideTimer);
+                    chatGardenerHideTimer = null;
+                }
             }
 
             function scheduleChatGardener() {
@@ -3500,9 +3291,7 @@
                     return;
                 }
                 if (!isDesktopViewport()) {
-                    chatGardener.classList.remove('visible');
-                    chatGardener.setAttribute('aria-hidden', 'true');
-                    chatGardenerShown = false;
+                    hideChatGardener();
                     if (chatGardenerTimer) {
                         clearTimeout(chatGardenerTimer);
                         chatGardenerTimer = null;
