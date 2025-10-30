@@ -1957,6 +1957,169 @@
             overflow: hidden;
         }
 
+        .character-popup {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(12, 34, 24, 0.72);
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease;
+            z-index: 1950;
+        }
+
+        .character-popup.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .character-popup-card {
+            position: relative;
+            max-width: 560px;
+            width: 100%;
+            border-radius: 28px;
+            overflow: hidden;
+            background: radial-gradient(circle at top, rgba(255, 255, 255, 0.98), rgba(236, 253, 243, 0.98));
+            box-shadow: 0 46px 80px rgba(8, 28, 16, 0.35);
+            padding: 36px 32px 32px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 26px;
+        }
+
+        .character-popup-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(46, 125, 50, 0.1);
+            color: var(--primary-dark);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .character-popup-close:hover {
+            background: rgba(46, 125, 50, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .character-popup-body {
+            display: grid;
+            grid-template-columns: 220px minmax(0, 1fr);
+            gap: 24px;
+            align-items: center;
+        }
+
+        .character-popup-illustration {
+            width: 100%;
+            max-width: 220px;
+            aspect-ratio: 1 / 1;
+            border-radius: 22px;
+            box-shadow: 0 26px 48px rgba(21, 64, 42, 0.28);
+            animation: character-float 6s ease-in-out infinite;
+        }
+
+        @keyframes character-float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .character-popup-content {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .character-popup-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(46, 125, 50, 0.12);
+            color: var(--primary-dark);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .character-popup-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.9rem;
+            color: var(--primary-dark);
+            line-height: 1.2;
+        }
+
+        .character-popup-copy {
+            color: var(--text-light);
+            line-height: 1.7;
+        }
+
+        .character-popup-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 6px;
+        }
+
+        .character-popup-actions .btn {
+            text-transform: none;
+            letter-spacing: 0.5px;
+        }
+
+        .character-popup-secondary {
+            background: rgba(46, 125, 50, 0.1);
+            color: var(--primary-dark);
+        }
+
+        .character-popup-secondary:hover {
+            background: rgba(46, 125, 50, 0.18);
+        }
+
+        @media (max-width: 720px) {
+            .character-popup-card {
+                padding: 28px 24px;
+            }
+
+            .character-popup-body {
+                grid-template-columns: minmax(0, 1fr);
+                text-align: center;
+            }
+
+            .character-popup-illustration {
+                margin: 0 auto;
+            }
+
+            .character-popup-actions {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .character-popup-card {
+                border-radius: 22px;
+            }
+
+            .character-popup-title {
+                font-size: 1.6rem;
+            }
+        }
+
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -2979,6 +3142,26 @@
         </div>
     </section>
 
+    <div class="character-popup" id="heroCharacterPopup" aria-hidden="true">
+        <div class="character-popup-card" role="dialog" aria-modal="true" aria-labelledby="characterPopupTitle" aria-describedby="characterPopupDescription">
+            <button type="button" class="character-popup-close" id="characterPopupClose" aria-label="Close welcome spotlight">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+            <div class="character-popup-body">
+                <img src="static/images/cool-character.svg" alt="Animated gardener wearing sunglasses" class="character-popup-illustration">
+                <div class="character-popup-content">
+                    <span class="character-popup-eyebrow"><i class="fas fa-bolt" aria-hidden="true"></i> Spotlight</span>
+                    <h3 class="character-popup-title" id="characterPopupTitle">Meet your sensational lawn hero</h3>
+                    <p class="character-popup-copy" id="characterPopupDescription">Our cartoon crew chief, Sparky, keeps the garden energy high. After a quick ten-second breather, he pops in with fresh ideas so you can jump straight into our standout services.</p>
+                    <div class="character-popup-actions">
+                        <a href="#services" class="btn" id="characterPopupCta">Explore services</a>
+                        <button type="button" class="btn character-popup-secondary" id="characterPopupDismiss">Maybe later</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="bookingModal" aria-hidden="true">
         <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
             <button type="button" class="modal-close" id="closeBookingModal" aria-label="Close booking details form">
@@ -3149,6 +3332,110 @@
         };
         const LIVE_CHAT_STORAGE_KEY = 'payAsYouMowChatSession';
         const LIVE_CHAT_POLL_INTERVAL = 4000;
+        const CHARACTER_POPUP_DELAY = 10000;
+        const CHARACTER_POPUP_STORAGE_KEY = 'payAsYouMowCharacterPopupShown';
+
+        const characterPopup = document.getElementById('heroCharacterPopup');
+        const characterPopupClose = document.getElementById('characterPopupClose');
+        const characterPopupDismiss = document.getElementById('characterPopupDismiss');
+        const characterPopupCta = document.getElementById('characterPopupCta');
+        let characterPopupTimer = null;
+
+        function hasCharacterPopupBeenSeen() {
+            try {
+                return sessionStorage.getItem(CHARACTER_POPUP_STORAGE_KEY) === '1';
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function markCharacterPopupSeen() {
+            try {
+                sessionStorage.setItem(CHARACTER_POPUP_STORAGE_KEY, '1');
+            } catch (error) {
+                // Ignore storage issues (private mode, etc.)
+            }
+        }
+
+        function cancelCharacterPopupTimer() {
+            if (characterPopupTimer) {
+                clearTimeout(characterPopupTimer);
+                characterPopupTimer = null;
+            }
+        }
+
+        function closeCharacterPopup() {
+            cancelCharacterPopupTimer();
+            if (!characterPopup) {
+                return;
+            }
+            characterPopup.classList.remove('visible');
+            characterPopup.setAttribute('aria-hidden', 'true');
+            if (!document.querySelector('.modal-overlay.visible')) {
+                document.body.classList.remove('modal-open');
+            }
+        }
+
+        function openCharacterPopup() {
+            cancelCharacterPopupTimer();
+            if (!characterPopup || characterPopup.classList.contains('visible')) {
+                return;
+            }
+            characterPopup.classList.add('visible');
+            characterPopup.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            markCharacterPopupSeen();
+            const focusTarget = characterPopupClose || characterPopupCta;
+            window.setTimeout(() => {
+                if (focusTarget && typeof focusTarget.focus === 'function') {
+                    focusTarget.focus({ preventScroll: true });
+                }
+            }, 100);
+        }
+
+        function scheduleCharacterPopup() {
+            if (!characterPopup || hasCharacterPopupBeenSeen()) {
+                return;
+            }
+            cancelCharacterPopupTimer();
+            characterPopupTimer = window.setTimeout(() => {
+                openCharacterPopup();
+            }, CHARACTER_POPUP_DELAY);
+        }
+
+        scheduleCharacterPopup();
+
+        if (characterPopup) {
+            characterPopup.addEventListener('click', (event) => {
+                if (event.target === characterPopup) {
+                    closeCharacterPopup();
+                }
+            });
+        }
+
+        if (characterPopupClose) {
+            characterPopupClose.addEventListener('click', () => {
+                closeCharacterPopup();
+            });
+        }
+
+        if (characterPopupDismiss) {
+            characterPopupDismiss.addEventListener('click', () => {
+                closeCharacterPopup();
+            });
+        }
+
+        if (characterPopupCta) {
+            characterPopupCta.addEventListener('click', () => {
+                closeCharacterPopup();
+            });
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && characterPopup && characterPopup.classList.contains('visible')) {
+                closeCharacterPopup();
+            }
+        });
 
         function buildPresencePayload(status = 'online') {
             return {
