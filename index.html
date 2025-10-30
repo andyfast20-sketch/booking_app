@@ -959,22 +959,12 @@
         }
 
         .hero-content {
-            max-width: 680px;
-            margin: 0;
-            padding: 44px 48px;
-            border-radius: 28px;
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            background: linear-gradient(150deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.45));
-            box-shadow: 0 30px 70px rgba(3, 20, 9, 0.55);
-            backdrop-filter: blur(8px);
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 24px;
-            text-align: left;
+            max-width: 800px;
+            margin: 0 auto;
             opacity: 0;
             transform: translateY(30px);
             transition: opacity 0.8s ease, transform 0.8s ease;
+            text-align: center;
         }
 
         .hero-slide.active .hero-content {
@@ -983,32 +973,24 @@
         }
 
         .hero h1 {
-            font-size: 3.1rem;
-            margin: 0;
-            text-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
-            letter-spacing: -0.01em;
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
         }
 
         .hero p {
-            font-size: 1.15rem;
-            margin: 0;
-            max-width: 480px;
-            line-height: 1.8;
-            color: rgba(255, 255, 255, 0.92);
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .hero-actions {
             display: flex;
-            justify-content: flex-start;
-            align-items: stretch;
-            gap: 12px;
+            justify-content: center;
+            gap: 15px;
             flex-wrap: wrap;
-            width: 100%;
-        }
-
-        .hero-actions .btn {
-            min-width: 180px;
-            text-align: center;
         }
 
         /* Services Section */
@@ -2203,19 +2185,6 @@
 
         /* Responsive Styles */
         @media (max-width: 992px) {
-            .hero-content {
-                padding: 36px 36px;
-                max-width: 620px;
-            }
-
-            .hero h1 {
-                font-size: 2.9rem;
-            }
-
-            .hero-actions .btn {
-                min-width: 160px;
-            }
-
             .about-content {
                 padding: 40px;
             }
@@ -2279,8 +2248,15 @@
                 margin: 0;
                 padding: 28px 24px;
                 border-radius: 24px;
+                border: 1px solid rgba(255, 255, 255, 0.16);
+                background: linear-gradient(150deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.45));
                 gap: 18px;
                 box-shadow: 0 22px 52px rgba(0, 0, 0, 0.45);
+                backdrop-filter: blur(8px);
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                text-align: left;
             }
 
             .hero h1 {
@@ -2294,6 +2270,9 @@
             }
 
             .hero-actions {
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
                 gap: 14px;
             }
 
