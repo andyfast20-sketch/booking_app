@@ -2006,8 +2006,11 @@
                 const lastSeenTitle = lastSeenRaw ? ` title="${escapeHtml(lastSeenRaw)}"` : '';
                 const visits = Number(visitor && visitor.visit_count ? visitor.visit_count : 0);
                 const totalSeconds = Number(visitor && visitor.total_duration_seconds ? visitor.total_duration_seconds : 0);
-                const currentSeconds = visitor && visitor.current_session && visitor.current_session.duration_seconds
-                  ? Number(visitor.current_session.duration_seconds)
+                const currentVisit = visitor && visitor.current_visit && typeof visitor.current_visit === 'object'
+                  ? visitor.current_visit
+                  : null;
+                const currentSeconds = currentVisit && currentVisit.duration_seconds
+                  ? Number(currentVisit.duration_seconds)
                   : 0;
                 const timeOnSite = escapeHtml(formatDuration(totalSeconds + currentSeconds));
                 const locationRaw =
