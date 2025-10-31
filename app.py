@@ -54,6 +54,23 @@ _banned_ips_lock = Lock()
 _banned_ips = {}
 
 
+def _ensure_storage_file(path: str, *, default):
+    """Ensure JSON-backed storage files always exist before use."""
+    try:
+        if os.path.exists(path):
+            return
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(default, handle, indent=2)
+    except OSError:
+        # If the file cannot be created we silently ignore the error – the
+        # in-memory store will continue to operate and future writes will
+        # retry automatically.
+        pass
+
+
+_ensure_storage_file(VISITOR_LOG_FILE, default={})
+
+
 def _is_private_ip(ip_str: str) -> bool:
     if not ip_str:
         return True
@@ -1758,6 +1775,7 @@ def presence():
 @app.route("/admin/visitors", methods=["GET"])
 def admin_visitors():
     now = datetime.utcnow()
+    _prune_visitors(now)
     snapshot = _visitor_log_snapshot()
     with _presence_lock:
         active_snapshot = {
