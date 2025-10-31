@@ -138,14 +138,66 @@ def _page_is_index(page: str) -> bool:
 def _load_visitor_log_from_disk() -> dict:
     if not os.path.exists(VISITOR_LOG_FILE):
         return {}
+
     try:
         with open(VISITOR_LOG_FILE, "r", encoding="utf-8") as handle:
             payload = json.load(handle)
     except (OSError, json.JSONDecodeError):
         return {}
+
     if not isinstance(payload, dict):
         return {}
-    return payload
+
+    entries = {}
+    for ip_key, details in payload.items():
+        record = details if isinstance(details, dict) else {}
+        ip_value = (record.get("ip") or ip_key or "").strip()
+        if not ip_value:
+            continue
+
+        record = dict(record)
+        record["ip"] = ip_value
+
+        pages = record.get("pages")
+        if isinstance(pages, (list, tuple, set)):
+            normalized_pages = {
+                _normalize_page_identifier(page)
+                for page in pages
+                if isinstance(page, str) and page
+            }
+            record["pages"] = sorted(normalized_pages)
+
+        visits = record.get("visits")
+        if isinstance(visits, list):
+            cleaned_visits = []
+            for raw_visit in visits:
+                if not isinstance(raw_visit, dict):
+                    continue
+                cleaned_visits.append(
+                    {
+                        "first_seen": raw_visit.get("first_seen") or "",
+                        "last_seen": raw_visit.get("last_seen") or "",
+                        "duration_seconds": float(raw_visit.get("duration_seconds") or 0.0),
+                        "pages": sorted(
+                            {
+                                _normalize_page_identifier(page)
+                                for page in raw_visit.get("pages", [])
+                                if isinstance(page, str) and page
+                            }
+                        ),
+                        "location": raw_visit.get("location") or "",
+                        "user_agent": raw_visit.get("user_agent") or "",
+                    }
+                )
+            record["visits"] = cleaned_visits
+
+        record["visit_count"] = int(record.get("visit_count") or 0)
+        record["total_duration_seconds"] = float(record.get("total_duration_seconds") or 0.0)
+        record["visited_index"] = bool(record.get("visited_index", False))
+
+        entries[ip_value] = record
+
+    return entries
 
 
 def _load_banned_ips_from_disk() -> dict:
@@ -248,6 +300,7 @@ def _update_visitor_history(ip_str: str, visitor_entry: dict) -> None:
             },
         )
 
+        record["ip"] = ip_str
         if record.get("first_seen") in {"", None} or record["first_seen"] > first_seen_iso:
             record["first_seen"] = first_seen_iso
         if record.get("last_seen") in {"", None} or record["last_seen"] < last_seen_iso:
@@ -333,6 +386,7 @@ def _finalize_visitor_session(ip_str: str, visitor_entry: dict) -> None:
             },
         )
 
+        record["ip"] = ip_str
         if record.get("first_seen") in {"", None} or record["first_seen"] > first_seen_iso:
             record["first_seen"] = first_seen_iso
         if record.get("last_seen") in {"", None} or record["last_seen"] < last_seen_iso:
@@ -363,9 +417,10 @@ def _finalize_visitor_session(ip_str: str, visitor_entry: dict) -> None:
 def _visitor_log_snapshot(include_current=True) -> list:
     with _visitor_log_lock:
         records = []
-        for record in _visitor_log.values():
+        for ip_key, record in _visitor_log.items():
+            ip_value = (record.get("ip") or ip_key or "").strip()
             entry = {
-                "ip": record.get("ip"),
+                "ip": ip_value,
                 "first_seen": record.get("first_seen"),
                 "last_seen": record.get("last_seen"),
                 "location": record.get("location", ""),
