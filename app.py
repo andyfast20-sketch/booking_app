@@ -24,6 +24,7 @@ AVAIL_FILE = "availability.txt"
 CONTACTS_FILE = "contacts.json"
 CHAT_STATE_FILE = "chat_state.json"
 AUTOPILOT_FILE = "autopilot.json"
+VISITOR_LOG_FILE = "visitor_log.json"
 
 DEFAULT_AUTOPILOT_MODEL = "gpt-3.5-turbo"
 DEFAULT_AUTOPILOT_TEMPERATURE = 0.3
@@ -32,6 +33,7 @@ AUTOPILOT_HISTORY_LIMIT = 12
 
 VISITOR_TIMEOUT = timedelta(minutes=3)
 LOCATION_CACHE_TTL = timedelta(hours=6)
+INDEX_PAGES = {"/", "/index", "/index.html"}
 
 _active_visitors = {}
 _presence_lock = Lock()
@@ -45,6 +47,8 @@ _autopilot_config = {
     "model": DEFAULT_AUTOPILOT_MODEL,
     "temperature": DEFAULT_AUTOPILOT_TEMPERATURE,
 }
+_visitor_log_lock = Lock()
+_visitor_log = {}
 
 
 def _is_private_ip(ip_str: str) -> bool:
@@ -109,7 +113,229 @@ def _client_ip() -> str:
     return "unknown"
 
 
+def _normalize_page_identifier(page: str) -> str:
+    if not page:
+        return "/"
+    clean = str(page).strip()
+    if not clean:
+        return "/"
+    clean = clean.split("#", 1)[0].split("?", 1)[0].strip()
+    if not clean:
+        return "/"
+    if not clean.startswith("/"):
+        clean = "/" + clean
+    return clean
+
+
+def _page_is_index(page: str) -> bool:
+    normalized = _normalize_page_identifier(page).lower()
+    return normalized in INDEX_PAGES
+
+
+def _load_visitor_log_from_disk() -> dict:
+    if not os.path.exists(VISITOR_LOG_FILE):
+        return {}
+    try:
+        with open(VISITOR_LOG_FILE, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    return payload
+
+
+def _save_visitor_log(snapshot=None) -> None:
+    payload = dict(snapshot or _visitor_log)
+    try:
+        with open(VISITOR_LOG_FILE, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2)
+    except OSError:
+        pass
+
+
+def _update_visitor_history(ip_str: str, visitor_entry: dict) -> None:
+    if not ip_str or not visitor_entry:
+        return
+
+    first_seen = visitor_entry.get("first_seen")
+    last_seen = visitor_entry.get("last_seen")
+    if not isinstance(first_seen, datetime) or not isinstance(last_seen, datetime):
+        return
+
+    pages = visitor_entry.get("pages")
+    if isinstance(pages, set):
+        pages = list(pages)
+    elif not isinstance(pages, (list, tuple)):
+        pages = []
+
+    normalized_pages = {_normalize_page_identifier(page) for page in pages if page}
+    page = visitor_entry.get("page") or ""
+    normalized_page = _normalize_page_identifier(page)
+    normalized_pages.add(normalized_page)
+
+    visited_index = visitor_entry.get("visited_index") or _page_is_index(normalized_page)
+
+    first_seen_iso = first_seen.isoformat() + "Z"
+    last_seen_iso = last_seen.isoformat() + "Z"
+    duration_seconds = max(0.0, (last_seen - first_seen).total_seconds())
+    location = visitor_entry.get("location") or ""
+    user_agent = visitor_entry.get("user_agent") or ""
+
+    with _visitor_log_lock:
+        record = _visitor_log.setdefault(
+            ip_str,
+            {
+                "ip": ip_str,
+                "first_seen": first_seen_iso,
+                "last_seen": last_seen_iso,
+                "location": location,
+                "user_agent": user_agent,
+                "pages": [],
+                "visits": [],
+                "visit_count": 0,
+                "total_duration_seconds": 0.0,
+                "current_visit": None,
+                "visited_index": visited_index,
+            },
+        )
+
+        if record.get("first_seen") in {"", None} or record["first_seen"] > first_seen_iso:
+            record["first_seen"] = first_seen_iso
+        if record.get("last_seen") in {"", None} or record["last_seen"] < last_seen_iso:
+            record["last_seen"] = last_seen_iso
+
+        if location and location != "Unknown location":
+            record["location"] = location
+        if user_agent:
+            record["user_agent"] = user_agent
+
+        combined_pages = set(record.get("pages", []))
+        combined_pages.update(normalized_pages)
+        record["pages"] = sorted(combined_pages)
+
+        record["visited_index"] = bool(record.get("visited_index")) or visited_index
+        record["current_visit"] = {
+            "first_seen": first_seen_iso,
+            "last_seen": last_seen_iso,
+            "duration_seconds": duration_seconds,
+        }
+
+        _visitor_log[ip_str] = record
+
+    _save_visitor_log()
+
+
+def _finalize_visitor_session(ip_str: str, visitor_entry: dict) -> None:
+    if not ip_str or not visitor_entry:
+        return
+
+    first_seen = visitor_entry.get("first_seen")
+    last_seen = visitor_entry.get("last_seen")
+    if not isinstance(first_seen, datetime) or not isinstance(last_seen, datetime):
+        return
+
+    pages = visitor_entry.get("pages")
+    if isinstance(pages, set):
+        pages = list(pages)
+    elif not isinstance(pages, (list, tuple)):
+        pages = []
+
+    normalized_pages = {_normalize_page_identifier(page) for page in pages if page}
+    page = visitor_entry.get("page") or ""
+    normalized_page = _normalize_page_identifier(page)
+    normalized_pages.add(normalized_page)
+
+    visited_index = visitor_entry.get("visited_index") or any(
+        _page_is_index(candidate) for candidate in normalized_pages
+    )
+    if not visited_index:
+        return
+
+    first_seen_iso = first_seen.isoformat() + "Z"
+    last_seen_iso = last_seen.isoformat() + "Z"
+    duration_seconds = max(0.0, (last_seen - first_seen).total_seconds())
+    location = visitor_entry.get("location") or ""
+    user_agent = visitor_entry.get("user_agent") or ""
+
+    visit_entry = {
+        "first_seen": first_seen_iso,
+        "last_seen": last_seen_iso,
+        "duration_seconds": duration_seconds,
+        "pages": sorted(normalized_pages),
+        "location": location,
+        "user_agent": user_agent,
+    }
+
+    with _visitor_log_lock:
+        record = _visitor_log.setdefault(
+            ip_str,
+            {
+                "ip": ip_str,
+                "first_seen": first_seen_iso,
+                "last_seen": last_seen_iso,
+                "location": location,
+                "user_agent": user_agent,
+                "pages": sorted(normalized_pages),
+                "visits": [],
+                "visit_count": 0,
+                "total_duration_seconds": 0.0,
+                "current_visit": None,
+                "visited_index": True,
+            },
+        )
+
+        if record.get("first_seen") in {"", None} or record["first_seen"] > first_seen_iso:
+            record["first_seen"] = first_seen_iso
+        if record.get("last_seen") in {"", None} or record["last_seen"] < last_seen_iso:
+            record["last_seen"] = last_seen_iso
+
+        if location and location != "Unknown location":
+            record["location"] = location
+        if user_agent:
+            record["user_agent"] = user_agent
+
+        combined_pages = set(record.get("pages", []))
+        combined_pages.update(normalized_pages)
+        record["pages"] = sorted(combined_pages)
+
+        record_visits = record.setdefault("visits", [])
+        record_visits.append(visit_entry)
+        record["visits"] = record_visits
+        record["visit_count"] = len(record_visits)
+        record["total_duration_seconds"] = float(record.get("total_duration_seconds", 0.0)) + duration_seconds
+        record["current_visit"] = None
+        record["visited_index"] = True
+
+        _visitor_log[ip_str] = record
+
+    _save_visitor_log()
+
+
+def _visitor_log_snapshot(include_current=True) -> list:
+    with _visitor_log_lock:
+        records = []
+        for record in _visitor_log.values():
+            entry = {
+                "ip": record.get("ip"),
+                "first_seen": record.get("first_seen"),
+                "last_seen": record.get("last_seen"),
+                "location": record.get("location", ""),
+                "user_agent": record.get("user_agent", ""),
+                "pages": list(record.get("pages", [])),
+                "visits": list(record.get("visits", [])),
+                "visit_count": int(record.get("visit_count", 0)),
+                "total_duration_seconds": float(record.get("total_duration_seconds", 0.0)),
+                "current_visit": record.get("current_visit") if include_current else None,
+                "visited_index": bool(record.get("visited_index", False)),
+            }
+            records.append(entry)
+    records.sort(key=lambda item: item.get("last_seen") or "", reverse=True)
+    return records
+
+
 def _prune_visitors(now: datetime) -> None:
+    stale_entries = []
     with _presence_lock:
         stale_keys = [
             key
@@ -117,7 +343,12 @@ def _prune_visitors(now: datetime) -> None:
             if now - details["last_seen"] > VISITOR_TIMEOUT
         ]
         for key in stale_keys:
-            _active_visitors.pop(key, None)
+            entry = _active_visitors.pop(key, None)
+            if entry:
+                stale_entries.append((key, entry))
+
+    for ip_str, visitor_entry in stale_entries:
+        _finalize_visitor_session(ip_str, visitor_entry)
 
 
 def _record_presence(data: dict) -> None:
@@ -126,27 +357,37 @@ def _record_presence(data: dict) -> None:
     location = _lookup_location(ip_str)
     page = (data.get("page") or "").strip()
     user_agent = (request.headers.get("User-Agent") or "").strip()
+    normalized_page = _normalize_page_identifier(page)
 
     with _presence_lock:
         entry = _active_visitors.get(ip_str)
         if entry:
             entry["last_seen"] = now
-            if page:
-                entry["page"] = page
+            entry["page"] = normalized_page
             if location and location != "Unknown location":
                 entry["location"] = location
             if user_agent:
                 entry["user_agent"] = user_agent
+            pages = entry.setdefault("pages", set())
+            pages.add(normalized_page)
+            if _page_is_index(normalized_page):
+                entry["visited_index"] = True
             _active_visitors[ip_str] = entry
         else:
-            _active_visitors[ip_str] = {
+            entry = {
                 "ip": ip_str,
                 "location": location,
-                "page": page,
+                "page": normalized_page,
                 "user_agent": user_agent,
                 "first_seen": now,
                 "last_seen": now,
+                "pages": {normalized_page},
+                "visited_index": _page_is_index(normalized_page),
             }
+            _active_visitors[ip_str] = entry
+
+    if entry.get("visited_index"):
+        _update_visitor_history(ip_str, entry)
 
 
 def _safe_int(value, default=0):
@@ -330,6 +571,12 @@ with _chat_state_lock:
 with _autopilot_lock:
     stored_autopilot = _load_autopilot_config_from_disk()
     _autopilot_config.update(stored_autopilot)
+
+
+with _visitor_log_lock:
+    stored_visitor_log = _load_visitor_log_from_disk()
+    if isinstance(stored_visitor_log, dict):
+        _visitor_log.update(stored_visitor_log)
 
 
 def _append_chat_message(
@@ -1277,8 +1524,11 @@ def delete_availability_slot():
 def _remove_visitor(ip_str: str) -> None:
     if not ip_str:
         return
+    entry = None
     with _presence_lock:
-        _active_visitors.pop(ip_str, None)
+        entry = _active_visitors.pop(ip_str, None)
+    if entry:
+        _finalize_visitor_session(ip_str, entry)
 
 
 @app.route("/presence", methods=["GET", "POST"])
@@ -1312,6 +1562,51 @@ def presence():
 
     visitors.sort(key=lambda entry: entry["last_seen"], reverse=True)
     return jsonify({"visitors": visitors, "generated_at": now.isoformat() + "Z"})
+
+
+@app.route("/admin/visitors", methods=["GET"])
+def admin_visitors():
+    now = datetime.utcnow()
+    snapshot = _visitor_log_snapshot()
+    with _presence_lock:
+        active_snapshot = {
+            ip: details
+            for ip, details in _active_visitors.items()
+            if isinstance(details, dict)
+        }
+
+    results = []
+    for record in snapshot:
+        if not record.get("visited_index"):
+            continue
+
+        combined = dict(record)
+        ip_str = combined.get("ip") or ""
+        active_entry = active_snapshot.get(ip_str)
+        if active_entry and isinstance(active_entry.get("first_seen"), datetime):
+            first_seen = active_entry.get("first_seen")
+            last_seen = active_entry.get("last_seen")
+            if isinstance(last_seen, datetime):
+                first_seen_iso = first_seen.isoformat() + "Z"
+                last_seen_iso = last_seen.isoformat() + "Z"
+                duration_seconds = max(0.0, (last_seen - first_seen).total_seconds())
+                combined["current_session"] = {
+                    "first_seen": first_seen_iso,
+                    "last_seen": last_seen_iso,
+                    "duration_seconds": duration_seconds,
+                }
+                if not combined.get("last_seen") or combined["last_seen"] < last_seen_iso:
+                    combined["last_seen"] = last_seen_iso
+            else:
+                combined["current_session"] = combined.get("current_visit")
+        else:
+            combined["current_session"] = combined.get("current_visit")
+
+        combined.pop("current_visit", None)
+        results.append(combined)
+
+    results.sort(key=lambda item: item.get("last_seen") or "", reverse=True)
+    return jsonify({"visitors": results, "generated_at": now.isoformat() + "Z"})
 # --- Serve admin.html file ---
 @app.route("/admin")
 def admin_page():
