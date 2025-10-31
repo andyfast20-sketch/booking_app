@@ -148,6 +148,21 @@
       transform: translateY(0);
     }
 
+    .panel-section {
+      margin-bottom: 1.75rem;
+    }
+
+    .panel-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .panel-subheading {
+      margin: 0 0 0.75rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
     .panel-header h2 {
       margin: 0;
       font-size: 1.4rem;
@@ -936,7 +951,17 @@
         <p class="panel-summary-note">Expand to see visitor locations, pages and invite them into a chat.</p>
       </div>
       <div class="panel-body" id="presencePanelBody" hidden>
-        <div id="onlineVisitors" class="empty-state">Checking for active visitors…</div>
+        <div class="panel-section">
+          <h3 class="panel-subheading">Active visitors</h3>
+          <div id="onlineVisitors" class="empty-state">Checking for active visitors…</div>
+        </div>
+        <div class="panel-section">
+          <h3 class="panel-subheading">Index visitor history</h3>
+          <p class="panel-summary-note">
+            Every visit to your homepage is saved here automatically. Use it to understand who has reached your site.
+          </p>
+          <div id="visitorHistory" class="empty-state">Loading visitor history…</div>
+        </div>
       </div>
     </section>
 
@@ -1161,6 +1186,7 @@
   <script>
     const bookingsTable = document.getElementById('bookingsTable');
     const onlineVisitorsContainer = document.getElementById('onlineVisitors');
+    const visitorHistoryContainer = document.getElementById('visitorHistory');
     const availabilityList = document.getElementById('availabilityList');
     const contactsTable = document.getElementById('contactsTable');
 
@@ -1216,6 +1242,7 @@
     let previousChatUnreadTotal = 0;
     let chatAttentionInitialised = false;
     let onlineVisitorsCache = [];
+    let visitorHistoryCache = [];
     let availabilityCache = [];
     const AUTOPILOT_DEFAULTS = {
       enabled: false,
@@ -1296,6 +1323,28 @@
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
 
+    function formatDuration(value) {
+      const seconds = Number(value);
+      if (!Number.isFinite(seconds) || seconds <= 0) {
+        return '0s';
+      }
+      const totalSeconds = Math.floor(seconds);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const secs = totalSeconds % 60;
+      const parts = [];
+      if (hours > 0) {
+        parts.push(`${hours}h`);
+      }
+      if (minutes > 0) {
+        parts.push(`${minutes}m`);
+      }
+      if (secs > 0 || parts.length === 0) {
+        parts.push(`${secs}s`);
+      }
+      return parts.join(' ');
+    }
+
     function setSummaryText(element, text) {
       if (element) {
         element.textContent = text;
@@ -1331,8 +1380,14 @@
     function updatePresenceSummary(visitors = []) {
       if (!presenceSummaryHighlight) return;
       const list = Array.isArray(visitors) ? visitors : [];
+      const savedCount = Array.isArray(visitorHistoryCache) ? visitorHistoryCache.length : 0;
       if (!list.length) {
-        setSummaryText(presenceSummaryHighlight, 'No active visitors right now.');
+        if (savedCount > 0) {
+          const label = savedCount === 1 ? 'homepage visit saved' : 'homepage visits saved';
+          setSummaryText(presenceSummaryHighlight, `No active visitors right now. ${savedCount} ${label}.`);
+        } else {
+          setSummaryText(presenceSummaryHighlight, 'No active visitors right now.');
+        }
         return;
       }
 
@@ -1344,9 +1399,12 @@
       const locationSuffix = locations.size
         ? ` from ${locations.size} location${locations.size === 1 ? '' : 's'}`
         : '';
+      const savedSuffix = savedCount
+        ? ` • ${savedCount} ${savedCount === 1 ? 'homepage visit saved' : 'homepage visits saved'}`
+        : '';
       setSummaryText(
         presenceSummaryHighlight,
-        `${list.length} active ${list.length === 1 ? 'visitor' : 'visitors'} browsing${locationSuffix}.`
+        `${list.length} active ${list.length === 1 ? 'visitor' : 'visitors'} browsing${locationSuffix}.${savedSuffix}`
       );
     }
 
@@ -1723,6 +1781,88 @@
         </tbody>
       </table>
       `;
+    }
+
+    async function loadVisitorHistory() {
+      if (!visitorHistoryContainer) return;
+      visitorHistoryContainer.className = 'empty-state';
+      visitorHistoryContainer.textContent = 'Loading visitor history…';
+      try {
+        const res = await fetch('/admin/visitors');
+        if (!res.ok) throw new Error('Unable to fetch visitor history');
+        const data = await res.json();
+        const visitors = Array.isArray(data.visitors) ? data.visitors : [];
+        renderVisitorHistory(visitors);
+      } catch (error) {
+        visitorHistoryContainer.className = 'empty-state';
+        visitorHistoryContainer.textContent = error.message || 'Failed to load visitor history';
+        visitorHistoryCache = [];
+        updatePresenceSummary(onlineVisitorsCache);
+      }
+    }
+
+    function renderVisitorHistory(history) {
+      if (!visitorHistoryContainer) return;
+      const list = Array.isArray(history) ? history : [];
+      visitorHistoryCache = list;
+      updatePresenceSummary(onlineVisitorsCache);
+
+      if (!list.length) {
+        visitorHistoryContainer.className = 'empty-state';
+        visitorHistoryContainer.textContent = 'No index page visits recorded yet.';
+        return;
+      }
+
+      visitorHistoryContainer.className = 'table-scroll';
+      visitorHistoryContainer.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>IP address</th>
+              <th>First visit</th>
+              <th>Last seen</th>
+              <th>Time on site</th>
+              <th>Visits logged</th>
+              <th>Location</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list
+              .map((visitor) => {
+                const ip = escapeHtml(visitor && visitor.ip ? visitor.ip : '—');
+                const firstVisit = escapeHtml(formatDate(visitor && visitor.first_seen));
+                const lastSeen = escapeHtml(formatDate(visitor && visitor.last_seen));
+                const visits = Number(visitor && visitor.visit_count ? visitor.visit_count : 0);
+                const totalSeconds = Number(visitor && visitor.total_duration_seconds ? visitor.total_duration_seconds : 0);
+                const currentSeconds = visitor && visitor.current_session && visitor.current_session.duration_seconds
+                  ? Number(visitor.current_session.duration_seconds)
+                  : 0;
+                const timeOnSite = escapeHtml(formatDuration(totalSeconds + currentSeconds));
+                const location = escapeHtml(
+                  visitor && typeof visitor.location === 'string' && visitor.location.trim()
+                    ? visitor.location.trim()
+                    : 'Unknown location'
+                );
+                return `
+                  <tr>
+                    <td>${ip}</td>
+                    <td>${firstVisit}</td>
+                    <td>${lastSeen}</td>
+                    <td>${timeOnSite}</td>
+                    <td>${visits}</td>
+                    <td>${location}</td>
+                  </tr>
+                `;
+              })
+              .join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function refreshPresenceData() {
+      loadOnlineVisitors();
+      loadVisitorHistory();
     }
 
     if (onlineVisitorsContainer) {
@@ -2654,19 +2794,19 @@
     loadAutopilotConfig();
 
     if (refreshPresenceBtn) {
-      refreshPresenceBtn.addEventListener('click', loadOnlineVisitors);
+      refreshPresenceBtn.addEventListener('click', refreshPresenceData);
     }
     refreshBookingsBtn.addEventListener('click', loadBookings);
     refreshAvailabilityBtn.addEventListener('click', loadAvailability);
     refreshContactsBtn.addEventListener('click', loadContacts);
 
-    loadOnlineVisitors();
+    refreshPresenceData();
     loadBookings();
     loadAvailability();
     loadContacts();
 
     setInterval(() => loadChatSessions(true), 5000);
-    setInterval(loadOnlineVisitors, 15000);
+    setInterval(refreshPresenceData, 15000);
   </script>
 </body>
 </html>
