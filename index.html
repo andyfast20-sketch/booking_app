@@ -1243,7 +1243,9 @@
 
         .hero-title-mobile {
             display: none;
-            white-space: nowrap;
+            white-space: normal;
+            width: 100%;
+            max-width: 100%;
         }
 
         .hero p {
@@ -2839,33 +2841,26 @@
             }
 
             .hero-title-mobile {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.45em;
-                padding: 0.4em 0.9em;
-                border-radius: 999px;
-                font-size: clamp(1.6rem, 6.8vw, 2.6rem);
-                line-height: 1.05;
-                letter-spacing: 0.06em;
+                display: block;
+                width: 100%;
+                max-width: 100%;
+                padding: 0;
+                border-radius: 0;
+                font-size: clamp(1.4rem, 6vw, 2.2rem);
+                line-height: 1.15;
+                letter-spacing: 0.04em;
                 text-transform: uppercase;
                 font-weight: 700;
                 color: #ffffff;
-                background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05));
-                border: 1px solid rgba(255, 255, 255, 0.18);
-                box-shadow: 0 18px 34px rgba(0, 0, 0, 0.35);
-                text-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+                background: none;
+                border: none;
+                box-shadow: none;
+                text-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+                word-break: break-word;
             }
 
             .hero-title-mobile::after {
-                content: '\f061';
-                font-family: 'Font Awesome 6 Free';
-                font-weight: 900;
-                font-size: 0.75em;
-                padding: 0.25em;
-                border-radius: 50%;
-                background: rgba(255, 255, 255, 0.18);
-                box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+                content: none;
             }
 
             .hero-actions .btn {
