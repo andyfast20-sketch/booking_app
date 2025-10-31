@@ -285,6 +285,12 @@
       box-shadow: 0 14px 30px rgba(48, 195, 166, 0.45);
     }
 
+    button.secondary {
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      font-weight: 600;
+    }
+
     button.danger {
       background: rgba(255, 107, 107, 0.18);
       color: #ffd3d3;
@@ -293,6 +299,13 @@
     button:hover {
       transform: translateY(-2px);
       box-shadow: 0 12px 26px rgba(3, 9, 24, 0.35);
+    }
+
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
 
     button.danger:hover {
@@ -912,6 +925,63 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
+    .quick-picks {
+      margin-top: 1rem;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      padding: 1rem 1.25rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .quick-picks-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .quick-picks-label {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .quick-picks-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .quick-picks-buttons button {
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 0.45rem 0.9rem;
+      font-size: 0.85rem;
+      border-radius: 999px;
+    }
+
+    .quick-picks-buttons button.active {
+      background: rgba(48, 195, 166, 0.22);
+      border-color: rgba(48, 195, 166, 0.45);
+      color: #d2fff3;
+      box-shadow: 0 10px 20px rgba(48, 195, 166, 0.25);
+    }
+
+    .quick-action {
+      margin-top: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .quick-action-note {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
     dialog {
       border: none;
       border-radius: 18px;
@@ -1188,15 +1258,32 @@
           </label>
           <label>
             Time
-            <select name="time" required>
-              <option value="">Select time…</option>
-              <option value="18:00">18:00</option>
-              <option value="19:00">19:00</option>
-              <option value="20:00">20:00</option>
-            </select>
+            <input type="time" name="time" step="900" min="06:00" max="21:00" required />
           </label>
           <button type="submit" class="primary">Add slot</button>
         </form>
+        <div class="quick-picks" aria-label="Quick availability shortcuts">
+          <div class="quick-picks-group">
+            <span class="quick-picks-label">Quick dates</span>
+            <div class="quick-picks-buttons" id="quickDateShortcuts"></div>
+          </div>
+          <div class="quick-picks-group">
+            <span class="quick-picks-label">Quick times</span>
+            <div class="quick-picks-buttons" id="quickTimeShortcuts">
+              <button type="button" data-quick-time="18:00">6:00 PM</button>
+              <button type="button" data-quick-time="18:30">6:30 PM</button>
+              <button type="button" data-quick-time="19:00">7:00 PM</button>
+              <button type="button" data-quick-time="19:30">7:30 PM</button>
+            </div>
+          </div>
+        </div>
+        <div class="quick-action">
+          <button type="button" id="autoNextWeekSlots" class="secondary">Add next week's evening trio</button>
+          <p class="quick-action-note">
+            Creates three 15-minute evening appointments next Monday and Wednesday between 6pm and 8pm.
+          </p>
+          <div id="autoScheduleFeedback" class="form-feedback" aria-live="polite"></div>
+        </div>
         <div id="availabilityList" class="empty-state">Loading availability…</div>
       </div>
     </section>
@@ -1298,6 +1385,12 @@
     const panelGrid = document.querySelector('main.panel-grid');
 
     const availabilityForm = document.getElementById('availabilityForm');
+    const availabilityDateInput = availabilityForm ? availabilityForm.querySelector('input[name="date"]') : null;
+    const availabilityTimeInput = availabilityForm ? availabilityForm.querySelector('[name="time"]') : null;
+    const quickDateShortcuts = document.getElementById('quickDateShortcuts');
+    const quickTimeShortcuts = document.getElementById('quickTimeShortcuts');
+    const autoNextWeekSlotsBtn = document.getElementById('autoNextWeekSlots');
+    const autoScheduleFeedback = document.getElementById('autoScheduleFeedback');
     const refreshPresenceBtn = document.getElementById('refreshPresence');
     const refreshAvailabilityBtn = document.getElementById('refreshAvailability');
     const refreshBookingsBtn = document.getElementById('refreshBookings');
@@ -1441,6 +1534,152 @@
         parts.push(`${secs}s`);
       }
       return parts.join(' ');
+    }
+
+    function toDateInputValue(date) {
+      if (!(date instanceof Date)) return '';
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function formatQuickDateLabel(date) {
+      if (!(date instanceof Date)) return '';
+      return new Intl.DateTimeFormat(undefined, {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      }).format(date);
+    }
+
+    function markActiveQuickButtons(container, dataAttribute, value) {
+      if (!container) return;
+      container.querySelectorAll('button').forEach((button) => {
+        if (button.dataset[dataAttribute] === value) {
+          button.classList.add('active');
+        } else {
+          button.classList.remove('active');
+        }
+      });
+    }
+
+    function renderQuickDateButtons() {
+      if (!quickDateShortcuts || !availabilityDateInput) return;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      quickDateShortcuts.innerHTML = '';
+      for (let offset = 0; offset < 7; offset += 1) {
+        const optionDate = new Date(today);
+        optionDate.setDate(today.getDate() + offset);
+        const value = toDateInputValue(optionDate);
+        const label = formatQuickDateLabel(optionDate);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.date = value;
+        button.textContent = label;
+        button.addEventListener('click', () => {
+          availabilityDateInput.value = value;
+          availabilityDateInput.dispatchEvent(new Event('input', { bubbles: true }));
+          markActiveQuickButtons(quickDateShortcuts, 'date', value);
+        });
+        quickDateShortcuts.appendChild(button);
+      }
+      markActiveQuickButtons(quickDateShortcuts, 'date', availabilityDateInput.value);
+    }
+
+    function updateQuickTimeButtons(value) {
+      if (!quickTimeShortcuts) return;
+      quickTimeShortcuts.querySelectorAll('button').forEach((button) => {
+        if (button.dataset.quickTime === value) {
+          button.classList.add('active');
+        } else {
+          button.classList.remove('active');
+        }
+      });
+    }
+
+    function updateAutoScheduleFeedback(message, success = false) {
+      if (!autoScheduleFeedback) return;
+      autoScheduleFeedback.textContent = message;
+      autoScheduleFeedback.classList.add('visible');
+      if (success) {
+        autoScheduleFeedback.classList.add('success');
+      } else {
+        autoScheduleFeedback.classList.remove('success');
+      }
+    }
+
+    function clearAutoScheduleFeedback() {
+      if (!autoScheduleFeedback) return;
+      autoScheduleFeedback.textContent = '';
+      autoScheduleFeedback.classList.remove('visible');
+      autoScheduleFeedback.classList.remove('success');
+    }
+
+    function computeNextWeekEveningSlots() {
+      const base = new Date();
+      base.setHours(0, 0, 0, 0);
+      const day = base.getDay();
+      let daysUntilNextMonday = (8 - day) % 7;
+      if (daysUntilNextMonday === 0) {
+        daysUntilNextMonday = 7;
+      }
+      const monday = new Date(base);
+      monday.setDate(base.getDate() + daysUntilNextMonday);
+      const wednesday = new Date(monday);
+      wednesday.setDate(monday.getDate() + 2);
+
+      const schedule = [
+        { date: monday, times: ['18:00', '18:30'] },
+        { date: wednesday, times: ['18:00'] },
+      ];
+
+      return schedule
+        .flatMap((entry) =>
+          entry.times.map((time) => ({
+            date: toDateInputValue(entry.date),
+            time,
+          }))
+        )
+        .slice(0, 3);
+    }
+
+    function formatSlotDescription(dateStr, timeStr) {
+      if (!dateStr || !timeStr) {
+        return `${dateStr || ''} ${timeStr || ''}`.trim();
+      }
+      try {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        const slotDate = new Date(year, month - 1, day, hours, minutes);
+        const dateFormatter = new Intl.DateTimeFormat(undefined, {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+        });
+        const timeFormatter = new Intl.DateTimeFormat(undefined, {
+          hour: 'numeric',
+          minute: '2-digit',
+        });
+        return `${dateFormatter.format(slotDate)} at ${timeFormatter.format(slotDate)}`;
+      } catch (error) {
+        return `${dateStr} ${timeStr}`.trim();
+      }
+    }
+
+    async function createAvailabilitySlot(date, time) {
+      const params = new URLSearchParams();
+      params.set('date', date);
+      params.set('time', time);
+      const res = await fetch('/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+      });
+      if (!res.ok) {
+        throw new Error('Unable to add slot. Please try again.');
+      }
     }
 
     function setBannedIpCache(list) {
@@ -2458,24 +2697,98 @@
     availabilityForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const formData = new FormData(availabilityForm);
-      const body = new URLSearchParams(formData);
+      const date = (formData.get('date') || '').toString();
+      const time = (formData.get('time') || '').toString();
+      if (!date || !time) {
+        alert('Please choose both a date and time for the slot.');
+        return;
+      }
       try {
-        const res = await fetch('/bookings', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: body.toString(),
-        });
-        if (!res.ok) {
-          throw new Error('Unable to add slot. Please try again.');
-        }
+        await createAvailabilitySlot(date, time);
         availabilityForm.reset();
+        if (availabilityDateInput) {
+          availabilityDateInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        if (availabilityTimeInput) {
+          availabilityTimeInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
         await loadAvailability();
       } catch (error) {
         alert(error.message || 'Unable to add slot');
       }
     });
+
+    if (availabilityDateInput) {
+      availabilityDateInput.addEventListener('input', () => {
+        markActiveQuickButtons(quickDateShortcuts, 'date', availabilityDateInput.value);
+      });
+    }
+
+    if (availabilityTimeInput) {
+      availabilityTimeInput.addEventListener('input', () => {
+        updateQuickTimeButtons(availabilityTimeInput.value);
+      });
+    }
+
+    if (quickTimeShortcuts && availabilityTimeInput) {
+      quickTimeShortcuts.querySelectorAll('button').forEach((button) => {
+        button.addEventListener('click', () => {
+          const value = button.dataset.quickTime || '';
+          if (!value) return;
+          availabilityTimeInput.value = value;
+          availabilityTimeInput.dispatchEvent(new Event('input', { bubbles: true }));
+          updateQuickTimeButtons(value);
+        });
+      });
+    }
+
+    if (quickDateShortcuts && availabilityDateInput) {
+      renderQuickDateButtons();
+    }
+
+    if (availabilityTimeInput) {
+      updateQuickTimeButtons(availabilityTimeInput.value);
+    }
+
+    if (autoNextWeekSlotsBtn) {
+      autoNextWeekSlotsBtn.addEventListener('click', async () => {
+        if (autoNextWeekSlotsBtn.disabled) return;
+        clearAutoScheduleFeedback();
+        updateAutoScheduleFeedback('Preparing next week evening trio…');
+        autoNextWeekSlotsBtn.disabled = true;
+        try {
+          const targets = computeNextWeekEveningSlots();
+          if (!targets.length) {
+            updateAutoScheduleFeedback('No suitable Monday/Wednesday evening slots were found.', false);
+            return;
+          }
+          const existing = new Set(Array.isArray(availabilityCache) ? availabilityCache : []);
+          const toCreate = targets.filter((slot) => !existing.has(`${slot.date} ${slot.time}`));
+          if (!toCreate.length) {
+            updateAutoScheduleFeedback('Those Monday and Wednesday evening slots are already published.', true);
+            return;
+          }
+          const skippedCount = targets.length - toCreate.length;
+          const created = [];
+          for (const slot of toCreate) {
+            await createAvailabilitySlot(slot.date, slot.time);
+            existing.add(`${slot.date} ${slot.time}`);
+            created.push(slot);
+          }
+          await loadAvailability();
+          const summary = created.map((slot) => formatSlotDescription(slot.date, slot.time)).join(', ');
+          let message = `Added ${created.length} slot${created.length === 1 ? '' : 's'}: ${summary}.`;
+          if (skippedCount > 0) {
+            message += ` Skipped ${skippedCount} existing slot${skippedCount === 1 ? '' : 's'}.`;
+          }
+          updateAutoScheduleFeedback(message, true);
+        } catch (error) {
+          updateAutoScheduleFeedback(error.message || 'Unable to add automatic slots.');
+        } finally {
+          autoNextWeekSlotsBtn.disabled = false;
+        }
+      });
+    }
 
     async function loadContacts() {
       contactsTable.className = 'empty-state';
