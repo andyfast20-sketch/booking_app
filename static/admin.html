@@ -72,6 +72,18 @@
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     }
 
+    main.panel-grid[data-active-panel] {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    main.panel-grid[data-active-panel] > .panel {
+      display: none;
+    }
+
+    main.panel-grid[data-active-panel] > .panel.panel--solo {
+      display: flex;
+    }
+
     .panel {
       position: relative;
       display: flex;
@@ -285,6 +297,90 @@
 
     button.danger:hover {
       box-shadow: 0 12px 26px rgba(255, 107, 107, 0.35);
+    }
+
+    .table-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .table-action {
+      padding: 0.45rem 0.85rem;
+      font-size: 0.78rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-primary);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .table-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(48, 195, 166, 0.3);
+      background: rgba(48, 195, 166, 0.18);
+    }
+
+    .table-action.secondary {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .table-action.secondary:hover {
+      box-shadow: 0 12px 24px rgba(3, 9, 24, 0.25);
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .table-action.danger {
+      background: rgba(255, 107, 107, 0.18);
+      border-color: rgba(255, 107, 107, 0.35);
+      color: #ffd3d3;
+    }
+
+    .table-action.danger:hover {
+      box-shadow: 0 12px 24px rgba(255, 107, 107, 0.35);
+      background: rgba(255, 107, 107, 0.26);
+    }
+
+    .table-action:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .table-action:focus-visible {
+      outline: 2px solid rgba(48, 195, 166, 0.65);
+      outline-offset: 2px;
+    }
+
+    .visitor-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.08);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .visitor-status.allowed {
+      background: rgba(48, 195, 166, 0.18);
+      border-color: rgba(48, 195, 166, 0.32);
+      color: #b6f6e9;
+    }
+
+    .visitor-status.banned {
+      background: rgba(255, 107, 107, 0.2);
+      border-color: rgba(255, 107, 107, 0.4);
+      color: #ffd6d6;
     }
 
     .table-scroll {
@@ -1199,6 +1295,7 @@
 
     const panelToggles = Array.from(document.querySelectorAll('.panel-toggle'));
     const panels = Array.from(document.querySelectorAll('[data-panel]'));
+    const panelGrid = document.querySelector('main.panel-grid');
 
     const availabilityForm = document.getElementById('availabilityForm');
     const refreshPresenceBtn = document.getElementById('refreshPresence');
@@ -1244,6 +1341,7 @@
     let onlineVisitorsCache = [];
     let visitorHistoryCache = [];
     let availabilityCache = [];
+    let bannedIpCache = new Map();
     const AUTOPILOT_DEFAULTS = {
       enabled: false,
       business_profile: '',
@@ -1345,6 +1443,30 @@
       return parts.join(' ');
     }
 
+    function setBannedIpCache(list) {
+      const map = new Map();
+      if (Array.isArray(list)) {
+        list.forEach((entry) => {
+          if (!entry || typeof entry !== 'object') return;
+          const ip = typeof entry.ip === 'string' ? entry.ip.trim() : '';
+          if (!ip) return;
+          map.set(ip, {
+            ip,
+            banned_at: typeof entry.banned_at === 'string' ? entry.banned_at : '',
+            reason: typeof entry.reason === 'string' ? entry.reason : '',
+          });
+        });
+      }
+      bannedIpCache = map;
+    }
+
+    function getBannedEntry(ip) {
+      if (!ip || !(bannedIpCache instanceof Map)) {
+        return null;
+      }
+      return bannedIpCache.get(ip) || null;
+    }
+
     function setSummaryText(element, text) {
       if (element) {
         element.textContent = text;
@@ -1381,13 +1503,19 @@
       if (!presenceSummaryHighlight) return;
       const list = Array.isArray(visitors) ? visitors : [];
       const savedCount = Array.isArray(visitorHistoryCache) ? visitorHistoryCache.length : 0;
+      const bannedCount = bannedIpCache instanceof Map ? bannedIpCache.size : 0;
       if (!list.length) {
+        const fragments = [];
         if (savedCount > 0) {
           const label = savedCount === 1 ? 'homepage visit saved' : 'homepage visits saved';
-          setSummaryText(presenceSummaryHighlight, `No active visitors right now. ${savedCount} ${label}.`);
-        } else {
-          setSummaryText(presenceSummaryHighlight, 'No active visitors right now.');
+          fragments.push(`${savedCount} ${label}`);
         }
+        if (bannedCount > 0) {
+          const bannedLabel = bannedCount === 1 ? 'IP banned' : 'IPs banned';
+          fragments.push(`${bannedCount} ${bannedLabel}`);
+        }
+        const suffix = fragments.length ? ` ${fragments.join(' • ')}` : '';
+        setSummaryText(presenceSummaryHighlight, `No active visitors right now.${suffix}`);
         return;
       }
 
@@ -1402,9 +1530,12 @@
       const savedSuffix = savedCount
         ? ` • ${savedCount} ${savedCount === 1 ? 'homepage visit saved' : 'homepage visits saved'}`
         : '';
+      const bannedSuffix = bannedCount
+        ? ` • ${bannedCount} ${bannedCount === 1 ? 'IP banned' : 'IPs banned'}`
+        : '';
       setSummaryText(
         presenceSummaryHighlight,
-        `${list.length} active ${list.length === 1 ? 'visitor' : 'visitors'} browsing${locationSuffix}.${savedSuffix}`
+        `${list.length} active ${list.length === 1 ? 'visitor' : 'visitors'} browsing${locationSuffix}.${savedSuffix}${bannedSuffix}`
       );
     }
 
@@ -1605,28 +1736,51 @@
       }
     }
 
-    function collapsePanel(panel, toggle, body) {
+    function updatePanelLayoutState() {
+      if (!panelGrid) return;
+      const expandedPanel = panels.find((candidate) => candidate.getAttribute('data-expanded') === 'true');
+      if (expandedPanel) {
+        const identifier = expandedPanel.dataset.panelId || expandedPanel.id || 'expanded';
+        panelGrid.setAttribute('data-active-panel', identifier);
+      } else {
+        panelGrid.removeAttribute('data-active-panel');
+      }
+    }
+
+    function collapsePanel(panel, toggle, body, suppressLayoutUpdate = false) {
       if (!panel || !toggle || !body) return;
+      panel.classList.remove('panel--solo');
       panel.setAttribute('data-expanded', 'false');
       toggle.setAttribute('aria-expanded', 'false');
       toggle.dataset.state = 'collapsed';
       toggle.textContent = 'Expand';
       body.hidden = true;
+      if (!suppressLayoutUpdate) {
+        updatePanelLayoutState();
+      }
     }
 
     function expandPanel(panel, toggle, body) {
       if (!panel || !toggle || !body) return;
+      panel.classList.add('panel--solo');
       body.hidden = false;
       toggle.setAttribute('aria-expanded', 'true');
       toggle.dataset.state = 'expanded';
       toggle.textContent = 'Collapse';
       requestAnimationFrame(() => {
         panel.setAttribute('data-expanded', 'true');
+        updatePanelLayoutState();
         panel.scrollIntoView({ block: 'start', behavior: 'smooth' });
       });
     }
 
     function initialisePanelToggles() {
+      panels.forEach((panel, index) => {
+        if (panel instanceof HTMLElement && !panel.dataset.panelId) {
+          panel.dataset.panelId = `panel-${index + 1}`;
+        }
+      });
+
       panelToggles.forEach((toggle) => {
         const panel = toggle.closest('[data-panel]');
         const bodyId = toggle.getAttribute('aria-controls');
@@ -1635,7 +1789,7 @@
           return;
         }
 
-        collapsePanel(panel, toggle, body);
+        collapsePanel(panel, toggle, body, true);
 
         toggle.addEventListener('click', () => {
           const isExpanded = panel.getAttribute('data-expanded') === 'true';
@@ -1643,6 +1797,12 @@
             collapsePanel(panel, toggle, body);
             return;
           }
+
+          if (panelGrid) {
+            const identifier = panel.dataset.panelId || panel.id || 'expanded';
+            panelGrid.setAttribute('data-active-panel', identifier);
+          }
+          panel.classList.add('panel--solo');
 
           panels.forEach((otherPanel) => {
             if (otherPanel === panel) return;
@@ -1652,13 +1812,15 @@
               `.panel-toggle[aria-controls="${bodyElement.id}"]`
             );
             if (otherPanel.getAttribute('data-expanded') === 'true' && otherToggle) {
-              collapsePanel(otherPanel, otherToggle, bodyElement);
+              collapsePanel(otherPanel, otherToggle, bodyElement, true);
             }
           });
 
           expandPanel(panel, toggle, body);
         });
       });
+
+      updatePanelLayoutState();
     }
 
     initialisePanelToggles();
@@ -1792,6 +1954,8 @@
         if (!res.ok) throw new Error('Unable to fetch visitor history');
         const data = await res.json();
         const visitors = Array.isArray(data.visitors) ? data.visitors : [];
+        const bannedList = Array.isArray(data.banned) ? data.banned : [];
+        setBannedIpCache(bannedList);
         renderVisitorHistory(visitors);
       } catch (error) {
         visitorHistoryContainer.className = 'empty-state';
@@ -1824,33 +1988,77 @@
               <th>Time on site</th>
               <th>Visits logged</th>
               <th>Location</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             ${list
               .map((visitor) => {
-                const ip = escapeHtml(visitor && visitor.ip ? visitor.ip : '—');
-                const firstVisit = escapeHtml(formatDate(visitor && visitor.first_seen));
-                const lastSeen = escapeHtml(formatDate(visitor && visitor.last_seen));
+                const ipValue = visitor && typeof visitor.ip === 'string' ? visitor.ip.trim() : '';
+                const ipDisplay = ipValue ? escapeHtml(ipValue) : '—';
+                const ipTitle = ipValue ? ` title="${escapeHtml(ipValue)}"` : '';
+                const firstSeenRaw = visitor && typeof visitor.first_seen === 'string' ? visitor.first_seen : '';
+                const firstVisit = escapeHtml(formatDate(firstSeenRaw));
+                const firstSeenTitle = firstSeenRaw ? ` title="${escapeHtml(firstSeenRaw)}"` : '';
+                const lastSeenRaw = visitor && typeof visitor.last_seen === 'string' ? visitor.last_seen : '';
+                const lastSeen = escapeHtml(formatDate(lastSeenRaw));
+                const lastSeenTitle = lastSeenRaw ? ` title="${escapeHtml(lastSeenRaw)}"` : '';
                 const visits = Number(visitor && visitor.visit_count ? visitor.visit_count : 0);
                 const totalSeconds = Number(visitor && visitor.total_duration_seconds ? visitor.total_duration_seconds : 0);
                 const currentSeconds = visitor && visitor.current_session && visitor.current_session.duration_seconds
                   ? Number(visitor.current_session.duration_seconds)
                   : 0;
                 const timeOnSite = escapeHtml(formatDuration(totalSeconds + currentSeconds));
-                const location = escapeHtml(
+                const locationRaw =
                   visitor && typeof visitor.location === 'string' && visitor.location.trim()
                     ? visitor.location.trim()
-                    : 'Unknown location'
-                );
+                    : 'Unknown location';
+                const location = escapeHtml(locationRaw);
+                const bannedEntry = ipValue ? getBannedEntry(ipValue) : null;
+                const bannedFlag =
+                  visitor && typeof visitor.banned === 'boolean' ? visitor.banned : Boolean(bannedEntry);
+                const bannedAtRaw = bannedEntry && typeof bannedEntry.banned_at === 'string' ? bannedEntry.banned_at : '';
+                const bannedReason = bannedEntry && typeof bannedEntry.reason === 'string' ? bannedEntry.reason.trim() : '';
+                const bannedAtDisplay = bannedAtRaw ? formatDate(bannedAtRaw) : '';
+                const statusLabel = bannedFlag ? 'Banned' : 'Allowed';
+                const statusClass = bannedFlag ? 'banned' : 'allowed';
+                const statusDetails = [];
+                if (bannedAtDisplay) {
+                  statusDetails.push(`Since ${bannedAtDisplay}`);
+                }
+                if (bannedReason) {
+                  statusDetails.push(bannedReason);
+                }
+                const statusTitle = statusDetails.length
+                  ? statusDetails.join(' • ')
+                  : bannedFlag
+                    ? 'Access revoked'
+                    : 'Access permitted';
+                const statusTitleAttr = statusTitle ? ` title="${escapeHtml(statusTitle)}"` : '';
+                const safeIpAttr = ipValue ? escapeHtml(ipValue) : '';
+                const disableActions = !ipValue;
+                const deleteButton = disableActions
+                  ? ''
+                  : `<button type="button" class="table-action secondary" data-visitor-action="delete" data-ip="${safeIpAttr}">Delete</button>`;
+                const banButton = disableActions
+                  ? ''
+                  : bannedFlag
+                    ? `<button type="button" class="table-action" data-visitor-action="unban" data-ip="${safeIpAttr}">Unban</button>`
+                    : `<button type="button" class="table-action danger" data-visitor-action="ban" data-ip="${safeIpAttr}">Ban</button>`;
+                const actionsCell = disableActions
+                  ? '<span class="cell-muted">No actions available</span>'
+                  : `<div class="table-actions">${deleteButton}${banButton}</div>`;
                 return `
                   <tr>
-                    <td>${ip}</td>
-                    <td>${firstVisit}</td>
-                    <td>${lastSeen}</td>
+                    <td${ipTitle}>${ipDisplay}</td>
+                    <td${firstSeenTitle}>${firstVisit}</td>
+                    <td${lastSeenTitle}>${lastSeen}</td>
                     <td>${timeOnSite}</td>
                     <td>${visits}</td>
                     <td>${location}</td>
+                    <td><span class="visitor-status ${statusClass}"${statusTitleAttr}>${statusLabel}</span></td>
+                    <td>${actionsCell}</td>
                   </tr>
                 `;
               })
@@ -1860,9 +2068,8 @@
       `;
     }
 
-    function refreshPresenceData() {
-      loadOnlineVisitors();
-      loadVisitorHistory();
+    async function refreshPresenceData() {
+      await Promise.allSettled([loadOnlineVisitors(), loadVisitorHistory()]);
     }
 
     if (onlineVisitorsContainer) {
@@ -1931,6 +2138,96 @@
             button.textContent = originalText;
             button.disabled = false;
           }, 2600);
+        }
+      });
+    }
+
+    if (visitorHistoryContainer) {
+      visitorHistoryContainer.addEventListener('click', async (event) => {
+        const target = event.target instanceof HTMLElement ? event.target : null;
+        if (!target) return;
+
+        const button = target.closest('[data-visitor-action]');
+        if (!(button instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        const action = button.getAttribute('data-visitor-action');
+        const ip = button.getAttribute('data-ip');
+        if (!action || !ip) {
+          return;
+        }
+
+        const originalText = button.textContent || '';
+        const setBusy = (text) => {
+          button.disabled = true;
+          if (text) {
+            button.textContent = text;
+          }
+        };
+        const resetButton = () => {
+          button.disabled = false;
+          button.textContent = originalText;
+        };
+
+        try {
+          if (action === 'delete') {
+            if (!window.confirm(`Delete visit history for ${ip}?`)) {
+              return;
+            }
+            setBusy('Deleting…');
+            const res = await fetch(`/admin/visitors/${encodeURIComponent(ip)}`, {
+              method: 'DELETE',
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              throw new Error(data.message || 'Unable to delete visitor history.');
+            }
+            await refreshPresenceData();
+            return;
+          }
+
+          if (action === 'ban') {
+            if (!window.confirm(`Ban ${ip}? They will be blocked from the site.`)) {
+              return;
+            }
+            setBusy('Banning…');
+            const res = await fetch('/admin/visitors/banned', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ip }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              throw new Error(data.message || 'Unable to ban IP address.');
+            }
+            await refreshPresenceData();
+            return;
+          }
+
+          if (action === 'unban') {
+            setBusy('Unbanning…');
+            const res = await fetch(`/admin/visitors/banned/${encodeURIComponent(ip)}`, {
+              method: 'DELETE',
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              throw new Error(data.message || 'Unable to unban IP address.');
+            }
+            await refreshPresenceData();
+            return;
+          }
+        } catch (error) {
+          console.error('Visitor history action failed.', error);
+          const message = error && error.message ? error.message : 'Action failed';
+          button.disabled = false;
+          button.textContent = message;
+          window.setTimeout(() => {
+            if (!document.body.contains(button)) {
+              return;
+            }
+            resetButton();
+          }, 2400);
         }
       });
     }

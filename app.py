@@ -24,6 +24,7 @@ AVAIL_FILE = "availability.txt"
 CONTACTS_FILE = "contacts.json"
 CHAT_STATE_FILE = "chat_state.json"
 AUTOPILOT_FILE = "autopilot.json"
+BANNED_IPS_FILE = "banned_ips.json"
 VISITOR_LOG_FILE = "visitor_log.json"
 
 DEFAULT_AUTOPILOT_MODEL = "gpt-3.5-turbo"
@@ -49,6 +50,8 @@ _autopilot_config = {
 }
 _visitor_log_lock = Lock()
 _visitor_log = {}
+_banned_ips_lock = Lock()
+_banned_ips = {}
 
 
 def _is_private_ip(ip_str: str) -> bool:
@@ -145,10 +148,55 @@ def _load_visitor_log_from_disk() -> dict:
     return payload
 
 
+def _load_banned_ips_from_disk() -> dict:
+    if not os.path.exists(BANNED_IPS_FILE):
+        return {}
+    try:
+        with open(BANNED_IPS_FILE, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+    entries = {}
+    if isinstance(payload, dict):
+        for ip_str, details in payload.items():
+            clean_ip = (ip_str or "").strip()
+            if not clean_ip:
+                continue
+            record = details if isinstance(details, dict) else {}
+            entries[clean_ip] = {
+                "ip": clean_ip,
+                "banned_at": (record.get("banned_at") or ""),
+                "reason": (record.get("reason") or ""),
+            }
+    elif isinstance(payload, list):
+        for raw_entry in payload:
+            if not isinstance(raw_entry, dict):
+                continue
+            clean_ip = (raw_entry.get("ip") or "").strip()
+            if not clean_ip:
+                continue
+            entries[clean_ip] = {
+                "ip": clean_ip,
+                "banned_at": (raw_entry.get("banned_at") or ""),
+                "reason": (raw_entry.get("reason") or ""),
+            }
+    return entries
+
+
 def _save_visitor_log(snapshot=None) -> None:
     payload = dict(snapshot or _visitor_log)
     try:
         with open(VISITOR_LOG_FILE, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2)
+    except OSError:
+        pass
+
+
+def _save_banned_ips(snapshot=None) -> None:
+    payload = dict(snapshot or _banned_ips)
+    try:
+        with open(BANNED_IPS_FILE, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, indent=2)
     except OSError:
         pass
@@ -390,6 +438,20 @@ def _record_presence(data: dict) -> None:
         _update_visitor_history(ip_str, entry)
 
 
+def _is_ip_banned(ip_str: str) -> bool:
+    if not ip_str:
+        return False
+    with _banned_ips_lock:
+        return ip_str in _banned_ips
+
+
+def _discard_active_visitor(ip_str: str) -> None:
+    if not ip_str:
+        return
+    with _presence_lock:
+        _active_visitors.pop(ip_str, None)
+
+
 def _safe_int(value, default=0):
     try:
         return int(value)
@@ -577,6 +639,80 @@ with _visitor_log_lock:
     stored_visitor_log = _load_visitor_log_from_disk()
     if isinstance(stored_visitor_log, dict):
         _visitor_log.update(stored_visitor_log)
+
+
+with _banned_ips_lock:
+    stored_banned_ips = _load_banned_ips_from_disk()
+    if isinstance(stored_banned_ips, dict):
+        _banned_ips.update(stored_banned_ips)
+
+
+@app.before_request
+def enforce_banned_ips():
+    ip_str = _client_ip()
+    if not ip_str:
+        return None
+    if not _is_ip_banned(ip_str):
+        return None
+
+    accepts_json = (
+        request.accept_mimetypes["application/json"]
+        >= request.accept_mimetypes["text/html"]
+    )
+    message = {"message": "Access revoked."}
+
+    if accepts_json:
+        return jsonify(message), 403
+
+    page = render_template_string(
+        """
+        <!doctype html>
+        <html lang="en">
+        <head>
+            <meta charset="utf-8" />
+            <title>Access revoked</title>
+            <style>
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                    background: #0b1623;
+                    color: #f8fbff;
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0;
+                }
+                main {
+                    text-align: center;
+                    padding: 3rem 2rem;
+                    border-radius: 18px;
+                    background: rgba(255, 255, 255, 0.06);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    max-width: 480px;
+                    box-shadow: 0 18px 40px rgba(8, 16, 44, 0.4);
+                }
+                h1 {
+                    margin-bottom: 1rem;
+                    font-size: 1.85rem;
+                    letter-spacing: 0.03em;
+                }
+                p {
+                    margin: 0;
+                    font-size: 1rem;
+                    line-height: 1.6;
+                }
+            </style>
+        </head>
+        <body>
+            <main>
+                <h1>Access revoked</h1>
+                <p>Your IP address has been blocked from accessing this site.</p>
+            </main>
+        </body>
+        </html>
+        """
+    )
+    return page, 403
 
 
 def _append_chat_message(
@@ -1575,6 +1711,13 @@ def admin_visitors():
             if isinstance(details, dict)
         }
 
+    with _banned_ips_lock:
+        banned_snapshot = {
+            ip: dict(details)
+            for ip, details in _banned_ips.items()
+            if isinstance(details, dict)
+        }
+
     results = []
     for record in snapshot:
         if not record.get("visited_index"):
@@ -1582,6 +1725,7 @@ def admin_visitors():
 
         combined = dict(record)
         ip_str = combined.get("ip") or ""
+        combined["banned"] = ip_str in banned_snapshot
         active_entry = active_snapshot.get(ip_str)
         if active_entry and isinstance(active_entry.get("first_seen"), datetime):
             first_seen = active_entry.get("first_seen")
@@ -1606,7 +1750,95 @@ def admin_visitors():
         results.append(combined)
 
     results.sort(key=lambda item: item.get("last_seen") or "", reverse=True)
-    return jsonify({"visitors": results, "generated_at": now.isoformat() + "Z"})
+    banned_list = list(banned_snapshot.values())
+    banned_list.sort(key=lambda item: item.get("banned_at") or "", reverse=True)
+    return jsonify(
+        {
+            "visitors": results,
+            "banned": banned_list,
+            "generated_at": now.isoformat() + "Z",
+        }
+    )
+
+
+@app.route("/admin/visitors/<ip_str>", methods=["DELETE"])
+def admin_delete_visitor(ip_str):
+    ip_clean = (ip_str or "").strip()
+    if not ip_clean:
+        return jsonify({"message": "IP address is required."}), 400
+
+    removed = False
+    snapshot = None
+    with _visitor_log_lock:
+        if ip_clean in _visitor_log:
+            _visitor_log.pop(ip_clean, None)
+            removed = True
+            snapshot = dict(_visitor_log)
+
+    if snapshot is not None:
+        _save_visitor_log(snapshot=snapshot)
+
+    _discard_active_visitor(ip_clean)
+
+    if not removed:
+        return jsonify({"message": "Visitor history not found."}), 404
+
+    return jsonify({"message": "Visitor history deleted."})
+
+
+@app.route("/admin/visitors/banned", methods=["GET"])
+def admin_list_banned_visitors():
+    with _banned_ips_lock:
+        banned_list = [dict(details) for details in _banned_ips.values()]
+    banned_list.sort(key=lambda item: item.get("banned_at") or "", reverse=True)
+    return jsonify({"banned": banned_list})
+
+
+@app.route("/admin/visitors/banned", methods=["POST"])
+def admin_ban_visitor():
+    data = request.get_json(silent=True) or {}
+    ip_clean = (data.get("ip") or "").strip()
+    reason = (data.get("reason") or "").strip()
+
+    if not ip_clean:
+        return jsonify({"message": "IP address is required."}), 400
+
+    now_iso = datetime.utcnow().isoformat() + "Z"
+    entry = {"ip": ip_clean, "banned_at": now_iso, "reason": reason}
+
+    with _banned_ips_lock:
+        if ip_clean in _banned_ips:
+            existing = dict(_banned_ips[ip_clean])
+            return jsonify({"message": "IP address already banned.", "banned": existing})
+        _banned_ips[ip_clean] = entry
+        snapshot = dict(_banned_ips)
+
+    _save_banned_ips(snapshot=snapshot)
+    _discard_active_visitor(ip_clean)
+
+    return jsonify({"message": "IP address banned.", "banned": entry})
+
+
+@app.route("/admin/visitors/banned/<ip_str>", methods=["DELETE"])
+def admin_unban_visitor(ip_str):
+    ip_clean = (ip_str or "").strip()
+    if not ip_clean:
+        return jsonify({"message": "IP address is required."}), 400
+
+    removed_entry = None
+    snapshot = None
+    with _banned_ips_lock:
+        if ip_clean in _banned_ips:
+            removed_entry = dict(_banned_ips.pop(ip_clean))
+            snapshot = dict(_banned_ips)
+
+    if snapshot is not None:
+        _save_banned_ips(snapshot=snapshot)
+
+    if not removed_entry:
+        return jsonify({"message": "IP address was not banned."}), 404
+
+    return jsonify({"message": "IP address unbanned.", "unbanned": removed_entry})
 # --- Serve admin.html file ---
 @app.route("/admin")
 def admin_page():
