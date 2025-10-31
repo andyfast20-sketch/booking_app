@@ -578,6 +578,17 @@
             word-break: break-word;
         }
 
+        .live-chat-message.typing .message-bubble {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 52px;
+        }
+
+        .live-chat-message.typing .message-meta {
+            font-style: italic;
+        }
+
         .live-chat-message.from-visitor .message-bubble {
             background: linear-gradient(135deg, var(--secondary), #ff7e5f);
             color: var(--white);
@@ -589,6 +600,40 @@
             background: linear-gradient(135deg, rgba(48, 195, 166, 0.18), rgba(29, 164, 136, 0.32));
             border-color: rgba(48, 195, 166, 0.35);
             box-shadow: 0 12px 26px rgba(48, 195, 166, 0.22);
+        }
+
+        .live-chat-message.autopilot.typing .message-bubble {
+            background: linear-gradient(135deg, rgba(48, 195, 166, 0.15), rgba(29, 164, 136, 0.25));
+        }
+
+        .live-chat-typing-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.2;
+            animation: live-chat-typing 1s ease-in-out infinite;
+        }
+
+        .live-chat-typing-dot:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+
+        .live-chat-typing-dot:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        @keyframes live-chat-typing {
+            0%,
+            80%,
+            100% {
+                opacity: 0.2;
+                transform: translateY(0);
+            }
+            40% {
+                opacity: 1;
+                transform: translateY(-3px);
+            }
         }
 
         .live-chat-message .message-meta {
@@ -3550,6 +3595,7 @@
             let chatGardenerTimer = null;
             let chatGardenerShown = false;
             let chatGardenerHideTimer = null;
+            let autopilotTypingQueue = Promise.resolve();
 
             function isDesktopViewport() {
                 return window.matchMedia('(min-width: 992px)').matches;
@@ -3618,10 +3664,108 @@
                 return parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             }
 
+            function createLiveChatMessageElement(message) {
+                if (!message) return null;
+                const sender = typeof message.sender === 'string' ? message.sender : 'visitor';
+                const isAutopilot = sender === 'autopilot';
+                const isAdminMessage = sender === 'admin' || isAutopilot;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = `live-chat-message ${isAdminMessage ? 'from-admin' : 'from-visitor'}`;
+                if (isAutopilot) {
+                    wrapper.classList.add('autopilot');
+                }
+
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble';
+                bubble.textContent = message.text || '';
+                wrapper.appendChild(bubble);
+
+                const meta = document.createElement('span');
+                meta.className = 'message-meta';
+                const senderLabel = isAutopilot ? 'Autopilot' : isAdminMessage ? 'Team' : 'You';
+                const timeLabel = formatLiveChatTime(message.timestamp);
+                meta.textContent = timeLabel ? `${senderLabel} • ${timeLabel}` : senderLabel;
+                wrapper.appendChild(meta);
+
+                return wrapper;
+            }
+
+            function appendLiveChatMessageElement(element) {
+                if (!element || !liveChatMessages) return;
+                liveChatMessages.appendChild(element);
+                liveChatMessages.scrollTop = liveChatMessages.scrollHeight;
+            }
+
+            function getAutopilotTypingDelay(text) {
+                const content = typeof text === 'string' ? text.trim() : '';
+                if (content.length < 5) {
+                    return 500 + Math.random() * 1000;
+                }
+                const minDelay = 10000;
+                const maxDelay = 20000;
+                return minDelay + Math.random() * (maxDelay - minDelay);
+            }
+
+            function createAutopilotTypingIndicator() {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'live-chat-message from-admin autopilot typing';
+
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble';
+                for (let index = 0; index < 3; index += 1) {
+                    const dot = document.createElement('span');
+                    dot.className = 'live-chat-typing-dot';
+                    bubble.appendChild(dot);
+                }
+                wrapper.appendChild(bubble);
+
+                const meta = document.createElement('span');
+                meta.className = 'message-meta';
+                meta.textContent = 'Autopilot is typing…';
+                wrapper.appendChild(meta);
+
+                return wrapper;
+            }
+
+            function queueAutopilotMessageDisplay(message) {
+                autopilotTypingQueue = autopilotTypingQueue.then(
+                    () =>
+                        new Promise((resolve) => {
+                            if (!liveChatMessages) {
+                                appendLiveChatMessageElement(createLiveChatMessageElement(message));
+                                resolve();
+                                return;
+                            }
+
+                            const indicator = createAutopilotTypingIndicator();
+                            appendLiveChatMessageElement(indicator);
+                            const delay = getAutopilotTypingDelay(message && message.text);
+
+                            window.setTimeout(() => {
+                                const messageElement = createLiveChatMessageElement(message);
+                                if (indicator.parentNode && messageElement) {
+                                    indicator.replaceWith(messageElement);
+                                    liveChatMessages.scrollTop = liveChatMessages.scrollHeight;
+                                } else if (messageElement) {
+                                    appendLiveChatMessageElement(messageElement);
+                                } else if (indicator.parentNode) {
+                                    indicator.remove();
+                                }
+                                resolve();
+                            }, delay);
+                        })
+                );
+            }
+
             function setChatUnreadIndicator(isActive) {
                 liveChatHasUnread = Boolean(isActive);
                 if (liveChatToggle) {
                     liveChatToggle.classList.toggle('has-unread', liveChatHasUnread);
+                    liveChatToggle.setAttribute(
+                        'aria-label',
+                        liveChatHasUnread ? 'Open live chat (new reply)' : 'Open live chat'
+                    );
                 }
             }
 
@@ -3734,28 +3878,13 @@
 
                 const sender = typeof message.sender === 'string' ? message.sender : 'visitor';
                 const isAutopilot = sender === 'autopilot';
-                const isAdminMessage = sender === 'admin' || isAutopilot;
 
-                const wrapper = document.createElement('div');
-                wrapper.className = `live-chat-message ${isAdminMessage ? 'from-admin' : 'from-visitor'}`;
-                if (isAutopilot) {
-                    wrapper.classList.add('autopilot');
+                if (isAutopilot && liveChatInitialized) {
+                    queueAutopilotMessageDisplay(message);
+                    return;
                 }
 
-                const bubble = document.createElement('div');
-                bubble.className = 'message-bubble';
-                bubble.textContent = message.text || '';
-                wrapper.appendChild(bubble);
-
-                const meta = document.createElement('span');
-                meta.className = 'message-meta';
-                const senderLabel = isAutopilot ? 'Autopilot' : isAdminMessage ? 'Team' : 'You';
-                const timeLabel = formatLiveChatTime(message.timestamp);
-                meta.textContent = timeLabel ? `${senderLabel} • ${timeLabel}` : senderLabel;
-                wrapper.appendChild(meta);
-
-                liveChatMessages.appendChild(wrapper);
-                liveChatMessages.scrollTop = liveChatMessages.scrollHeight;
+                appendLiveChatMessageElement(createLiveChatMessageElement(message));
             }
 
             function resetLiveChatMessages(messages = []) {
