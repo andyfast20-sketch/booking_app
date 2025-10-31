@@ -1032,6 +1032,10 @@
             color: var(--white);
         }
 
+        .logo-title-text {
+            display: inline-flex;
+        }
+
         .logo-title .highlight {
             color: #ffe082;
             position: relative;
@@ -2911,7 +2915,7 @@
             }
 
             .logo {
-                gap: 18px;
+                gap: 14px;
             }
 
             .logo-icon {
@@ -2920,16 +2924,22 @@
                 padding: 10px;
             }
 
-            .logo-title .highlight {
-                color: var(--white);
+            .logo-title {
+                font-size: 1.08em;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0;
+                line-height: 1.08;
             }
 
-            .logo-title .highlight::after {
-                display: none;
+            .logo-title-text {
+                letter-spacing: 0.04em;
             }
 
             .logo-title .highlight {
-                color: var(--white);
+                color: var(--secondary);
+                display: block;
+                margin-top: 2px;
             }
 
             .logo-title .highlight::after {
@@ -2939,10 +2949,6 @@
             .logo-eyebrow {
                 font-size: 0.64em;
                 letter-spacing: 4.4px;
-            }
-
-            .logo-title {
-                font-size: 1.32em;
             }
 
             .logo-tagline {
@@ -3039,7 +3045,11 @@
             }
 
             .logo-title {
-                font-size: 1.18em;
+                font-size: 1.02em;
+            }
+
+            .logo-title-text {
+                letter-spacing: 0.03em;
             }
 
             .logo-tagline {
@@ -3072,14 +3082,6 @@
                 gap: 14px;
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 background: linear-gradient(150deg, rgba(0, 0, 0, 0.36), rgba(0, 0, 0, 0.16));
-            }
-
-            .logo-title .highlight {
-                color: var(--white);
-            }
-
-            .logo-title .highlight::after {
-                display: none;
             }
 
             .hero-actions {
@@ -3141,14 +3143,26 @@
             }
 
             .logo {
-                font-size: 24px;
-                gap: 16px;
+                font-size: 22px;
+                gap: 12px;
             }
 
             .logo-icon {
-                width: 60px;
-                height: 60px;
+                width: 56px;
+                height: 56px;
                 padding: 8px;
+            }
+
+            .logo-title {
+                font-size: 0.96em;
+            }
+
+            .logo-title-text {
+                letter-spacing: 0.02em;
+            }
+
+            .logo-title .highlight {
+                margin-top: 1px;
             }
 
             .booking-header h2 {
@@ -3246,7 +3260,7 @@
                 </span>
                 <span class="logo-wordmark">
                     <span class="logo-eyebrow">Premium Lawn Care</span>
-                    <span class="logo-title">Pay As You <span class="highlight">Mow</span></span>
+                    <span class="logo-title"><span class="logo-title-text">Pay As You</span><span class="highlight">Mow</span></span>
                     <span class="logo-tagline">Audenshaw &bull; Denton &bull; Dukinfield</span>
                 </span>
             </a>
