@@ -1233,6 +1233,14 @@
             text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
         }
 
+        .hero-title-desktop {
+            display: inline;
+        }
+
+        .hero-title-mobile {
+            display: none;
+        }
+
         .hero p {
             font-size: 1.2rem;
             margin-bottom: 30px;
@@ -2656,7 +2664,7 @@
             }
 
             .hero-slide .container {
-                padding-top: 110px;
+                padding-top: 140px;
                 padding-bottom: 36px;
             }
 
@@ -2667,7 +2675,7 @@
                 padding: 28px 24px;
                 border-radius: 24px;
                 border: 1px solid rgba(255, 255, 255, 0.16);
-                background: linear-gradient(150deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.45));
+                background: linear-gradient(150deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.28));
                 gap: 18px;
                 box-shadow: 0 22px 52px rgba(0, 0, 0, 0.45);
                 backdrop-filter: blur(8px);
@@ -2693,6 +2701,14 @@
                 flex-direction: column;
                 align-items: stretch;
                 gap: 14px;
+            }
+
+            .hero-title-desktop {
+                display: none;
+            }
+
+            .hero-title-mobile {
+                display: block;
             }
 
             .hero-actions .btn {
@@ -2746,9 +2762,17 @@
             }
 
             .logo-icon {
-                width: 52px;
-                height: 52px;
+                width: 60px;
+                height: 60px;
                 padding: 8px;
+            }
+
+            .logo-title .highlight {
+                color: var(--white);
+            }
+
+            .logo-title .highlight::after {
+                display: none;
             }
 
             .logo-eyebrow {
@@ -2877,7 +2901,7 @@
             }
 
             .hero-slide .container {
-                padding-top: 88px;
+                padding-top: 120px;
                 padding-bottom: 28px;
             }
 
@@ -2885,7 +2909,15 @@
                 padding: 18px;
                 border-radius: 18px;
                 gap: 14px;
-                background: linear-gradient(150deg, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.3));
+                background: linear-gradient(150deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.2));
+            }
+
+            .logo-title .highlight {
+                color: var(--white);
+            }
+
+            .logo-title .highlight::after {
+                display: none;
             }
 
             .hero-actions {
@@ -3075,7 +3107,10 @@
         <div class="hero-slide active" style="--hero-image: url('https://image.pollinations.ai/prompt/Ultra%20realistic%20photo%20of%20a%20professional%20male%20gardener%20with%20olive%20skin%20pushing%20a%20lawn%20mower%20across%20a%20lush%20small%20urban%20garden%2C%20wearing%20khaki%20shorts%20and%20a%20green%20t-shirt%2C%20bright%20summer%20day%2C%20hyper-detailed%2C%208k');">
             <div class="container">
                 <div class="hero-content">
-                    <h1>Garden Maintenance Service</h1>
+                    <h1>
+                        <span class="hero-title-desktop">Garden Maintenance Service</span>
+                        <span class="hero-title-mobile">Pay As You Mow</span>
+                    </h1>
                     <p>Probably the best rates in Tameside.</p>
                     <div class="hero-actions">
                         <a href="#booking" class="btn">Get a Free Quote</a>
@@ -3087,7 +3122,10 @@
         <div class="hero-slide" style="--hero-image: url('https://image.pollinations.ai/prompt/Ultra%20realistic%20photo%20of%20the%20same%20professional%20male%20gardener%20with%20olive%20skin%20on%20his%20hands%20and%20knees%20weeding%20a%20flower%20border%20in%20a%20well-kept%20urban%20garden%2C%20wearing%20khaki%20shorts%20and%20a%20green%20t-shirt%2C%20bright%20summer%20day%2C%20hyper-detailed%2C%208k');">
             <div class="container">
                 <div class="hero-content">
-                    <h1>Garden Maintenance Service</h1>
+                    <h1>
+                        <span class="hero-title-desktop">Garden Maintenance Service</span>
+                        <span class="hero-title-mobile">Pay As You Mow</span>
+                    </h1>
                     <p>Detailed border care, weeding, and mowing tailored to your garden.</p>
                     <div class="hero-actions">
                         <a href="#booking" class="btn">Get a Free Quote</a>
