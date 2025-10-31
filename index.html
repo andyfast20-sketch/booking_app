@@ -1233,6 +1233,15 @@
             text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
         }
 
+        .hero-title-desktop {
+            display: inline;
+        }
+
+        .hero-title-mobile {
+            display: none;
+            white-space: nowrap;
+        }
+
         .hero p {
             font-size: 1.2rem;
             margin-bottom: 30px;
@@ -2085,6 +2094,132 @@
             overflow: hidden;
         }
 
+        .mobile-offer-popup {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 48px 20px 24px;
+            background: rgba(10, 24, 14, 0.48);
+            backdrop-filter: blur(6px);
+            z-index: 2050;
+            opacity: 0;
+            transition: opacity 0.35s ease;
+        }
+
+        .mobile-offer-popup.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .mobile-offer-card {
+            position: relative;
+            width: min(420px, 100%);
+            background: var(--white);
+            border-radius: 26px;
+            box-shadow: 0 28px 60px rgba(15, 31, 16, 0.35);
+            overflow: hidden;
+            animation: mobileOfferPopupSlideUp 0.4s ease forwards;
+        }
+
+        .mobile-offer-visual {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+        }
+
+        .mobile-offer-visual img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .mobile-offer-content {
+            padding: 22px 22px 26px;
+            text-align: left;
+        }
+
+        .mobile-offer-content h3 {
+            font-size: 1.65rem;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .mobile-offer-content p {
+            margin-bottom: 12px;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .mobile-offer-list {
+            list-style: none;
+            display: grid;
+            gap: 8px;
+            padding: 0;
+            margin: 0;
+        }
+
+        .mobile-offer-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        .mobile-offer-list li::before {
+            content: '\f058';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: var(--secondary);
+        }
+
+        .mobile-offer-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .mobile-offer-close:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.2);
+        }
+
+        .mobile-offer-close i {
+            font-size: 1rem;
+        }
+
+        @keyframes mobileOfferPopupSlideUp {
+            from {
+                transform: translateY(40px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-offer-popup {
+                display: none !important;
+            }
+        }
+
         .character-popup {
             position: fixed;
             inset: 0;
@@ -2656,7 +2791,7 @@
             }
 
             .hero-slide .container {
-                padding-top: 110px;
+                padding-top: 140px;
                 padding-bottom: 36px;
             }
 
@@ -2666,10 +2801,10 @@
                 margin: 0;
                 padding: 28px 24px;
                 border-radius: 24px;
-                border: 1px solid rgba(255, 255, 255, 0.16);
-                background: linear-gradient(150deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.45));
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                background: linear-gradient(150deg, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.18));
                 gap: 18px;
-                box-shadow: 0 22px 52px rgba(0, 0, 0, 0.45);
+                box-shadow: 0 22px 52px rgba(0, 0, 0, 0.38);
                 backdrop-filter: blur(8px);
                 display: flex;
                 flex-direction: column;
@@ -2680,7 +2815,7 @@
 
             .hero h1 {
                 font-size: 2.6rem;
-                line-height: 1.25;
+                line-height: 1.2;
             }
 
             .hero p {
@@ -2693,6 +2828,17 @@
                 flex-direction: column;
                 align-items: stretch;
                 gap: 14px;
+            }
+
+            .hero-title-desktop {
+                display: none;
+            }
+
+            .hero-title-mobile {
+                display: block;
+                font-size: clamp(1.45rem, 6.8vw, 2.55rem);
+                line-height: 1.05;
+                letter-spacing: -0.012em;
             }
 
             .hero-actions .btn {
@@ -2742,27 +2888,35 @@
             }
 
             .logo {
-                gap: 16px;
+                gap: 18px;
             }
 
             .logo-icon {
-                width: 52px;
-                height: 52px;
-                padding: 8px;
+                width: 68px;
+                height: 68px;
+                padding: 10px;
+            }
+
+            .logo-title .highlight {
+                color: var(--white);
+            }
+
+            .logo-title .highlight::after {
+                display: none;
             }
 
             .logo-eyebrow {
-                font-size: 0.58em;
-                letter-spacing: 4px;
+                font-size: 0.64em;
+                letter-spacing: 4.4px;
             }
 
             .logo-title {
-                font-size: 1.2em;
+                font-size: 1.32em;
             }
 
             .logo-tagline {
-                font-size: 0.52em;
-                letter-spacing: 2.6px;
+                font-size: 0.56em;
+                letter-spacing: 3px;
             }
 
             nav {
@@ -2854,7 +3008,7 @@
             }
 
             .logo-title {
-                font-size: 1.08em;
+                font-size: 1.18em;
             }
 
             .logo-tagline {
@@ -2877,7 +3031,7 @@
             }
 
             .hero-slide .container {
-                padding-top: 88px;
+                padding-top: 120px;
                 padding-bottom: 28px;
             }
 
@@ -2885,7 +3039,16 @@
                 padding: 18px;
                 border-radius: 18px;
                 gap: 14px;
-                background: linear-gradient(150deg, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.3));
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                background: linear-gradient(150deg, rgba(0, 0, 0, 0.36), rgba(0, 0, 0, 0.16));
+            }
+
+            .logo-title .highlight {
+                color: var(--white);
+            }
+
+            .logo-title .highlight::after {
+                display: none;
             }
 
             .hero-actions {
@@ -2947,12 +3110,14 @@
             }
 
             .logo {
-                font-size: 22px;
+                font-size: 24px;
+                gap: 16px;
             }
 
             .logo-icon {
-                width: 44px;
-                height: 44px;
+                width: 60px;
+                height: 60px;
+                padding: 8px;
             }
 
             .booking-header h2 {
@@ -3075,7 +3240,10 @@
         <div class="hero-slide active" style="--hero-image: url('https://image.pollinations.ai/prompt/Ultra%20realistic%20photo%20of%20a%20professional%20male%20gardener%20with%20olive%20skin%20pushing%20a%20lawn%20mower%20across%20a%20lush%20small%20urban%20garden%2C%20wearing%20khaki%20shorts%20and%20a%20green%20t-shirt%2C%20bright%20summer%20day%2C%20hyper-detailed%2C%208k');">
             <div class="container">
                 <div class="hero-content">
-                    <h1>Garden Maintenance Service</h1>
+                    <h1>
+                        <span class="hero-title-desktop">Garden Maintenance Service</span>
+                        <span class="hero-title-mobile">Pay As You Mow</span>
+                    </h1>
                     <p>Probably the best rates in Tameside.</p>
                     <div class="hero-actions">
                         <a href="#booking" class="btn">Get a Free Quote</a>
@@ -3087,7 +3255,10 @@
         <div class="hero-slide" style="--hero-image: url('https://image.pollinations.ai/prompt/Ultra%20realistic%20photo%20of%20the%20same%20professional%20male%20gardener%20with%20olive%20skin%20on%20his%20hands%20and%20knees%20weeding%20a%20flower%20border%20in%20a%20well-kept%20urban%20garden%2C%20wearing%20khaki%20shorts%20and%20a%20green%20t-shirt%2C%20bright%20summer%20day%2C%20hyper-detailed%2C%208k');">
             <div class="container">
                 <div class="hero-content">
-                    <h1>Garden Maintenance Service</h1>
+                    <h1>
+                        <span class="hero-title-desktop">Garden Maintenance Service</span>
+                        <span class="hero-title-mobile">Pay As You Mow</span>
+                    </h1>
                     <p>Detailed border care, weeding, and mowing tailored to your garden.</p>
                     <div class="hero-actions">
                         <a href="#booking" class="btn">Get a Free Quote</a>
@@ -3097,6 +3268,27 @@
             </div>
         </div>
     </section>
+
+    <div class="mobile-offer-popup" id="mobileOfferPopup" aria-hidden="true">
+        <div class="mobile-offer-card" role="dialog" aria-modal="true" aria-labelledby="mobileOfferTitle" aria-describedby="mobileOfferCopy mobileOfferList">
+            <button type="button" class="mobile-offer-close" id="mobileOfferClose" aria-label="Close special garden offer">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+            <div class="mobile-offer-visual" aria-hidden="true">
+                <img src="https://image.pollinations.ai/prompt/Ultra%20realistic%20photo%20of%20a%20smiling%20gardener%20standing%20with%20arms%20folded%20in%20front%20of%20a%20neatly%20trimmed%20hedge%2C%20golden%20hour%20lighting%2C%20professional%20portrait%2C%208k" alt="Smiling gardener standing with folded arms in front of a neatly trimmed hedge">
+            </div>
+            <div class="mobile-offer-content">
+                <h3 id="mobileOfferTitle">Gardens from only £10</h3>
+                <p id="mobileOfferCopy">Includes mowing, weeding, tidying borders, and bushes.</p>
+                <ul class="mobile-offer-list" id="mobileOfferList">
+                    <li>Mowing</li>
+                    <li>Weeding</li>
+                    <li>Tidying borders</li>
+                    <li>Bushes</li>
+                </ul>
+            </div>
+        </div>
+    </div>
 
     <!-- Services Section -->
     <section class="services" id="services">
@@ -3533,12 +3725,84 @@
         const LIVE_CHAT_POLL_INTERVAL = 4000;
         const CHARACTER_POPUP_DELAY = 10000;
         const CHARACTER_POPUP_STORAGE_KEY = 'payAsYouMowCharacterPopupShown';
+        const MOBILE_OFFER_POPUP_DELAY = 600;
+        const MOBILE_OFFER_POPUP_DURATION = 5000;
 
         const characterPopup = document.getElementById('heroCharacterPopup');
         const characterPopupClose = document.getElementById('characterPopupClose');
         const characterPopupDismiss = document.getElementById('characterPopupDismiss');
         const characterPopupCta = document.getElementById('characterPopupCta');
+        const mobileOfferPopup = document.getElementById('mobileOfferPopup');
+        const mobileOfferClose = document.getElementById('mobileOfferClose');
+        const mobileOfferBreakpoint = window.matchMedia ? window.matchMedia('(max-width: 768px)') : null;
+
         let characterPopupTimer = null;
+        let mobileOfferDelayTimer = null;
+        let mobileOfferAutoCloseTimer = null;
+        let mobileOfferShown = false;
+
+        function isMobileOfferViewport() {
+            if (mobileOfferBreakpoint) {
+                return mobileOfferBreakpoint.matches;
+            }
+            return window.innerWidth <= 768;
+        }
+
+        function clearMobileOfferDelayTimer() {
+            if (mobileOfferDelayTimer) {
+                clearTimeout(mobileOfferDelayTimer);
+                mobileOfferDelayTimer = null;
+            }
+        }
+
+        function clearMobileOfferAutoCloseTimer() {
+            if (mobileOfferAutoCloseTimer) {
+                clearTimeout(mobileOfferAutoCloseTimer);
+                mobileOfferAutoCloseTimer = null;
+            }
+        }
+
+        function openMobileOfferPopup() {
+            if (!mobileOfferPopup || mobileOfferPopup.classList.contains('visible')) {
+                return;
+            }
+            mobileOfferPopup.classList.add('visible');
+            mobileOfferPopup.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            mobileOfferShown = true;
+            clearMobileOfferAutoCloseTimer();
+            mobileOfferAutoCloseTimer = window.setTimeout(() => {
+                closeMobileOfferPopup();
+            }, MOBILE_OFFER_POPUP_DURATION);
+            if (mobileOfferClose && typeof mobileOfferClose.focus === 'function') {
+                window.setTimeout(() => {
+                    mobileOfferClose.focus({ preventScroll: true });
+                }, 150);
+            }
+        }
+
+        function closeMobileOfferPopup() {
+            clearMobileOfferDelayTimer();
+            clearMobileOfferAutoCloseTimer();
+            if (!mobileOfferPopup || !mobileOfferPopup.classList.contains('visible')) {
+                return;
+            }
+            mobileOfferPopup.classList.remove('visible');
+            mobileOfferPopup.setAttribute('aria-hidden', 'true');
+            if (!document.querySelector('.modal-overlay.visible') && !(characterPopup && characterPopup.classList.contains('visible'))) {
+                document.body.classList.remove('modal-open');
+            }
+        }
+
+        function scheduleMobileOfferPopup() {
+            if (!mobileOfferPopup || mobileOfferShown || !isMobileOfferViewport()) {
+                return;
+            }
+            clearMobileOfferDelayTimer();
+            mobileOfferDelayTimer = window.setTimeout(() => {
+                openMobileOfferPopup();
+            }, MOBILE_OFFER_POPUP_DELAY);
+        }
 
         function hasCharacterPopupBeenSeen() {
             try {
@@ -3570,7 +3834,7 @@
             }
             characterPopup.classList.remove('visible');
             characterPopup.setAttribute('aria-hidden', 'true');
-            if (!document.querySelector('.modal-overlay.visible')) {
+            if (!document.querySelector('.modal-overlay.visible') && !(mobileOfferPopup && mobileOfferPopup.classList.contains('visible'))) {
                 document.body.classList.remove('modal-open');
             }
         }
@@ -3602,7 +3866,50 @@
             }, CHARACTER_POPUP_DELAY);
         }
 
+        scheduleMobileOfferPopup();
         scheduleCharacterPopup();
+
+        if (mobileOfferBreakpoint) {
+            if (typeof mobileOfferBreakpoint.addEventListener === 'function') {
+                mobileOfferBreakpoint.addEventListener('change', (event) => {
+                    if (event.matches) {
+                        scheduleMobileOfferPopup();
+                    } else {
+                        closeMobileOfferPopup();
+                    }
+                });
+            } else if (typeof mobileOfferBreakpoint.addListener === 'function') {
+                mobileOfferBreakpoint.addListener((event) => {
+                    if (event.matches) {
+                        scheduleMobileOfferPopup();
+                    } else {
+                        closeMobileOfferPopup();
+                    }
+                });
+            }
+        } else {
+            window.addEventListener('resize', () => {
+                if (isMobileOfferViewport()) {
+                    scheduleMobileOfferPopup();
+                } else {
+                    closeMobileOfferPopup();
+                }
+            });
+        }
+
+        if (mobileOfferPopup) {
+            mobileOfferPopup.addEventListener('click', (event) => {
+                if (event.target === mobileOfferPopup) {
+                    closeMobileOfferPopup();
+                }
+            });
+        }
+
+        if (mobileOfferClose) {
+            mobileOfferClose.addEventListener('click', () => {
+                closeMobileOfferPopup();
+            });
+        }
 
         if (characterPopup) {
             characterPopup.addEventListener('click', (event) => {
@@ -3631,8 +3938,14 @@
         }
 
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && characterPopup && characterPopup.classList.contains('visible')) {
+            if (event.key !== 'Escape') {
+                return;
+            }
+            if (characterPopup && characterPopup.classList.contains('visible')) {
                 closeCharacterPopup();
+            }
+            if (mobileOfferPopup && mobileOfferPopup.classList.contains('visible')) {
+                closeMobileOfferPopup();
             }
         });
 
