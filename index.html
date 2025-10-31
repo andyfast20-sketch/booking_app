@@ -3683,7 +3683,7 @@
 
                 const meta = document.createElement('span');
                 meta.className = 'message-meta';
-                const senderLabel = isAutopilot ? 'Autopilot' : isAdminMessage ? 'Team' : 'You';
+                const senderLabel = isAutopilot ? 'Agent' : isAdminMessage ? 'Team' : 'You';
                 const timeLabel = formatLiveChatTime(message.timestamp);
                 meta.textContent = timeLabel ? `${senderLabel} • ${timeLabel}` : senderLabel;
                 wrapper.appendChild(meta);
@@ -3707,6 +3707,12 @@
                 return minDelay + Math.random() * (maxDelay - minDelay);
             }
 
+            function getAutopilotTypingIndicatorDelay() {
+                const minDelay = 3000;
+                const maxDelay = 7000;
+                return minDelay + Math.random() * (maxDelay - minDelay);
+            }
+
             function createAutopilotTypingIndicator() {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'live-chat-message from-admin autopilot typing';
@@ -3722,7 +3728,7 @@
 
                 const meta = document.createElement('span');
                 meta.className = 'message-meta';
-                meta.textContent = 'Autopilot is typing…';
+                meta.textContent = 'Agent is typing…';
                 wrapper.appendChild(meta);
 
                 return wrapper;
@@ -3739,10 +3745,10 @@
                             }
 
                             const indicator = createAutopilotTypingIndicator();
-                            appendLiveChatMessageElement(indicator);
-                            const delay = getAutopilotTypingDelay(message && message.text);
+                            const typingDelay = getAutopilotTypingDelay(message && message.text);
+                            const indicatorDelay = getAutopilotTypingIndicatorDelay();
 
-                            window.setTimeout(() => {
+                            const displayMessage = () => {
                                 const messageElement = createLiveChatMessageElement(message);
                                 if (indicator.parentNode && messageElement) {
                                     indicator.replaceWith(messageElement);
@@ -3753,7 +3759,15 @@
                                     indicator.remove();
                                 }
                                 resolve();
-                            }, delay);
+                            };
+
+                            window.setTimeout(() => {
+                                appendLiveChatMessageElement(indicator);
+                            }, indicatorDelay);
+
+                            window.setTimeout(() => {
+                                displayMessage();
+                            }, indicatorDelay + typingDelay);
                         })
                 );
             }
