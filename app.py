@@ -328,6 +328,11 @@ def _update_visitor_history(ip_str: str, visitor_entry: dict) -> None:
         if user_agent:
             record["user_agent"] = user_agent
 
+        existing_visits = record.get("visits")
+        if not isinstance(existing_visits, list):
+            existing_visits = []
+            record["visits"] = existing_visits
+
         combined_pages = set(record.get("pages", []))
         combined_pages.update(normalized_pages)
         record["pages"] = sorted(combined_pages)
@@ -337,7 +342,14 @@ def _update_visitor_history(ip_str: str, visitor_entry: dict) -> None:
             "first_seen": first_seen_iso,
             "last_seen": last_seen_iso,
             "duration_seconds": duration_seconds,
+            "pages": sorted(normalized_pages),
+            "location": location,
         }
+
+        # Include the active visit in the running count so live visitors appear
+        # in the index history with a meaningful visit number.
+        record["visit_count"] = max(len(existing_visits) + 1, int(record.get("visit_count", 0)))
+        record["total_duration_seconds"] = float(record.get("total_duration_seconds", 0.0))
 
         _visitor_log[ip_str] = record
 

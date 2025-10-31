@@ -1232,13 +1232,40 @@
         }
 
         .hero h1 {
-            font-size: 3.5rem;
+            font-size: clamp(3rem, 4.2vw, 4.5rem);
             margin-bottom: 20px;
-            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+            text-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+            letter-spacing: 0.6px;
         }
 
         .hero-title-desktop {
-            display: inline;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .hero-title-desktop .hero-title-line,
+        .hero-title-desktop .hero-title-accent {
+            display: block;
+            padding: 0 18px;
+            border-radius: 32px;
+        }
+
+        .hero-title-desktop .hero-title-line {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.35));
+            color: #103218;
+            text-shadow: none;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .hero-title-desktop .hero-title-accent {
+            background: linear-gradient(135deg, rgba(255, 152, 0, 0.95), rgba(46, 125, 50, 0.85));
+            color: var(--white);
+            box-shadow: 0 12px 30px rgba(16, 50, 24, 0.45);
         }
 
         .hero-title-mobile {
@@ -1246,6 +1273,16 @@
             white-space: normal;
             width: 100%;
             max-width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title-desktop {
+                display: none;
+            }
+
+            .hero-title-mobile {
+                display: inline;
+            }
         }
 
         .hero p {
@@ -3355,12 +3392,15 @@
             <div class="container">
                 <div class="hero-content">
                     <h1>
-                        <span class="hero-title-desktop">Garden Maintenance Service</span>
-                        <span class="hero-title-mobile">Garden Maintenance</span>
+                        <span class="hero-title-desktop">
+                            <span class="hero-title-line">Signature Garden Care</span>
+                            <span class="hero-title-accent">Crafted for Tameside Homes</span>
+                        </span>
+                        <span class="hero-title-mobile">Signature Garden Care</span>
                     </h1>
-                    <p>Probably the best rates in Tameside.</p>
+                    <p>Meticulous mowing, hedge shaping, and seasonal tidy-ups with quotes that stay free and friendly.</p>
                     <div class="hero-actions">
-                        <a href="#booking" class="btn">Get a Free Quote</a>
+                        <a href="#booking" class="btn">Book a Free Quote Visit</a>
                         <a href="#services" class="btn btn-secondary">Our Services</a>
                     </div>
                 </div>
@@ -3370,12 +3410,15 @@
             <div class="container">
                 <div class="hero-content">
                     <h1>
-                        <span class="hero-title-desktop">Garden Maintenance Service</span>
-                        <span class="hero-title-mobile">Garden Maintenance</span>
+                        <span class="hero-title-desktop">
+                            <span class="hero-title-line">Precision Garden Detailing</span>
+                            <span class="hero-title-accent">Personal Service, Local Expertise</span>
+                        </span>
+                        <span class="hero-title-mobile">Precision Garden Detailing</span>
                     </h1>
-                    <p>Detailed border care, weeding, and mowing tailored to your garden.</p>
+                    <p>Bespoke trims, border care, and expert advice before any work begins — we always visit to quote first.</p>
                     <div class="hero-actions">
-                        <a href="#booking" class="btn">Get a Free Quote</a>
+                        <a href="#booking" class="btn">Book a Free Quote Visit</a>
                         <a href="#services" class="btn btn-secondary">Our Services</a>
                     </div>
                 </div>
@@ -3578,21 +3621,21 @@
     <section class="booking" id="booking">
         <div class="container">
             <div class="booking-header">
-                <span class="booking-eyebrow"><i class="fas fa-calendar-check" aria-hidden="true"></i> Book Your Appointment</span>
-                <h2>Schedule Your Garden Visit</h2>
-                <p>Select your preferred time slot and we'll confirm your booking right away.</p>
+                <span class="booking-eyebrow"><i class="fas fa-calendar-check" aria-hidden="true"></i> Book Your Free Quote</span>
+                <h2>Schedule Your Free Garden Quote Visit</h2>
+                <p>Pick a slot for Andy to assess your garden in person — every visit is purely for preparing your no-obligation quote.</p>
             </div>
 
             <div class="booking-content">
                 <div class="booking-info">
                     <div class="booking-intro">
-                        <h3>Effortless garden scheduling</h3>
-                        <p>Pick a visit time that fits around you and we'll confirm with any prep details you need before we arrive.</p>
+                        <h3>Effortless free-quote scheduling</h3>
+                        <p>Choose a convenient time for us to stop by, walk the garden with you, and leave you with a tailored quote before any work is booked.</p>
                     </div>
                     <ul class="booking-highlights">
                         <li>Live availability direct from our gardener rota.</li>
-                        <li>Share access notes or special requests after you choose a slot.</li>
-                        <li>Receive SMS and email confirmation as soon as we lock in your visit.</li>
+                        <li>Your visit is dedicated to scoping the work and pricing it transparently.</li>
+                        <li>Receive SMS and email confirmation with your quote visit details.</li>
                     </ul>
                     <div class="booking-assurance">
                         <div class="assurance-item">
@@ -3614,8 +3657,8 @@
                                 <option value="">Loading available times...</option>
                             </select>
                         </div>
-                        <p class="form-hint"><i class="fas fa-clipboard-check" aria-hidden="true"></i>Choose a time and we'll open a quick contact form to confirm.</p>
-                        <button type="submit" class="booking-submit">Book Now</button>
+                        <p class="form-hint"><i class="fas fa-clipboard-check" aria-hidden="true"></i>Choose a time and we'll open a quick contact form to lock in your free quote visit.</p>
+                        <button type="submit" class="booking-submit">Book Free Quote Visit</button>
                     </form>
                     <div class="booking-response" id="bookingResponse" role="alert" aria-live="assertive"></div>
                 </div>
