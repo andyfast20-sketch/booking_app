@@ -4896,7 +4896,21 @@
         }
 
         async function loadTestimonialsFromEndpoint(endpoint) {
-            const res = await fetch(endpoint);
+            const absolutePattern = /^https?:\/\//i;
+            const url = (() => {
+                if (absolutePattern.test(endpoint)) {
+                    return new URL(endpoint);
+                }
+                if (endpoint.startsWith('/api/')) {
+                    return new URL(endpoint, API_BASE || window.location.origin);
+                }
+                if (endpoint.startsWith('/')) {
+                    return new URL(endpoint, window.location.origin);
+                }
+                return new URL(endpoint, window.location.href);
+            })();
+            url.searchParams.set('_', Date.now().toString());
+            const res = await fetch(url.href, { cache: 'no-store' });
             if (!res.ok) {
                 throw new Error(`Unable to load testimonials from ${endpoint}.`);
             }
