@@ -4896,7 +4896,9 @@
         }
 
         async function loadTestimonialsFromEndpoint(endpoint) {
-            const res = await fetch(endpoint);
+            const url = new URL(endpoint, window.location.href);
+            url.searchParams.set('_', Date.now().toString());
+            const res = await fetch(url, { cache: 'no-store' });
             if (!res.ok) {
                 throw new Error(`Unable to load testimonials from ${endpoint}.`);
             }
