@@ -4753,6 +4753,24 @@
         const testimonialSlider = document.getElementById('testimonialSlider');
         let testimonialCards = [];
         let testimonialDots = [];
+        const BUILT_IN_TESTIMONIALS = [
+            {
+                quote: 'Pay As You Mow transformed my neglected garden into a beautiful oasis. Their flexible payment model meant I could get the help I needed without breaking the bank. Highly recommended!',
+                author: 'Sarah Johnson',
+                location: 'Northwood',
+            },
+            {
+                quote: 'As someone who travels frequently, I love that I can schedule garden maintenance only when I need it. The team is professional, reliable, and does an amazing job every time.',
+                author: 'Michael Chen',
+                location: 'Westfield',
+            },
+            {
+                quote: 'The quality of work is exceptional. My hedges have never looked better, and the lawn is always perfectly manicured. The pay-as-you-go model is perfect for my budget.',
+                author: 'Emma Davis',
+                location: 'Riverside',
+            },
+        ];
+
         let testimonialTimer = null;
         let currentTestimonialIndex = 0;
 
@@ -4877,22 +4895,57 @@
             startTestimonialRotation();
         }
 
+        async function loadTestimonialsFromEndpoint(endpoint) {
+            const res = await fetch(endpoint);
+            if (!res.ok) {
+                throw new Error(`Unable to load testimonials from ${endpoint}.`);
+            }
+
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                return data;
+            }
+
+            if (data && Array.isArray(data.reviews)) {
+                return data.reviews;
+            }
+
+            return [];
+        }
+
         async function fetchTestimonials() {
             if (!testimonialSlider) {
                 return;
             }
             showTestimonialStatus('Loading testimonials…');
+            let lastError = null;
             try {
-                const res = await fetch('/api/reviews');
-                if (!res.ok) {
-                    throw new Error('Unable to load testimonials right now.');
-                }
-                const data = await res.json();
-                const reviews = Array.isArray(data.reviews) ? data.reviews : [];
+                const reviews = await loadTestimonialsFromEndpoint('/api/reviews');
                 renderTestimonials(reviews);
+                return;
             } catch (error) {
-                showTestimonialStatus(error.message || 'Testimonials are unavailable at the moment.', true);
+                lastError = error;
+                console.warn('Unable to load testimonials from /api/reviews.', error);
             }
+
+            try {
+                const reviews = await loadTestimonialsFromEndpoint('/reviews.json');
+                renderTestimonials(reviews);
+                return;
+            } catch (error) {
+                lastError = error;
+                console.warn('Unable to load testimonials from /reviews.json.', error);
+            }
+
+            if (Array.isArray(BUILT_IN_TESTIMONIALS) && BUILT_IN_TESTIMONIALS.length) {
+                if (lastError) {
+                    console.warn('Displaying built-in testimonials because the live data could not be loaded.');
+                }
+                renderTestimonials(BUILT_IN_TESTIMONIALS);
+                return;
+            }
+
+            showTestimonialStatus(lastError?.message || 'Testimonials are unavailable at the moment.', true);
         }
 
         fetchTestimonials();
