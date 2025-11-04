@@ -26,6 +26,7 @@ CHAT_STATE_FILE = "chat_state.json"
 AUTOPILOT_FILE = "autopilot.json"
 BANNED_IPS_FILE = "banned_ips.json"
 VISITOR_LOG_FILE = "visitor_log.json"
+REVIEWS_FILE = "reviews.json"
 
 DEFAULT_AUTOPILOT_MODEL = "gpt-3.5-turbo"
 DEFAULT_AUTOPILOT_TEMPERATURE = 0.3
@@ -68,7 +69,35 @@ def _ensure_storage_file(path: str, *, default):
         pass
 
 
+def _default_reviews_payload():
+    timestamp = datetime.utcnow().isoformat()
+    return [
+        {
+            "id": str(uuid4()),
+            "author": "Sarah Johnson",
+            "location": "Northwood",
+            "quote": "Pay As You Mow transformed my neglected garden into a beautiful oasis. Their flexible payment model meant I could get the help I needed without breaking the bank. Highly recommended!",
+            "created_at": timestamp,
+        },
+        {
+            "id": str(uuid4()),
+            "author": "Michael Chen",
+            "location": "Westfield",
+            "quote": "As someone who travels frequently, I love that I can schedule garden maintenance only when I need it. The team is professional, reliable, and does an amazing job every time.",
+            "created_at": timestamp,
+        },
+        {
+            "id": str(uuid4()),
+            "author": "Emma Davis",
+            "location": "Riverside",
+            "quote": "The quality of work is exceptional. My hedges have never looked better, and the lawn is always perfectly manicured. The pay-as-you-go model is perfect for my budget.",
+            "created_at": timestamp,
+        },
+    ]
+
+
 _ensure_storage_file(VISITOR_LOG_FILE, default={})
+_ensure_storage_file(REVIEWS_FILE, default=_default_reviews_payload())
 
 
 def _is_private_ip(ip_str: str) -> bool:
@@ -1347,6 +1376,69 @@ def _read_text_file(path: str) -> str:
         return file.read()
 
 
+def load_reviews():
+    raw = _read_text_file(REVIEWS_FILE).strip()
+    if not raw:
+        return []
+
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return []
+
+    if not isinstance(data, list):
+        return []
+
+    reviews = []
+    needs_save = False
+    for entry in data:
+        if not isinstance(entry, dict):
+            continue
+        review_id = entry.get("id")
+        if not isinstance(review_id, str) or not review_id.strip():
+            review_id = str(uuid4())
+            needs_save = True
+        quote = entry.get("quote")
+        author = entry.get("author")
+        location = entry.get("location")
+        created_at = entry.get("created_at")
+        updated_at = entry.get("updated_at")
+
+        if not isinstance(quote, str):
+            quote = ""
+        if not isinstance(author, str):
+            author = ""
+        if not isinstance(location, str):
+            location = ""
+        if not isinstance(created_at, str) or not created_at.strip():
+            created_at = datetime.utcnow().isoformat()
+            needs_save = True
+        if updated_at is not None and not isinstance(updated_at, str):
+            updated_at = None
+            needs_save = True
+
+        reviews.append(
+            {
+                "id": review_id.strip(),
+                "quote": quote.strip(),
+                "author": author.strip(),
+                "location": location.strip(),
+                "created_at": created_at,
+                **({"updated_at": updated_at} if updated_at else {}),
+            }
+        )
+
+    if needs_save:
+        save_reviews(reviews)
+
+    return reviews
+
+
+def save_reviews(reviews):
+    with open(REVIEWS_FILE, "w", encoding="utf-8") as file:
+        json.dump(reviews, file, indent=2)
+
+
 def load_bookings():
     raw = _read_text_file(BOOKINGS_FILE).strip()
     if not raw:
@@ -1723,6 +1815,78 @@ def api_modify_contact(contact_id):
         return jsonify({"message": "Enquiry updated.", "contact": contact})
 
     return jsonify({"message": "Enquiry not found."}), 404
+
+
+@app.route("/api/reviews", methods=["GET", "POST"])
+def api_reviews():
+    if request.method == "GET":
+        return jsonify({"reviews": load_reviews()})
+
+    data = request.get_json(silent=True) or {}
+    quote = (data.get("quote") or "").strip()
+    author = (data.get("author") or "").strip()
+    location = (data.get("location") or "").strip()
+
+    if not quote or not author:
+        return (
+            jsonify({"message": "Review quote and author name are required."}),
+            400,
+        )
+
+    review = {
+        "id": str(uuid4()),
+        "quote": quote,
+        "author": author,
+        "location": location,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+
+    reviews = load_reviews()
+    reviews.append(review)
+    save_reviews(reviews)
+
+    return jsonify({"message": "Review created.", "review": review}), 201
+
+
+@app.route("/api/reviews/<review_id>", methods=["PUT", "PATCH", "DELETE"])
+def api_review_detail(review_id):
+    review_id = (review_id or "").strip()
+    if not review_id:
+        return jsonify({"message": "Review ID is required."}), 400
+
+    reviews = load_reviews()
+    match = next((item for item in reviews if item.get("id") == review_id), None)
+
+    if not match:
+        return jsonify({"message": "Review not found."}), 404
+
+    if request.method == "DELETE":
+        updated = [item for item in reviews if item.get("id") != review_id]
+        save_reviews(updated)
+        return jsonify({"message": "Review deleted."})
+
+    data = request.get_json(silent=True) or {}
+    quote = (data.get("quote") or "").strip()
+    author = (data.get("author") or "").strip()
+    location = (data.get("location") or "").strip()
+
+    if not quote or not author:
+        return (
+            jsonify({"message": "Review quote and author name are required."}),
+            400,
+        )
+
+    match.update(
+        {
+            "quote": quote,
+            "author": author,
+            "location": location,
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+    )
+    save_reviews(reviews)
+
+    return jsonify({"message": "Review updated.", "review": match})
 
 
 @app.route("/availability", methods=["DELETE"])

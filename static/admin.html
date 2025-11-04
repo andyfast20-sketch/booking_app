@@ -1307,6 +1307,27 @@
         <div id="contactsTable" class="empty-state">Waiting for enquiries…</div>
       </div>
     </section>
+
+    <section class="panel" aria-labelledby="reviews-heading" data-panel data-expanded="false">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="reviews-heading">Customer testimonials</h2>
+          <p>Keep the homepage testimonials fresh and relevant.</p>
+        </div>
+        <div class="panel-actions">
+          <button id="addReview" type="button" class="primary">Add testimonial</button>
+          <button id="refreshReviews" type="button">Refresh</button>
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="reviewsPanelBody">Expand</button>
+        </div>
+      </div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight" id="reviewsSummaryHighlight">Share success stories from your happiest clients.</p>
+        <p class="panel-summary-note">Expand to add, edit or remove reviews that appear on the website.</p>
+      </div>
+      <div class="panel-body" id="reviewsPanelBody" hidden>
+        <div id="reviewsTable" class="empty-state">Loading testimonials…</div>
+      </div>
+    </section>
   </main>
 
   <dialog id="bookingDialog" aria-labelledby="bookingDialogTitle">
@@ -1366,12 +1387,42 @@
     </div>
   </dialog>
 
+  <dialog id="reviewDialog" aria-labelledby="reviewDialogTitle">
+    <form id="reviewForm" method="dialog">
+      <h3 id="reviewDialogTitle">Add testimonial</h3>
+      <p class="cell-muted" id="reviewDialogSubtitle">Publish new words from your customers on the homepage.</p>
+      <div class="form-feedback" id="reviewFormFeedback"></div>
+      <div class="grid" style="margin-top: 1.25rem;">
+        <label>
+          Customer name
+          <input type="text" id="reviewAuthor" name="author" placeholder="e.g. Emma Davis" required />
+        </label>
+        <label>
+          Location (optional)
+          <input type="text" id="reviewLocation" name="location" placeholder="e.g. Riverside" />
+        </label>
+      </div>
+      <label style="margin-top: 1rem; display: block;">
+        Testimonial
+        <textarea id="reviewText" name="quote" rows="4" maxlength="600" placeholder="Write the customer's feedback in their own words." required></textarea>
+      </label>
+      <input type="hidden" id="reviewId" name="id" />
+      <div class="dialog-actions">
+        <button type="button" id="closeReviewDialog" class="secondary">Cancel</button>
+        <div class="right">
+          <button type="submit" class="primary">Save testimonial</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
   <script>
     const bookingsTable = document.getElementById('bookingsTable');
     const onlineVisitorsContainer = document.getElementById('onlineVisitors');
     const visitorHistoryContainer = document.getElementById('visitorHistory');
     const availabilityList = document.getElementById('availabilityList');
     const contactsTable = document.getElementById('contactsTable');
+    const reviewsTable = document.getElementById('reviewsTable');
 
     const bookingsSummaryHighlight = document.getElementById('bookingsSummaryHighlight');
     const presenceSummaryHighlight = document.getElementById('presenceSummaryHighlight');
@@ -1379,6 +1430,7 @@
     const autopilotSummaryHighlight = document.getElementById('autopilotSummaryHighlight');
     const availabilitySummaryHighlight = document.getElementById('availabilitySummaryHighlight');
     const contactsSummaryHighlight = document.getElementById('contactsSummaryHighlight');
+    const reviewsSummaryHighlight = document.getElementById('reviewsSummaryHighlight');
 
     const panelToggles = Array.from(document.querySelectorAll('.panel-toggle'));
     const panels = Array.from(document.querySelectorAll('[data-panel]'));
@@ -1395,6 +1447,8 @@
     const refreshAvailabilityBtn = document.getElementById('refreshAvailability');
     const refreshBookingsBtn = document.getElementById('refreshBookings');
     const refreshContactsBtn = document.getElementById('refreshContacts');
+    const refreshReviewsBtn = document.getElementById('refreshReviews');
+    const addReviewBtn = document.getElementById('addReview');
 
     const chatStatusIndicator = document.getElementById('chatStatusIndicator');
     const chatWaitingAlert = document.getElementById('chatWaitingAlert');
@@ -1462,8 +1516,21 @@
     const deleteContactBtn = document.getElementById('deleteContact');
     const closeContactDialogBtn = document.getElementById('closeContactDialog');
 
+    const reviewDialog = document.getElementById('reviewDialog');
+    const reviewForm = document.getElementById('reviewForm');
+    const reviewFormFeedback = document.getElementById('reviewFormFeedback');
+    const reviewDialogTitle = document.getElementById('reviewDialogTitle');
+    const reviewDialogSubtitle = document.getElementById('reviewDialogSubtitle');
+    const reviewAuthorInput = document.getElementById('reviewAuthor');
+    const reviewLocationInput = document.getElementById('reviewLocation');
+    const reviewTextInput = document.getElementById('reviewText');
+    const reviewIdInput = document.getElementById('reviewId');
+    const closeReviewDialogBtn = document.getElementById('closeReviewDialog');
+    const reviewSubmitButton = reviewForm ? reviewForm.querySelector('button[type="submit"]') : null;
+
     let bookingsCache = [];
     let contactsCache = [];
+    let reviewsCache = [];
     let previousVisitorIps = new Set();
     let onlinePresenceInitialised = false;
     let audioContextInstance = null;
@@ -1833,6 +1900,18 @@
         contactsSummaryHighlight,
         `${contactsCache.length} contact ${contactsCache.length === 1 ? 'enquiry' : 'enquiries'}${suffix}.`
       );
+    }
+
+    function updateReviewsSummary() {
+      if (!reviewsSummaryHighlight) return;
+      if (!reviewsCache.length) {
+        setSummaryText(reviewsSummaryHighlight, 'No testimonials published yet.');
+        return;
+      }
+
+      const count = reviewsCache.length;
+      const highlight = `${count} customer ${count === 1 ? 'testimonial' : 'testimonials'} live on your homepage.`;
+      setSummaryText(reviewsSummaryHighlight, highlight);
     }
 
     function updateChatSummary() {
@@ -2875,6 +2954,217 @@
       });
     }
 
+    async function loadReviews() {
+      if (!reviewsTable) return;
+      reviewsTable.className = 'empty-state';
+      reviewsTable.textContent = 'Loading testimonials…';
+      setSummaryText(reviewsSummaryHighlight, 'Loading testimonials…');
+      try {
+        const res = await fetch('/api/reviews');
+        if (!res.ok) throw new Error('Unable to fetch testimonials');
+        const data = await res.json();
+        reviewsCache = Array.isArray(data.reviews) ? data.reviews : [];
+        renderReviews();
+      } catch (error) {
+        reviewsCache = [];
+        reviewsTable.className = 'empty-state';
+        reviewsTable.textContent = error.message || 'Failed to load testimonials.';
+        setSummaryText(reviewsSummaryHighlight, error.message || 'Unable to load testimonials.');
+      }
+    }
+
+    function renderReviews() {
+      updateReviewsSummary();
+      if (!reviewsTable) return;
+      if (!reviewsCache.length) {
+        reviewsTable.className = 'empty-state';
+        reviewsTable.textContent = 'No testimonials published yet.';
+        return;
+      }
+
+      reviewsTable.className = 'table-scroll';
+      reviewsTable.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Testimonial</th>
+              <th>Client</th>
+              <th style="width: 180px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${reviewsCache
+              .map((review) => {
+                const id = escapeHtml(review.id || '');
+                const quote = escapeHtml(review.quote || '');
+                const author = escapeHtml(review.author || 'Anonymous');
+                const location = escapeHtml(
+                  review.location && review.location.trim() ? review.location : 'Location not provided'
+                );
+                const timestamp = review.updated_at || review.created_at;
+                const meta = review.updated_at ? 'Updated' : 'Added';
+                const metaDate = formatDate(timestamp);
+                return `
+                  <tr>
+                    <td>
+                      <div class="cell-main">
+                        <span>&ldquo;${quote || 'No quote provided'}&rdquo;</span>
+                        <span class="cell-muted">${meta} ${metaDate}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="cell-main">
+                        <strong>${author}</strong>
+                        <span class="cell-muted">${location}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="panel-actions">
+                        <button type="button" data-action="edit" data-id="${id}" class="primary">Edit</button>
+                        <button type="button" data-action="delete" data-id="${id}" class="danger">Delete</button>
+                      </div>
+                    </td>
+                  </tr>`;
+              })
+              .join('')}
+          </tbody>
+        </table>
+      `;
+
+      reviewsTable.querySelectorAll('[data-action="edit"]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const id = button.dataset.id || '';
+          const review = reviewsCache.find((item) => item && item.id === id);
+          if (review) {
+            openReviewDialog('edit', review);
+          }
+        });
+      });
+
+      reviewsTable.querySelectorAll('[data-action="delete"]').forEach((button) => {
+        button.addEventListener('click', async () => {
+          const id = button.dataset.id || '';
+          if (!id) return;
+          const confirmed = window.confirm('Delete this testimonial?');
+          if (!confirmed) return;
+          button.disabled = true;
+          try {
+            const res = await fetch(`/api/reviews/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.message || 'Unable to delete testimonial.');
+            }
+            await loadReviews();
+          } catch (error) {
+            alert(error.message || 'Unable to delete testimonial.');
+          } finally {
+            button.disabled = false;
+          }
+        });
+      });
+    }
+
+    function openReviewDialog(mode = 'create', review = null) {
+      if (!reviewDialog || !reviewForm) return;
+      reviewForm.reset();
+      reviewForm.dataset.mode = mode;
+      if (reviewFormFeedback) {
+        reviewFormFeedback.textContent = '';
+        reviewFormFeedback.classList.remove('visible', 'success');
+      }
+      if (reviewDialogTitle) {
+        reviewDialogTitle.textContent = mode === 'edit' ? 'Edit testimonial' : 'Add testimonial';
+      }
+      if (reviewDialogSubtitle) {
+        reviewDialogSubtitle.textContent =
+          mode === 'edit'
+            ? 'Update the quote shown on your homepage.'
+            : 'Publish new words from your customers on the homepage.';
+      }
+      if (mode === 'edit' && review) {
+        if (reviewAuthorInput) reviewAuthorInput.value = review.author || '';
+        if (reviewLocationInput) reviewLocationInput.value = review.location || '';
+        if (reviewTextInput) reviewTextInput.value = review.quote || '';
+        if (reviewIdInput) reviewIdInput.value = review.id || '';
+      } else {
+        if (reviewAuthorInput) reviewAuthorInput.value = '';
+        if (reviewLocationInput) reviewLocationInput.value = '';
+        if (reviewTextInput) reviewTextInput.value = '';
+        if (reviewIdInput) reviewIdInput.value = '';
+      }
+
+      showDialog(reviewDialog);
+      requestAnimationFrame(() => {
+        if (reviewAuthorInput) {
+          reviewAuthorInput.focus();
+        }
+      });
+    }
+
+    if (addReviewBtn) {
+      addReviewBtn.addEventListener('click', () => openReviewDialog('create'));
+    }
+
+    if (closeReviewDialogBtn) {
+      closeReviewDialogBtn.addEventListener('click', () => closeDialog(reviewDialog));
+    }
+
+    if (reviewForm) {
+      reviewForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!reviewAuthorInput || !reviewTextInput) {
+          return;
+        }
+
+        const quote = reviewTextInput.value.trim();
+        const author = reviewAuthorInput.value.trim();
+        const location = reviewLocationInput ? reviewLocationInput.value.trim() : '';
+
+        if (!quote || !author) {
+          reviewForm.reportValidity();
+          return;
+        }
+
+        const mode = reviewForm.dataset.mode === 'edit' ? 'edit' : 'create';
+        const reviewId = reviewIdInput ? reviewIdInput.value.trim() : '';
+
+        if (reviewFormFeedback) {
+          reviewFormFeedback.textContent = '';
+          reviewFormFeedback.classList.remove('visible', 'success');
+        }
+        if (reviewSubmitButton) {
+          reviewSubmitButton.disabled = true;
+        }
+
+        try {
+          const endpoint = mode === 'edit' && reviewId
+            ? `/api/reviews/${encodeURIComponent(reviewId)}`
+            : '/api/reviews';
+          const res = await fetch(endpoint, {
+            method: mode === 'edit' ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quote, author, location }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            throw new Error(data.message || 'Unable to save testimonial.');
+          }
+          closeDialog(reviewDialog);
+          await loadReviews();
+        } catch (error) {
+          if (reviewFormFeedback) {
+            reviewFormFeedback.textContent = error.message || 'Unable to save testimonial.';
+            reviewFormFeedback.classList.add('visible');
+            reviewFormFeedback.classList.remove('success');
+          }
+        } finally {
+          if (reviewSubmitButton) {
+            reviewSubmitButton.disabled = false;
+          }
+        }
+      });
+    }
+
     function openContactDialog(id) {
       const contact = contactsCache.find((item) => item.id === id);
       if (!contact) return;
@@ -3412,11 +3702,15 @@
     refreshBookingsBtn.addEventListener('click', loadBookings);
     refreshAvailabilityBtn.addEventListener('click', loadAvailability);
     refreshContactsBtn.addEventListener('click', loadContacts);
+    if (refreshReviewsBtn) {
+      refreshReviewsBtn.addEventListener('click', loadReviews);
+    }
 
     refreshPresenceData();
     loadBookings();
     loadAvailability();
     loadContacts();
+    loadReviews();
 
     setInterval(() => loadChatSessions(true), 5000);
     setInterval(refreshPresenceData, 15000);

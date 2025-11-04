@@ -1833,6 +1833,17 @@
             color: var(--primary);
         }
 
+        .testimonial-status {
+            text-align: center;
+            padding: 2rem 1.5rem;
+            font-size: 1.05rem;
+            color: rgba(0, 0, 0, 0.65);
+        }
+
+        .testimonial-status.error {
+            color: #c53030;
+        }
+
         .testimonial-nav {
             display: flex;
             justify-content: center;
@@ -3589,24 +3600,8 @@
                 <h2>Customer Testimonials</h2>
                 <p>What our clients say about our services</p>
             </div>
-            <div class="testimonials-slider">
-                <div class="testimonial active">
-                    <p class="testimonial-text">"Pay As You Mow transformed my neglected garden into a beautiful oasis. Their flexible payment model meant I could get the help I needed without breaking the bank. Highly recommended!"</p>
-                    <p class="testimonial-author">- Sarah Johnson, Northwood</p>
-                </div>
-                <div class="testimonial">
-                    <p class="testimonial-text">"As someone who travels frequently, I love that I can schedule garden maintenance only when I need it. The team is professional, reliable, and does an amazing job every time."</p>
-                    <p class="testimonial-author">- Michael Chen, Westfield</p>
-                </div>
-                <div class="testimonial">
-                    <p class="testimonial-text">"The quality of work is exceptional. My hedges have never looked better, and the lawn is always perfectly manicured. The pay-as-you-go model is perfect for my budget."</p>
-                    <p class="testimonial-author">- Emma Davis, Riverside</p>
-                </div>
-                <div class="testimonial-nav">
-                    <span class="testimonial-dot active" data-index="0"></span>
-                    <span class="testimonial-dot" data-index="1"></span>
-                    <span class="testimonial-dot" data-index="2"></span>
-                </div>
+            <div class="testimonials-slider" id="testimonialSlider">
+                <div class="testimonial-status" id="testimonialStatus">Loading testimonials…</div>
             </div>
         </div>
     </section>
@@ -4755,40 +4750,152 @@
         }
 
         // Testimonial Slider
-        const testimonialDots = document.querySelectorAll('.testimonial-dot');
-        const testimonials = document.querySelectorAll('.testimonial');
-        
-        testimonialDots.forEach(dot => {
-            dot.addEventListener('click', () => {
-                const index = dot.getAttribute('data-index');
-                
-                testimonials.forEach(testimonial => {
-                    testimonial.classList.remove('active');
-                });
-                testimonials[index].classList.add('active');
-                
-                testimonialDots.forEach(d => {
-                    d.classList.remove('active');
-                });
-                dot.classList.add('active');
-            });
-        });
+        const testimonialSlider = document.getElementById('testimonialSlider');
+        let testimonialCards = [];
+        let testimonialDots = [];
+        let testimonialTimer = null;
+        let currentTestimonialIndex = 0;
 
-        let currentTestimonial = 0;
-        
-        function rotateTestimonials() {
-            testimonialDots.forEach(d => d.classList.remove('active'));
-            testimonials.forEach(t => t.classList.remove('active'));
-            
-            currentTestimonial = (currentTestimonial + 1) % testimonials.length;
-            
-            testimonialDots[currentTestimonial].classList.add('active');
-            testimonials[currentTestimonial].classList.add('active');
+        function clearTestimonialRotation() {
+            if (testimonialTimer) {
+                clearInterval(testimonialTimer);
+                testimonialTimer = null;
+            }
         }
-        
-        if (testimonialDots.length > 0 && testimonials.length > 0) {
-            setInterval(rotateTestimonials, 5000);
+
+        function setActiveTestimonial(index) {
+            if (!testimonialCards.length) {
+                return;
+            }
+
+            const nextIndex = ((index % testimonialCards.length) + testimonialCards.length) % testimonialCards.length;
+            testimonialCards.forEach((card, cardIndex) => {
+                card.classList.toggle('active', cardIndex === nextIndex);
+            });
+            testimonialDots.forEach((dot, dotIndex) => {
+                dot.classList.toggle('active', dotIndex === nextIndex);
+            });
+            currentTestimonialIndex = nextIndex;
         }
+
+        function startTestimonialRotation() {
+            clearTestimonialRotation();
+            if (testimonialCards.length <= 1) {
+                return;
+            }
+            testimonialTimer = setInterval(() => {
+                setActiveTestimonial(currentTestimonialIndex + 1);
+            }, 5000);
+        }
+
+        function showTestimonialStatus(message, isError = false) {
+            if (!testimonialSlider) {
+                return;
+            }
+            testimonialSlider.innerHTML = '';
+            const status = document.createElement('div');
+            status.className = 'testimonial-status';
+            if (isError) {
+                status.classList.add('error');
+            }
+            status.textContent = message;
+            testimonialSlider.appendChild(status);
+        }
+
+        function renderTestimonials(reviews) {
+            if (!testimonialSlider) {
+                return;
+            }
+
+            testimonialSlider.innerHTML = '';
+            testimonialCards = [];
+            testimonialDots = [];
+            clearTestimonialRotation();
+
+            if (!Array.isArray(reviews) || !reviews.length) {
+                showTestimonialStatus('No testimonials have been published yet.');
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            const nav = document.createElement('div');
+            nav.className = 'testimonial-nav';
+
+            reviews.forEach((review, index) => {
+                const card = document.createElement('div');
+                card.className = 'testimonial';
+                if (index === 0) {
+                    card.classList.add('active');
+                }
+
+                const quote = document.createElement('p');
+                quote.className = 'testimonial-text';
+                const quoteText = typeof review.quote === 'string' && review.quote.trim()
+                    ? review.quote.trim()
+                    : '';
+                quote.textContent = quoteText ? `“${quoteText}”` : '“A happy customer story will appear here.”';
+
+                const author = document.createElement('p');
+                author.className = 'testimonial-author';
+                const name = typeof review.author === 'string' ? review.author.trim() : '';
+                const location = typeof review.location === 'string' ? review.location.trim() : '';
+                const authorLine = [name, location].filter(Boolean).join(', ');
+                author.textContent = authorLine ? `- ${authorLine}` : '- Anonymous';
+
+                card.appendChild(quote);
+                card.appendChild(author);
+                fragment.appendChild(card);
+
+                if (reviews.length > 1) {
+                    const dot = document.createElement('span');
+                    dot.className = 'testimonial-dot';
+                    dot.dataset.index = String(index);
+                    if (index === 0) {
+                        dot.classList.add('active');
+                    }
+                    nav.appendChild(dot);
+                }
+            });
+
+            testimonialSlider.appendChild(fragment);
+            if (reviews.length > 1) {
+                testimonialSlider.appendChild(nav);
+            }
+
+            testimonialCards = Array.from(testimonialSlider.querySelectorAll('.testimonial'));
+            testimonialDots = Array.from(testimonialSlider.querySelectorAll('.testimonial-dot'));
+
+            testimonialDots.forEach((dot) => {
+                dot.addEventListener('click', () => {
+                    const index = Number.parseInt(dot.dataset.index || '0', 10);
+                    setActiveTestimonial(index);
+                    startTestimonialRotation();
+                });
+            });
+
+            setActiveTestimonial(0);
+            startTestimonialRotation();
+        }
+
+        async function fetchTestimonials() {
+            if (!testimonialSlider) {
+                return;
+            }
+            showTestimonialStatus('Loading testimonials…');
+            try {
+                const res = await fetch('/api/reviews');
+                if (!res.ok) {
+                    throw new Error('Unable to load testimonials right now.');
+                }
+                const data = await res.json();
+                const reviews = Array.isArray(data.reviews) ? data.reviews : [];
+                renderTestimonials(reviews);
+            } catch (error) {
+                showTestimonialStatus(error.message || 'Testimonials are unavailable at the moment.', true);
+            }
+        }
+
+        fetchTestimonials();
 
         // Smooth scrolling for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
