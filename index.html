@@ -2709,6 +2709,68 @@
             box-shadow: var(--shadow);
         }
 
+        .admin-access {
+            background: linear-gradient(145deg, rgba(46, 125, 50, 0.12), rgba(27, 94, 32, 0.16));
+            padding: 70px 0;
+        }
+
+        .admin-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            align-items: center;
+            gap: 24px;
+            padding: clamp(24px, 4vw, 36px);
+        }
+
+        .admin-copy h3 {
+            margin: 6px 0;
+            font-size: 1.5rem;
+            color: var(--primary-dark);
+        }
+
+        .admin-copy p {
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        .admin-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .admin-button {
+            justify-self: flex-end;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+            padding: 14px 26px;
+            border-radius: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 12px 25px rgba(27, 94, 32, 0.25);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .admin-button:hover,
+        .admin-button:focus-visible {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 30px rgba(27, 94, 32, 0.3);
+        }
+
+        .admin-button:focus-visible {
+            outline: 3px solid rgba(46, 125, 50, 0.35);
+            outline-offset: 3px;
+        }
+
         /* Footer */
         footer {
             background-color: var(--primary-dark);
@@ -3784,6 +3846,19 @@
             <span>WhatsApp</span>
         </div>
     </a>
+
+    <section class="admin-access" id="admin">
+        <div class="container">
+            <div class="admin-card">
+                <div class="admin-copy">
+                    <span class="admin-eyebrow"><i class="fas fa-lock" aria-hidden="true"></i> Admin area</span>
+                    <h3>View bookings, visitor log, and live chats</h3>
+                    <p>Open the private admin dashboard to review every booking, contact message, and chat session in one place.</p>
+                </div>
+                <a class="admin-button" href="/admin">Open admin dashboard</a>
+            </div>
+        </div>
+    </section>
 
     <!-- Footer -->
     <footer>
