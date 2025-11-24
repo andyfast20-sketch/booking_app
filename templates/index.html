@@ -1,0 +1,5294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pay As You Mow | Professional Garden Maintenance</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-dark: #1b5e20;
+            --secondary: #ff9800;
+            --text: #333333;
+            --text-light: #666666;
+            --background: #f9f9f9;
+            --white: #ffffff;
+            --shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: var(--background);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        section {
+            padding: 80px 0;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background-color: #f57c00;
+        }
+
+        .btn-quote {
+            background: linear-gradient(135deg, #ffb347, #ff7e5f);
+            padding: 10px 26px;
+            font-size: 0.95rem;
+            border-radius: 999px;
+            box-shadow: 0 12px 22px rgba(255, 126, 95, 0.25);
+            text-transform: none;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-quote:hover {
+            background: linear-gradient(135deg, #ff9566, #ff5f6d);
+            transform: translateY(-2px);
+            box-shadow: 0 16px 28px rgba(255, 95, 109, 0.3);
+        }
+
+        .whatsapp-button {
+            position: fixed;
+            bottom: 120px;
+            right: 32px;
+            z-index: 1200;
+            display: inline-flex;
+            align-items: center;
+            gap: 10.5px;
+            padding: 12px 21px;
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 45%, #075e54 100%);
+            color: var(--white);
+            text-decoration: none;
+            border-radius: 999px;
+            box-shadow: 0 18px 35px rgba(7, 94, 84, 0.35);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            isolation: isolate;
+        }
+
+        .whatsapp-button::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.45), transparent 55%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .whatsapp-button:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 22px 40px rgba(7, 94, 84, 0.4);
+        }
+
+        .whatsapp-button:hover::after {
+            opacity: 1;
+        }
+
+        .whatsapp-button .icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 31.5px;
+            height: 31.5px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            font-size: 16.5px;
+            box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .whatsapp-button .whatsapp-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
+        .whatsapp-button .whatsapp-text span:first-child {
+            font-size: 0.53rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.85;
+        }
+
+        .whatsapp-button .whatsapp-text span:last-child {
+            font-size: 0.79rem;
+        }
+
+        .live-chat-whatsapp {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 45%, #075e54 100%);
+            color: var(--white);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            box-shadow: 0 12px 24px rgba(7, 94, 84, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 18px;
+        }
+
+        .live-chat-whatsapp:focus-visible {
+            outline: 3px solid rgba(37, 211, 102, 0.55);
+            outline-offset: 3px;
+        }
+
+        .live-chat-whatsapp:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 28px rgba(7, 94, 84, 0.3);
+        }
+
+        .live-chat-whatsapp.is-highlighted {
+            box-shadow: 0 18px 36px rgba(7, 94, 84, 0.35);
+            transform: translateY(-2px) scale(1.01);
+        }
+
+        .live-chat-whatsapp .icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            font-size: 16px;
+        }
+
+        .chat-gardener {
+            position: fixed;
+            right: 116px;
+            bottom: 34px;
+            width: 132px;
+            padding: 14px 16px 18px;
+            border-radius: 28px;
+            background: var(--white);
+            box-shadow: 0 24px 44px rgba(26, 54, 35, 0.28);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            z-index: 1190;
+            transform: translateY(12px) scale(0.92);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .chat-gardener.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .chat-gardener::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(46, 125, 50, 0.06), rgba(255, 152, 0, 0.08));
+            pointer-events: none;
+        }
+
+        .chat-gardener-inner {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-gardener-illustration {
+            width: 96px;
+            height: 96px;
+            border-radius: 24px;
+            object-fit: cover;
+            box-shadow: 0 14px 28px rgba(33, 64, 35, 0.28);
+        }
+
+        .chat-gardener-caption {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+            background: rgba(76, 175, 80, 0.12);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+            z-index: 1;
+        }
+
+        .chat-gardener-caption::before {
+            content: '\f0eb';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+        }
+
+        @media (min-width: 992px) {
+            .whatsapp-button {
+                display: none;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .chat-gardener {
+                display: none !important;
+            }
+        }
+
+        @keyframes whatsapp-pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 18px rgba(37, 211, 102, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+            }
+        }
+
+        .whatsapp-button::before {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: inherit;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            animation: whatsapp-pulse 2.8s infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .live-chat-widget {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            z-index: 1250;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 14px;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .live-chat-toggle {
+            border: none;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            padding: 0;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--white);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 20px 36px rgba(27, 94, 32, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .live-chat-toggle:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 24px 42px rgba(27, 94, 32, 0.38);
+        }
+
+        .live-chat-toggle:focus-visible {
+            outline: 3px solid rgba(255, 255, 255, 0.85);
+            outline-offset: 3px;
+        }
+
+        .live-chat-toggle .live-chat-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #66bb6a;
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 0 6px rgba(102, 187, 106, 0.2);
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .live-chat-toggle .live-chat-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            font-size: 1.45rem;
+            pointer-events: none;
+        }
+
+        .live-chat-toggle .live-chat-label {
+            display: none;
+        }
+
+        .live-chat-toggle.is-offline {
+            background: linear-gradient(135deg, #9e9e9e 0%, #616161 100%);
+            box-shadow: 0 18px 32px rgba(66, 66, 66, 0.28);
+        }
+
+        .live-chat-toggle.is-offline .live-chat-indicator {
+            background: #ff6b6b;
+            box-shadow: 0 0 0 6px rgba(255, 107, 107, 0.2);
+        }
+
+        .live-chat-toggle.has-unread::after {
+            content: '';
+            position: absolute;
+            inset: -12px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.75);
+            animation: live-chat-pulse 2.6s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes live-chat-pulse {
+            0% {
+                opacity: 0.75;
+                transform: scale(0.85);
+            }
+            60% {
+                opacity: 0;
+                transform: scale(1.35);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1.35);
+            }
+        }
+
+        .live-chat-window {
+            position: absolute;
+            bottom: 88px;
+            right: 0;
+            width: 360px;
+            max-width: calc(100vw - 32px);
+            max-height: calc(100vh - 160px);
+            max-height: min(620px, calc(100vh - 160px));
+            background: var(--white);
+            border-radius: 22px;
+            box-shadow: 0 30px 65px rgba(12, 28, 18, 0.32);
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(16px);
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .live-chat-window.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .live-chat-header {
+            background: linear-gradient(135deg, rgba(46, 125, 50, 0.96), rgba(67, 160, 71, 0.92));
+            padding: 18px 22px;
+            color: var(--white);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .live-chat-header strong {
+            display: block;
+            font-size: 1.05rem;
+            letter-spacing: 0.4px;
+        }
+
+        .live-chat-header p {
+            margin: 0;
+            font-size: 0.85rem;
+            opacity: 0.85;
+        }
+
+        .live-chat-close {
+            border: none;
+            background: rgba(255, 255, 255, 0.18);
+            color: var(--white);
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .live-chat-close:hover {
+            background: rgba(255, 255, 255, 0.28);
+            transform: rotate(90deg);
+        }
+
+        .live-chat-body {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            background: linear-gradient(180deg, rgba(249, 249, 249, 1) 0%, rgba(255, 255, 255, 1) 65%);
+            overflow: hidden;
+        }
+
+        .live-chat-status-banner {
+            display: none;
+            padding: 12px 18px;
+            font-size: 0.85rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .live-chat-status-banner.visible {
+            display: block;
+        }
+
+        .live-chat-status-banner.online {
+            background: rgba(76, 175, 80, 0.12);
+            color: var(--primary-dark);
+        }
+
+        .live-chat-status-banner.offline {
+            background: rgba(255, 107, 107, 0.12);
+            color: #c62828;
+        }
+
+        .live-chat-status-banner.error {
+            background: rgba(255, 152, 0, 0.18);
+            color: #e65100;
+        }
+
+        .live-chat-messages {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+        }
+
+        .live-chat-empty {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.92rem;
+            padding: 12px 8px 4px;
+        }
+
+        .live-chat-empty i {
+            display: block;
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .live-chat-empty.hidden {
+            display: none;
+        }
+
+        .live-chat-message {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-width: 85%;
+        }
+
+        .live-chat-message.from-admin {
+            align-self: flex-start;
+        }
+
+        .live-chat-message.from-visitor {
+            align-self: flex-end;
+        }
+
+        .live-chat-message .message-bubble {
+            padding: 10px 14px;
+            border-radius: 18px;
+            background: rgba(46, 125, 50, 0.12);
+            color: var(--text);
+            border: 1px solid rgba(46, 125, 50, 0.18);
+            box-shadow: 0 8px 18px rgba(46, 125, 50, 0.12);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .live-chat-message.typing .message-bubble {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 52px;
+        }
+
+        .live-chat-message.typing .message-meta {
+            font-style: italic;
+        }
+
+        .live-chat-message.from-visitor .message-bubble {
+            background: linear-gradient(135deg, var(--secondary), #ff7e5f);
+            color: var(--white);
+            border-color: rgba(255, 126, 95, 0.4);
+            box-shadow: 0 14px 26px rgba(255, 126, 95, 0.3);
+        }
+
+        .live-chat-message.autopilot .message-bubble {
+            background: linear-gradient(135deg, rgba(48, 195, 166, 0.18), rgba(29, 164, 136, 0.32));
+            border-color: rgba(48, 195, 166, 0.35);
+            box-shadow: 0 12px 26px rgba(48, 195, 166, 0.22);
+        }
+
+        .live-chat-message.autopilot.typing .message-bubble {
+            background: linear-gradient(135deg, rgba(48, 195, 166, 0.15), rgba(29, 164, 136, 0.25));
+        }
+
+        .live-chat-typing-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.2;
+            animation: live-chat-typing 1s ease-in-out infinite;
+        }
+
+        .live-chat-typing-dot:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+
+        .live-chat-typing-dot:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        @keyframes live-chat-typing {
+            0%,
+            80%,
+            100% {
+                opacity: 0.2;
+                transform: translateY(0);
+            }
+            40% {
+                opacity: 1;
+                transform: translateY(-3px);
+            }
+        }
+
+        .live-chat-message .message-meta {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            opacity: 0.9;
+        }
+
+        .live-chat-message.autopilot .message-meta {
+            color: var(--primary);
+        }
+
+        .live-chat-form {
+            padding: 16px 18px 18px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .live-chat-form textarea {
+            flex: 1;
+            border: 1px solid rgba(46, 125, 50, 0.18);
+            border-radius: 14px;
+            padding: 10px 14px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            resize: none;
+            min-height: 60px;
+            max-height: 140px;
+            background: rgba(249, 249, 249, 0.9);
+            transition: border 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .live-chat-form textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
+        }
+
+        .live-chat-form button {
+            border: none;
+            border-radius: 14px;
+            padding: 12px 18px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .live-chat-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 26px rgba(27, 94, 32, 0.32);
+        }
+
+        .live-chat-form button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .chat-invite-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(6, 17, 11, 0.68);
+            backdrop-filter: blur(6px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease;
+            z-index: 1600;
+        }
+
+        .chat-invite-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .chat-invite-overlay::before {
+            content: '';
+            position: absolute;
+            width: 340px;
+            height: 340px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(46, 125, 50, 0.45), transparent 65%);
+            filter: blur(2px);
+            animation: chat-invite-glow 3.6s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        .chat-invite-card {
+            position: relative;
+            max-width: 420px;
+            width: 100%;
+            padding: 32px 30px;
+            border-radius: 24px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(236, 253, 243, 0.98));
+            box-shadow: 0 40px 70px rgba(6, 31, 18, 0.35);
+            text-align: center;
+            color: var(--text);
+            transform: translateY(24px) scale(0.95);
+            opacity: 0;
+            transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease;
+            overflow: hidden;
+        }
+
+        .chat-invite-overlay.visible .chat-invite-card {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        .chat-invite-card::before {
+            content: '';
+            position: absolute;
+            inset: -30%;
+            background: conic-gradient(from 120deg, rgba(46, 125, 50, 0.14), transparent 45%, rgba(255, 152, 0, 0.18), transparent 70%);
+            animation: chat-invite-shimmer 6s linear infinite;
+            z-index: 0;
+        }
+
+        .chat-invite-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .chat-invite-title {
+            font-size: 1.45rem;
+            font-family: 'Playfair Display', serif;
+            color: var(--primary-dark);
+            text-shadow: 0 8px 22px rgba(46, 125, 50, 0.25);
+        }
+
+        .chat-invite-message {
+            font-size: 1.02rem;
+            line-height: 1.55;
+            color: var(--text-light);
+        }
+
+        .chat-invite-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-invite-actions button {
+            border: none;
+            border-radius: 16px;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .chat-invite-actions .chat-invite-accept {
+            background: linear-gradient(135deg, var(--primary), #2e8b57 45%, #1b5e20 100%);
+            color: var(--white);
+            box-shadow: 0 24px 38px rgba(46, 125, 50, 0.35);
+        }
+
+        .chat-invite-actions .chat-invite-accept:hover {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 32px 48px rgba(27, 94, 32, 0.38);
+        }
+
+        .chat-invite-actions .chat-invite-decline {
+            background: rgba(255, 255, 255, 0.88);
+            color: var(--primary-dark);
+            border: 1px solid rgba(46, 125, 50, 0.3);
+            box-shadow: 0 16px 26px rgba(46, 125, 50, 0.18);
+        }
+
+        .chat-invite-actions .chat-invite-decline:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.02);
+        }
+
+        @keyframes chat-invite-glow {
+            0%, 100% {
+                transform: scale(0.85);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+        }
+
+        @keyframes chat-invite-shimmer {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .live-chat-form.is-disabled textarea {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .whatsapp-button {
+                display: none;
+            }
+
+            .live-chat-widget {
+                right: 16px;
+                bottom: 16px;
+            }
+
+            .live-chat-window {
+                position: fixed;
+                bottom: 84px;
+                right: auto;
+                left: 50%;
+                width: min(340px, calc(100vw - 28px));
+                max-width: calc(100vw - 28px);
+                max-height: calc(100vh - 140px);
+                transform: translate(-50%, 20px);
+                border-radius: 20px;
+            }
+
+            .live-chat-window.visible {
+                transform: translate(-50%, 0);
+            }
+
+            .live-chat-form textarea {
+                min-height: 48px;
+                max-height: 110px;
+            }
+
+            .chat-invite-overlay {
+                padding: 18px;
+            }
+
+            .chat-invite-card {
+                padding: 26px 22px;
+            }
+
+            .chat-invite-title {
+                font-size: 1.3rem;
+            }
+
+            .chat-invite-message {
+                font-size: 0.98rem;
+            }
+        }
+
+        /* Header Styles */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background: linear-gradient(120deg, rgba(46, 125, 50, 0.95) 0%, rgba(26, 94, 32, 0.92) 60%, rgba(255, 152, 0, 0.85) 100%);
+            box-shadow: 0 20px 45px rgba(14, 51, 23, 0.18);
+            transition: var(--transition);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 65%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        header.scrolled {
+            padding: 10px 0;
+            background: rgba(255, 255, 255, 0.98);
+            border-bottom-color: rgba(46, 125, 50, 0.15);
+            box-shadow: 0 12px 25px rgba(23, 61, 32, 0.15);
+        }
+
+        header.scrolled::before {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.65) 0%, rgba(46, 125, 50, 0.1) 65%);
+            opacity: 0.85;
+        }
+
+        .header-container {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 22px 0;
+            gap: 40px;
+            z-index: 2;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 18px;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+            color: var(--white);
+        }
+
+        .logo-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 58px;
+            height: 58px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(56, 142, 60, 0.9), rgba(27, 94, 32, 0.9));
+            padding: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 14px 28px rgba(12, 53, 25, 0.32);
+            isolation: isolate;
+        }
+
+        .logo-icon::before {
+            content: '';
+            position: absolute;
+            inset: -12px;
+            border-radius: 24px;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.45), transparent 60%);
+            z-index: 0;
+            opacity: 0.8;
+            filter: blur(12px);
+        }
+
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, rgba(220, 255, 199, 0.25), rgba(255, 255, 255, 0.05));
+            z-index: 1;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .logo-icon svg {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+        }
+
+        .logo-wordmark {
+            display: inline-flex;
+            flex-direction: column;
+            line-height: 1.05;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .logo-eyebrow {
+            font-size: 0.6em;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 4px;
+        }
+
+        .logo-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.32em;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: baseline;
+            gap: 6px;
+            color: var(--white);
+        }
+
+        .logo-title-text {
+            display: inline-flex;
+        }
+
+        .logo-title .highlight {
+            color: #ffe082;
+            position: relative;
+        }
+
+        .logo-title .highlight::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -4px;
+            width: 100%;
+            height: 3px;
+            border-radius: 999px;
+            background: linear-gradient(120deg, rgba(255, 224, 130, 0.85), rgba(255, 152, 0, 0.85));
+        }
+
+        .logo-tagline {
+            font-size: 0.58em;
+            letter-spacing: 3.2px;
+            text-transform: uppercase;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 6px;
+        }
+
+        header.scrolled .logo {
+            color: var(--primary-dark);
+        }
+
+        header.scrolled .logo-icon {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(220, 255, 199, 0.9));
+            box-shadow: 0 10px 22px rgba(23, 61, 32, 0.18);
+        }
+
+        header.scrolled .logo-icon::after {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.35), rgba(210, 255, 210, 0.25));
+            border-color: rgba(46, 125, 50, 0.25);
+        }
+
+        header.scrolled .logo-eyebrow {
+            color: var(--primary-light);
+        }
+
+        header.scrolled .logo-title {
+            color: var(--primary);
+        }
+
+        header.scrolled .logo-title .highlight {
+            color: var(--secondary);
+        }
+
+        header.scrolled .logo-title .highlight::after {
+            background: linear-gradient(120deg, rgba(255, 152, 0, 0.7), rgba(255, 224, 130, 0.6));
+        }
+
+        header.scrolled .logo-tagline {
+            color: var(--text-light);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            align-items: center;
+            gap: 24px;
+        }
+
+        nav ul li {
+            position: relative;
+        }
+
+        nav ul li a {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            transition: var(--transition);
+            padding: 6px 4px;
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+        }
+
+        nav ul li a::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -8px;
+            width: 0;
+            height: 3px;
+            border-radius: 999px;
+            background: linear-gradient(120deg, var(--secondary), #ffe082);
+            transition: var(--transition);
+        }
+
+        nav ul li a:hover {
+            color: var(--white);
+        }
+
+        nav ul li a:hover::after {
+            width: 100%;
+        }
+
+        header.scrolled nav ul li a {
+            color: var(--text);
+        }
+
+        header.scrolled nav ul li a:hover {
+            color: var(--primary);
+        }
+
+        header.scrolled nav ul li a::after {
+            background: linear-gradient(120deg, var(--primary), var(--secondary));
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 26px;
+            color: var(--white);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .mobile-menu-btn:hover {
+            transform: scale(1.05);
+            color: var(--secondary);
+        }
+
+        header.scrolled .mobile-menu-btn {
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 80vh;
+            color: var(--white);
+            overflow: hidden;
+            margin-top: clamp(12px, 2vw, 24px);
+        }
+
+        .hero-slide {
+            --hero-image: none;
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 20px;
+            background-image: var(--hero-image);
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transform: scale(1.04);
+            transition: opacity 1s ease, transform 8s ease;
+            pointer-events: none;
+        }
+
+        .hero-slide::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.35));
+            z-index: 1;
+        }
+
+        .hero-slide.active {
+            opacity: 1;
+            z-index: 2;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .hero-slide .container {
+            position: relative;
+            z-index: 3;
+            width: 100%;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+            text-align: center;
+        }
+
+        .hero-slide.active .hero-content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 4.2vw, 4.5rem);
+            margin-bottom: 20px;
+            text-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+            letter-spacing: 0.6px;
+        }
+
+        .hero-title-desktop {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .hero-title-desktop .hero-title-line,
+        .hero-title-desktop .hero-title-accent {
+            display: block;
+            padding: 0 18px;
+            border-radius: 32px;
+        }
+
+        .hero-title-desktop .hero-title-line {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.35));
+            color: #103218;
+            text-shadow: none;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .hero-title-desktop .hero-title-accent {
+            background: linear-gradient(135deg, rgba(255, 152, 0, 0.95), rgba(46, 125, 50, 0.85));
+            color: var(--white);
+            box-shadow: 0 12px 30px rgba(16, 50, 24, 0.45);
+        }
+
+        .hero-title-mobile {
+            display: none;
+            white-space: normal;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title-desktop {
+                display: none;
+            }
+
+            .hero-title-mobile {
+                display: inline;
+            }
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* Services Section */
+        .services {
+            background-color: var(--white);
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background-color: var(--secondary);
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .service-card {
+            background-color: var(--white);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .service-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .service-image {
+            position: relative;
+            width: 100%;
+            padding-top: 62%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .service-image img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            transform: translate(-50%, -50%) scale(1);
+            object-fit: cover;
+            object-position: center;
+            filter: saturate(1.05);
+            transition: transform 0.5s ease;
+        }
+
+        .service-card:hover .service-image img {
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        .service-content {
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            height: 100%;
+        }
+
+        .service-content h3 {
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        .service-content p {
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        /* About Section */
+        .about {
+            background-color: var(--background);
+            padding-bottom: 56px;
+        }
+
+        .about-content {
+            display: flex;
+            align-items: center;
+            gap: 50px;
+            background: linear-gradient(135deg, rgba(103, 159, 87, 0.18) 0%, rgba(255, 255, 255, 0) 65%);
+            border-radius: 18px;
+            padding: 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-content::before {
+            content: "";
+            position: absolute;
+            top: -40%;
+            left: -20%;
+            width: 55%;
+            aspect-ratio: 1 / 1;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.5) 0%, rgba(103, 159, 87, 0.25) 55%, rgba(103, 159, 87, 0) 80%);
+            z-index: 0;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        .about-text {
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        .about-text p {
+            text-align: justify;
+        }
+
+        .about-text .btn-quote {
+            margin-top: 24px;
+            font-size: 0.85rem;
+            padding: 8px 22px;
+        }
+
+        .about-video {
+            flex: 1;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(37, 68, 35, 0.25);
+            position: relative;
+            background: radial-gradient(circle at top left, rgba(37, 68, 35, 0.35), rgba(37, 68, 35, 0.15) 45%, rgba(0, 0, 0, 0) 75%);
+            isolation: isolate;
+        }
+
+        .about-video::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(140deg, rgba(37, 68, 35, 0.4) 0%, rgba(37, 68, 35, 0.05) 60%, rgba(255, 255, 255, 0) 100%);
+            mix-blend-mode: soft-light;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .about-video .video-frame {
+            width: 100%;
+            height: 100%;
+            border-radius: inherit;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* FAQ Section */
+        .faq {
+            background-color: var(--background);
+            padding-top: 56px;
+        }
+
+        .faq .section-title {
+            margin-bottom: 32px;
+        }
+
+        .faq .section-title h2 {
+            font-size: 2.2rem;
+            letter-spacing: -0.01em;
+        }
+
+        .faq-intro {
+            max-width: 760px;
+            margin: 0 auto 36px;
+            text-align: center;
+            color: var(--text-light);
+            font-size: 1rem;
+            line-height: 1.65;
+        }
+
+        .faq-grid {
+            display: grid;
+            gap: 38px 60px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-items: stretch;
+        }
+
+        .faq-card {
+            background-color: var(--white);
+            border-radius: 22px;
+            padding: 32px 34px;
+            box-shadow: 0 22px 45px rgba(37, 68, 35, 0.12);
+            border: 1px solid rgba(37, 68, 35, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .faq-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            border-top: 4px solid rgba(46, 125, 50, 0.5);
+            pointer-events: none;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        }
+
+        .faq-card h3 {
+            font-size: 1.3rem;
+            color: var(--text);
+            margin-bottom: 14px;
+        }
+
+        .faq-card p {
+            color: var(--text-light);
+            font-size: 1rem;
+            line-height: 1.75;
+        }
+
+        @media (max-width: 900px) {
+            .faq-grid {
+                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                gap: 32px;
+            }
+
+            .faq {
+                padding-top: 48px;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .about {
+                padding-bottom: 48px;
+            }
+
+            .faq {
+                padding-top: 44px;
+            }
+
+            .faq-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .faq-card p + p {
+            margin-top: 12px;
+        }
+
+        /* Video Showcase Section */
+        .video-showcase {
+            background: linear-gradient(135deg, rgba(37, 68, 35, 0.1) 0%, rgba(37, 68, 35, 0.3) 55%, rgba(37, 68, 35, 0.05) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .video-showcase::before {
+            content: "";
+            position: absolute;
+            top: -220px;
+            right: -160px;
+            width: 480px;
+            height: 480px;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.25) 0%, rgba(103, 159, 87, 0.4) 45%, rgba(37, 68, 35, 0) 75%);
+            filter: blur(0px);
+            opacity: 0.75;
+            pointer-events: none;
+        }
+
+        .video-showcase::after {
+            content: "";
+            position: absolute;
+            bottom: -180px;
+            left: -120px;
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle at center, rgba(103, 159, 87, 0.3) 0%, rgba(103, 159, 87, 0.15) 40%, rgba(37, 68, 35, 0) 70%);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .video-showcase .section-title h2 {
+            font-size: 2.4rem;
+        }
+
+        .video-showcase .section-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-weight: 600;
+            color: var(--primary-dark);
+            background: rgba(255, 255, 255, 0.65);
+            padding: 6px 18px;
+            border-radius: 999px;
+            box-shadow: 0 10px 30px rgba(37, 68, 35, 0.12);
+        }
+
+        .video-showcase .section-eyebrow i {
+            color: var(--primary);
+        }
+
+        .video-showcase .section-title p {
+            max-width: 680px;
+            margin: 18px auto 0;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .video-card {
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 24px;
+            padding: 26px 26px 32px;
+            box-shadow: 0 24px 60px rgba(37, 68, 35, 0.22);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .video-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(145deg, rgba(103, 159, 87, 0.18), rgba(103, 159, 87, 0));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .video-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 30px 70px rgba(37, 68, 35, 0.26);
+        }
+
+        .video-card:hover::after {
+            opacity: 1;
+        }
+
+        .video-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .video-card-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 16px;
+            border-radius: 999px;
+            background: rgba(103, 159, 87, 0.12);
+            color: var(--primary-dark);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .video-card-label i {
+            color: var(--primary);
+        }
+
+        .video-card-metric {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-light);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .video-card-metric i {
+            color: var(--primary);
+        }
+
+        .video-card h3 {
+            font-size: 1.35rem;
+            margin-bottom: 12px;
+            color: var(--text);
+            position: relative;
+            z-index: 2;
+        }
+
+        .video-card p {
+            color: var(--text-light);
+            line-height: 1.7;
+            margin-bottom: 22px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .video-frame {
+            border-radius: 18px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 16 / 9;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+        }
+
+        .video-frame::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0));
+            mix-blend-mode: soft-light;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .video-frame iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+            border-radius: inherit;
+        }
+
+        .video-thumbnail {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+            cursor: pointer;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .video-thumbnail::after {
+            content: 'Replay video';
+            font-size: 0.9rem;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: var(--white);
+            background: rgba(0, 0, 0, 0.65);
+            padding: 10px 22px;
+            border-radius: 999px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+        }
+
+        .video-thumbnail.visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        @media (max-width: 1024px) {
+            .video-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 720px) {
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .video-showcase .section-title h2 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Testimonials Section */
+        .testimonials {
+            background-color: var(--background);
+        }
+
+        .testimonials-slider {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .testimonial {
+            background-color: var(--white);
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            display: none;
+        }
+
+        .testimonial.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .testimonial-text {
+            font-style: italic;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        .testimonial-author {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .testimonial-status {
+            text-align: center;
+            padding: 2rem 1.5rem;
+            font-size: 1.05rem;
+            color: rgba(0, 0, 0, 0.65);
+        }
+
+        .testimonial-status.error {
+            color: #c53030;
+        }
+
+        .testimonial-nav {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .testimonial-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #ddd;
+            margin: 0 5px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .testimonial-dot.active {
+            background-color: var(--primary);
+        }
+
+        /* Booking Section */
+        .booking {
+            position: relative;
+            background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.12), transparent 45%),
+                        linear-gradient(140deg, rgba(46, 125, 50, 0.95) 0%, rgba(27, 94, 32, 0.92) 55%, rgba(67, 160, 71, 0.9) 100%);
+            color: var(--white);
+            overflow: hidden;
+        }
+
+        .booking::before,
+        .booking::after {
+            content: '';
+            position: absolute;
+            width: 480px;
+            height: 480px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 65%);
+            filter: blur(0.5px);
+            opacity: 0.45;
+            z-index: 0;
+        }
+
+        .booking::before {
+            top: -240px;
+            right: -120px;
+        }
+
+        .booking::after {
+            bottom: -220px;
+            left: -160px;
+        }
+
+        .booking .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .booking-header {
+            max-width: 780px;
+            margin: 0 auto 60px;
+            text-align: center;
+        }
+
+        .booking-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 18px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            font-size: 0.85rem;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.88);
+            margin-bottom: 18px;
+        }
+
+        .booking-header h2 {
+            font-size: 2.8rem;
+            color: var(--white);
+            margin-bottom: 18px;
+        }
+
+        .booking-header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1.05rem;
+        }
+
+        .booking-content {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+            gap: 48px;
+            align-items: stretch;
+        }
+
+        .booking-info {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .booking-intro h3 {
+            font-size: 2rem;
+            color: var(--white);
+            margin-bottom: 10px;
+        }
+
+        .booking-intro p {
+            font-size: 1.05rem;
+            line-height: 1.7;
+        }
+
+        .booking-highlights {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 16px;
+        }
+
+        .booking-highlights li {
+            position: relative;
+            padding-left: 34px;
+            line-height: 1.6;
+        }
+
+        .booking-highlights li::before {
+            content: '\2713';
+            position: absolute;
+            left: 0;
+            top: 4px;
+            font-size: 1rem;
+            color: #a5f2c6;
+            background: rgba(165, 242, 198, 0.12);
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 0 1px rgba(165, 242, 198, 0.28);
+        }
+
+        .booking-assurance {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+        }
+
+        .booking-assurance .assurance-item {
+            background: rgba(255, 255, 255, 0.12);
+            padding: 18px 20px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .booking-assurance .assurance-item strong {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .booking-assurance .assurance-item span {
+            font-size: 1.1rem;
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        .booking-form-wrapper {
+            max-width: 440px;
+            margin: 0;
+            background: rgba(255, 255, 255, 0.14);
+            border-radius: 26px;
+            padding: 40px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 20px 45px rgba(9, 35, 15, 0.25);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .booking-form-wrapper::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            pointer-events: none;
+        }
+
+        .booking-form {
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--white);
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--text);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            transition: border 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15);
+        }
+
+        .form-group select {
+            cursor: pointer;
+        }
+
+        .form-hint {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.82);
+            margin-top: 8px;
+        }
+
+        .form-hint i {
+            margin-right: 6px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .booking-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #ffb347, #ff7e5f);
+            color: var(--white);
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .booking-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 28px rgba(255, 95, 109, 0.3);
+        }
+
+        .booking-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .booking-response {
+            margin-top: 20px;
+            padding: 14px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .booking-response.visible {
+            display: block;
+        }
+
+        .booking-response.success {
+            background: rgba(76, 175, 80, 0.12);
+            border: 1px solid rgba(76, 175, 80, 0.35);
+            color: #1b5e20;
+        }
+
+        .booking-response.error {
+            background: rgba(244, 67, 54, 0.12);
+            border: 1px solid rgba(244, 67, 54, 0.35);
+            color: #b71c1c;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        .mobile-offer-popup {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 48px 20px 24px;
+            background: rgba(10, 24, 14, 0.48);
+            backdrop-filter: blur(6px);
+            z-index: 2050;
+            opacity: 0;
+            transition: opacity 0.35s ease;
+        }
+
+        .mobile-offer-popup.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .mobile-offer-card {
+            position: relative;
+            width: min(420px, 100%);
+            background: var(--white);
+            border-radius: 26px;
+            box-shadow: 0 28px 60px rgba(15, 31, 16, 0.35);
+            overflow: hidden;
+            animation: mobileOfferPopupSlideUp 0.4s ease forwards;
+        }
+
+        .mobile-offer-visual {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+        }
+
+        .mobile-offer-visual img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .mobile-offer-content {
+            padding: 22px 22px 26px;
+            text-align: left;
+        }
+
+        .mobile-offer-content h3 {
+            font-size: 1.65rem;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .mobile-offer-content p {
+            margin-bottom: 12px;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .mobile-offer-list {
+            list-style: none;
+            display: grid;
+            gap: 8px;
+            padding: 0;
+            margin: 0;
+        }
+
+        .mobile-offer-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        .mobile-offer-list li::before {
+            content: '\f058';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: var(--secondary);
+        }
+
+        .mobile-offer-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .mobile-offer-close:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.2);
+        }
+
+        .mobile-offer-close i {
+            font-size: 1rem;
+        }
+
+        @keyframes mobileOfferPopupSlideUp {
+            from {
+                transform: translateY(40px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-offer-popup {
+                display: none !important;
+            }
+        }
+
+        .character-popup {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(12, 34, 24, 0.72);
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease;
+            z-index: 1950;
+        }
+
+        .character-popup.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .character-popup-card {
+            position: relative;
+            max-width: 560px;
+            width: 100%;
+            border-radius: 28px;
+            overflow: hidden;
+            background: radial-gradient(circle at top, rgba(255, 255, 255, 0.98), rgba(236, 253, 243, 0.98));
+            box-shadow: 0 46px 80px rgba(8, 28, 16, 0.35);
+            padding: 36px 32px 32px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 26px;
+        }
+
+        .character-popup-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(46, 125, 50, 0.1);
+            color: var(--primary-dark);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .character-popup-close:hover {
+            background: rgba(46, 125, 50, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .character-popup-body {
+            display: grid;
+            grid-template-columns: 220px minmax(0, 1fr);
+            gap: 24px;
+            align-items: center;
+        }
+
+        .character-popup-illustration {
+            width: 100%;
+            max-width: 220px;
+            aspect-ratio: 1 / 1;
+            border-radius: 22px;
+            box-shadow: 0 26px 48px rgba(21, 64, 42, 0.28);
+            animation: character-float 6s ease-in-out infinite;
+        }
+
+        @keyframes character-float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .character-popup-content {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .character-popup-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(46, 125, 50, 0.12);
+            color: var(--primary-dark);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .character-popup-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.9rem;
+            color: var(--primary-dark);
+            line-height: 1.2;
+        }
+
+        .character-popup-copy {
+            color: var(--text-light);
+            line-height: 1.7;
+        }
+
+        .character-popup-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 6px;
+        }
+
+        .character-popup-actions .btn {
+            text-transform: none;
+            letter-spacing: 0.5px;
+        }
+
+        .character-popup-secondary {
+            background: rgba(46, 125, 50, 0.1);
+            color: var(--primary-dark);
+        }
+
+        .character-popup-secondary:hover {
+            background: rgba(46, 125, 50, 0.18);
+        }
+
+        @media (max-width: 720px) {
+            .character-popup-card {
+                padding: 28px 24px;
+            }
+
+            .character-popup-body {
+                grid-template-columns: minmax(0, 1fr);
+                text-align: center;
+            }
+
+            .character-popup-illustration {
+                margin: 0 auto;
+            }
+
+            .character-popup-actions {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .character-popup-card {
+                border-radius: 22px;
+            }
+
+            .character-popup-title {
+                font-size: 1.6rem;
+            }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 2000;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            position: relative;
+            width: min(520px, 100%);
+            background: var(--white);
+            border-radius: 28px;
+            box-shadow: 0 40px 70px rgba(15, 23, 42, 0.25);
+            padding: 40px;
+            overflow: hidden;
+        }
+
+        .modal-card::before {
+            content: "";
+            position: absolute;
+            inset: -80px -120px auto auto;
+            width: 240px;
+            height: 240px;
+            background: radial-gradient(circle at center, rgba(76, 175, 80, 0.18), transparent 60%);
+            z-index: 0;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(46, 125, 50, 0.08);
+            color: var(--primary-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease, transform 0.3s ease;
+            z-index: 2;
+        }
+
+        .modal-close:hover {
+            background: rgba(46, 125, 50, 0.18);
+            transform: rotate(90deg);
+        }
+
+        .modal-header {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 24px;
+        }
+
+        .modal-header .modal-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(46, 125, 50, 0.12);
+            color: var(--primary-dark);
+            font-weight: 600;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .modal-header h3 {
+            font-size: 1.8rem;
+            margin-top: 18px;
+            margin-bottom: 10px;
+        }
+
+        .modal-header p {
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        .modal-header p strong {
+            color: var(--primary-dark);
+        }
+
+        .modal-form {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: 18px;
+        }
+
+        .modal-feedback {
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: none;
+        }
+
+        .modal-feedback.visible {
+            display: block;
+        }
+
+        .modal-feedback.error {
+            background: rgba(244, 67, 54, 0.12);
+            color: #b71c1c;
+        }
+
+        .modal-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .modal-group input,
+        .modal-group select {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(46, 125, 50, 0.18);
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .modal-group input:focus,
+        .modal-group select:focus {
+            outline: none;
+            border-color: rgba(46, 125, 50, 0.55);
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.15);
+        }
+
+        .modal-submit {
+            margin-top: 10px;
+            padding: 16px;
+            border-radius: 16px;
+            border: none;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+            font-weight: 700;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .modal-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 28px rgba(46, 125, 50, 0.25);
+        }
+
+        .modal-submit[disabled] {
+            opacity: 0.7;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .booking-support {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+            margin-top: 60px;
+        }
+
+        .support-card {
+            background: rgba(255, 255, 255, 0.12);
+            padding: 26px;
+            border-radius: 22px;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 18px 40px rgba(10, 36, 15, 0.28);
+            position: relative;
+        }
+
+        .support-card h3 {
+            color: var(--white);
+            margin-bottom: 12px;
+            font-size: 1.25rem;
+        }
+
+        .support-card p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 14px;
+        }
+
+        .support-card form {
+            display: grid;
+            gap: 14px;
+        }
+
+        .support-card form .field-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .support-card input,
+        .support-card textarea {
+            width: 100%;
+            border: none;
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--white);
+            box-shadow: inset 0 2px 6px rgba(9, 30, 15, 0.2);
+        }
+
+        .support-card input::placeholder,
+        .support-card textarea::placeholder {
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .support-card input:focus,
+        .support-card textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.28);
+        }
+
+        .support-card textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .support-card .btn {
+            background: var(--white);
+            color: var(--primary);
+            text-transform: none;
+            letter-spacing: 0.5px;
+        }
+
+        .support-card .btn:hover {
+            background: #f1f8e9;
+            color: var(--primary-dark);
+        }
+
+        .support-card button[type="submit"] {
+            background: var(--secondary);
+            color: var(--white);
+            border: none;
+            border-radius: 999px;
+            padding: 12px 24px;
+            font-weight: 600;
+            text-transform: none;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: var(--transition);
+            justify-self: flex-start;
+        }
+
+        .support-card button[type="submit"]:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--primary-dark);
+            color: var(--white);
+            padding: 60px 0 30px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-column h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .footer-column h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            height: 2px;
+            background-color: var(--secondary);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: #ccc;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: var(--white);
+            padding-left: 5px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: var(--white);
+            transition: var(--transition);
+        }
+
+        .social-links a:hover {
+            background-color: var(--secondary);
+            transform: translateY(-3px);
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .about-content {
+                padding: 40px;
+            }
+
+            .faq-grid {
+                gap: 28px;
+            }
+
+            .booking-content {
+                grid-template-columns: 1fr;
+                gap: 36px;
+            }
+
+            .booking-form-wrapper {
+                margin: 0 auto;
+            }
+
+            .support-card {
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+
+            section {
+                padding: 60px 0;
+            }
+
+            header {
+                overflow: visible;
+            }
+
+            nav {
+                z-index: 1050;
+            }
+
+            .hero {
+                min-height: 100vh;
+                overflow: visible;
+                padding-top: 12px;
+            }
+
+            .hero-slide {
+                align-items: flex-start;
+                justify-content: flex-start;
+                background-position: center 62%;
+            }
+
+            .hero-slide .container {
+                padding-top: 140px;
+                padding-bottom: 36px;
+            }
+
+            .hero-content {
+                width: 100%;
+                max-width: 420px;
+                margin: 0 auto;
+                padding: 26px 24px;
+                border-radius: 24px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                background: linear-gradient(150deg, rgba(0, 0, 0, 0.52), rgba(0, 0, 0, 0.2));
+                gap: 18px;
+                box-shadow: 0 22px 52px rgba(0, 0, 0, 0.38);
+                backdrop-filter: blur(8px);
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                text-align: left;
+                transition: opacity 1.4s ease, transform 1.4s ease;
+            }
+
+            .hero h1 {
+                font-size: 2.6rem;
+                line-height: 1.2;
+            }
+
+            .hero p {
+                font-size: 1.08rem;
+                line-height: 1.65;
+            }
+
+            .hero-actions {
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 14px;
+            }
+
+            .hero-title-desktop {
+                display: none;
+            }
+
+            .hero-title-mobile {
+                display: block;
+                width: 100%;
+                max-width: 100%;
+                padding: 0;
+                border-radius: 0;
+                font-size: clamp(1.4rem, 6vw, 2.2rem);
+                line-height: 1.15;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                font-weight: 700;
+                color: #ffffff;
+                background: none;
+                border: none;
+                box-shadow: none;
+                text-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+                word-break: break-word;
+            }
+
+            .hero-title-mobile::after {
+                content: none;
+            }
+
+            .hero-actions .btn {
+                flex: 1 1 100%;
+                min-width: 0;
+                padding: 12px 18px;
+                font-size: 0.95rem;
+                border-radius: 20px;
+            }
+
+            .about-content {
+                flex-direction: column;
+                padding: 30px;
+                gap: 35px;
+            }
+
+            .faq .section-title h2 {
+                font-size: 1.9rem;
+            }
+
+            .faq-intro {
+                font-size: 0.95rem;
+            }
+
+            .faq-grid {
+                gap: 24px;
+            }
+
+            .faq-card {
+                padding: 28px 24px;
+            }
+
+            .faq-card h3 {
+                font-size: 1.25rem;
+            }
+
+            .booking-intro h3 {
+                font-size: 1.65rem;
+            }
+
+            .booking-assurance {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .logo {
+                gap: 14px;
+            }
+
+            .logo-icon {
+                width: 68px;
+                height: 68px;
+                padding: 10px;
+            }
+
+            .header-container {
+                gap: 24px;
+                padding: 18px 0;
+            }
+
+            .logo {
+                padding: 8px 16px;
+                border-radius: 18px;
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
+                box-shadow: 0 20px 36px rgba(12, 53, 25, 0.28);
+                position: relative;
+                overflow: hidden;
+                isolation: isolate;
+            }
+
+            .logo::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(130deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0));
+                opacity: 0.65;
+                pointer-events: none;
+                z-index: 0;
+            }
+
+            .logo-icon {
+                width: 50px;
+                height: 50px;
+                border-radius: 16px;
+                box-shadow: 0 14px 28px rgba(12, 53, 25, 0.32);
+                position: relative;
+                z-index: 1;
+            }
+
+            .logo-title {
+                font-size: 1.12em;
+                flex-direction: row;
+                align-items: center;
+                gap: 6px;
+                line-height: 1.08;
+                padding: 0;
+                border-radius: 0;
+                background: transparent;
+                border: none;
+                box-shadow: none;
+                backdrop-filter: none;
+            }
+
+            .logo-wordmark {
+                position: relative;
+                z-index: 1;
+            }
+
+            header.scrolled .logo {
+                background: linear-gradient(135deg, rgba(46, 125, 50, 0.15), rgba(46, 125, 50, 0.03));
+                box-shadow: 0 18px 30px rgba(23, 61, 32, 0.18);
+            }
+
+            header.scrolled .logo::before {
+                background: linear-gradient(130deg, rgba(46, 125, 50, 0.22), rgba(255, 255, 255, 0));
+                opacity: 0.75;
+            }
+
+            .logo-title-text,
+            .logo-title .highlight {
+                display: inline-flex;
+                align-items: center;
+                padding: 0;
+                border-radius: 0;
+                text-transform: none;
+                letter-spacing: 0.02em;
+                font-weight: 700;
+            }
+
+            .logo-title .highlight {
+                color: #ffe082;
+            }
+
+            .logo-title .highlight::after {
+                bottom: -6px;
+                height: 3px;
+            }
+
+            .logo-eyebrow {
+                font-size: 0.64em;
+                letter-spacing: 4.4px;
+            }
+
+            .logo-tagline {
+                font-size: 0.56em;
+                letter-spacing: 3px;
+            }
+
+            nav {
+                position: fixed;
+                top: 76px;
+                left: -100%;
+                width: 100%;
+                background: linear-gradient(135deg, rgba(46, 125, 50, 0.95), rgba(26, 94, 32, 0.92));
+                transition: var(--transition);
+                box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1);
+            }
+
+            nav.active {
+                left: 0;
+            }
+
+            nav ul {
+                flex-direction: column;
+                padding: 20px;
+            }
+
+            nav ul li {
+                margin: 0 0 15px 0;
+            }
+
+            nav ul li a {
+                color: rgba(255, 255, 255, 0.92);
+                font-size: 1.1rem;
+            }
+
+            nav ul li a::after {
+                bottom: -4px;
+            }
+
+            header.scrolled nav ul li a {
+                color: rgba(255, 255, 255, 0.92);
+            }
+
+            .section-title h2 {
+                font-size: 2rem;
+            }
+
+            .service-content {
+                padding: 24px;
+            }
+
+            .booking-header {
+                margin-bottom: 40px;
+            }
+
+            .booking-header h2 {
+                font-size: 2.3rem;
+            }
+
+            .booking-form-wrapper {
+                padding: 30px;
+            }
+
+            .modal-card {
+                padding: 30px 24px;
+                border-radius: 22px;
+            }
+
+            .modal-header h3 {
+                font-size: 1.55rem;
+            }
+
+            .modal-header p {
+                font-size: 0.95rem;
+            }
+
+            .modal-group input,
+            .modal-group select {
+                padding: 12px 14px;
+            }
+
+            .modal-feedback {
+                font-size: 0.9rem;
+            }
+
+            .form-hint {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .logo-eyebrow {
+                display: none;
+            }
+
+            .logo {
+                padding: 8px 14px;
+            }
+
+            .logo-icon {
+                width: 46px;
+                height: 46px;
+            }
+
+            .logo-title {
+                font-size: 1.04em;
+            }
+
+            .logo-title-text,
+            .logo-title .highlight {
+                letter-spacing: 0.04em;
+            }
+
+            .logo-tagline {
+                display: none;
+            }
+
+            .booking-info {
+                display: none;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            section {
+                padding: 48px 0;
+            }
+
+            .hero-slide {
+                background-position: center 66%;
+            }
+
+            .hero-slide .container {
+                padding-top: 120px;
+                padding-bottom: 28px;
+            }
+
+            .hero-content {
+                padding: 18px;
+                border-radius: 18px;
+                gap: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                background: linear-gradient(150deg, rgba(0, 0, 0, 0.36), rgba(0, 0, 0, 0.16));
+            }
+
+            .hero-actions {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .hero h1 {
+                font-size: 2.3rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+                line-height: 1.6;
+            }
+
+            .hero-actions .btn {
+                font-size: 0.88rem;
+                padding: 10px 15px;
+                border-radius: 18px;
+            }
+
+            .btn {
+                padding: 10px 18px;
+            }
+
+            .live-chat-window {
+                max-height: calc(100vh - 120px);
+                bottom: 78px;
+                border-radius: 18px;
+            }
+
+            .live-chat-form {
+                padding: 14px 16px 16px;
+            }
+
+            .live-chat-form textarea {
+                min-height: 44px;
+            }
+
+            .service-content {
+                padding: 20px;
+            }
+
+            .faq .section-title h2 {
+                font-size: 1.7rem;
+            }
+
+            .faq-intro {
+                font-size: 0.92rem;
+            }
+
+            .faq-card {
+                padding: 26px 22px;
+            }
+
+            .faq-card h3 {
+                font-size: 1.18rem;
+            }
+
+            .logo {
+                font-size: 22px;
+                gap: 12px;
+            }
+
+            .logo-icon {
+                width: 56px;
+                height: 56px;
+                padding: 8px;
+            }
+
+            .logo-title {
+                font-size: 0.96em;
+            }
+
+            .logo-title-text {
+                letter-spacing: 0.02em;
+            }
+
+            .logo-title .highlight {
+                margin-top: 1px;
+            }
+
+            .booking-header h2 {
+                font-size: 2rem;
+            }
+
+            .booking-header p {
+                font-size: 1rem;
+            }
+
+            .booking-content {
+                gap: 28px;
+            }
+
+            .booking-assurance {
+                grid-template-columns: 1fr;
+            }
+
+            .booking-form-wrapper {
+                padding: 26px;
+            }
+
+            .live-chat-window {
+                width: calc(100vw - 24px);
+                max-width: calc(100vw - 24px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header id="header">
+        <div class="container header-container">
+            <a href="#" class="logo">
+                <span class="logo-icon" aria-hidden="true">
+                    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
+                        <defs>
+                            <radialGradient id="logo-badge-gradient" cx="0.5" cy="0.2" r="0.85">
+                                <stop offset="0%" stop-color="#f5ffe8" />
+                                <stop offset="55%" stop-color="#b5f1a6" />
+                                <stop offset="100%" stop-color="#1f6a28" />
+                            </radialGradient>
+                            <linearGradient id="logo-ground-gradient" x1="14" y1="46" x2="50" y2="56" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#66bb6a" />
+                                <stop offset="50%" stop-color="#2e7d32" />
+                                <stop offset="100%" stop-color="#0c3f18" />
+                            </linearGradient>
+                            <linearGradient id="logo-stripe-gradient" x1="16" y1="42" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="rgba(255, 255, 255, 0.55)" />
+                                <stop offset="100%" stop-color="rgba(255, 255, 255, 0)" />
+                            </linearGradient>
+                            <linearGradient id="logo-deck-gradient" x1="18" y1="36" x2="50" y2="48" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#e0ffef" />
+                                <stop offset="45%" stop-color="#47b46a" />
+                                <stop offset="100%" stop-color="#0f5b2a" />
+                            </linearGradient>
+                            <linearGradient id="logo-top-gradient" x1="26" y1="30" x2="46" y2="38" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#f4fff6" />
+                                <stop offset="40%" stop-color="#9be8b8" />
+                                <stop offset="100%" stop-color="#2a8150" />
+                            </linearGradient>
+                            <linearGradient id="logo-handle-gradient" x1="28" y1="14" x2="56" y2="30" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#dffff3" />
+                                <stop offset="50%" stop-color="#8be7c6" />
+                                <stop offset="100%" stop-color="#2d9470" />
+                            </linearGradient>
+                            <radialGradient id="logo-wheel-gradient" cx="0.5" cy="0.45" r="0.7">
+                                <stop offset="0%" stop-color="#ffffff" />
+                                <stop offset="45%" stop-color="#b0bec5" />
+                                <stop offset="100%" stop-color="#1b2429" />
+                            </radialGradient>
+                            <radialGradient id="logo-glow-gradient" cx="0.5" cy="0.1" r="0.9">
+                                <stop offset="0%" stop-color="rgba(255, 255, 255, 0.65)" />
+                                <stop offset="100%" stop-color="rgba(255, 255, 255, 0)" />
+                            </radialGradient>
+                        </defs>
+                        <circle cx="32" cy="32" r="27" fill="url(#logo-badge-gradient)" />
+                        <circle cx="32" cy="22" r="18" fill="url(#logo-glow-gradient)" opacity="0.65" />
+                        <path d="M14 45c4.8 4 12 6 18 6s13.2-2 18-6v6H14z" fill="url(#logo-ground-gradient)" />
+                        <path d="M18 43c4 2.4 8.8 3.6 14 3.6S42 45.4 46 43" fill="none" stroke="url(#logo-stripe-gradient)" stroke-width="3.2" stroke-linecap="round" opacity="0.8" />
+                        <path d="M26.5 28.5L44 17.2c1.5-0.9 3.4-0.5 4.4 0.9l4.6 6.4c1 1.3 0.4 3.2-1.3 3.9l-7.9 3.1" fill="none" stroke="url(#logo-handle-gradient)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" />
+                        <g>
+                            <path d="M18.6 36.8h22.4c4.4 0 8.5 2.5 10.5 6.4l2.1 4.1c0.8 1.6-0.4 3.5-2.2 3.5H20.8c-1.2 0-2.3-0.7-2.7-1.8l-2.1-5.7c-1.1-3.1 1.2-6.5 4.6-6.5z" fill="url(#logo-deck-gradient)" />
+                            <path d="M24.4 34.8h16.5c2 0 3.9 1.2 4.6 3.1l1.4 3.5H22.1l-0.8-2.4c-0.8-2.7 1.3-5.4 4-5.4z" fill="url(#logo-top-gradient)" />
+                            <path d="M24 37c-2.8 0.6-4.6 3.4-3.9 6.2l0.6 2.2c0.3 1.1 1.3 1.9 2.4 1.9h20.4c1.2 0 2.2-0.8 2.5-2l0.5-2.6c0.5-2.8-1.5-5.5-4.3-5.9" fill="none" stroke="rgba(255, 255, 255, 0.28)" stroke-width="2.2" stroke-linecap="round" />
+                        </g>
+                        <circle cx="24.5" cy="47.2" r="4.8" fill="url(#logo-wheel-gradient)" />
+                        <circle cx="42.8" cy="47.6" r="5.6" fill="url(#logo-wheel-gradient)" />
+                        <circle cx="24.5" cy="47.2" r="1.6" fill="rgba(255, 255, 255, 0.65)" />
+                        <circle cx="42.8" cy="47.6" r="1.9" fill="rgba(255, 255, 255, 0.6)" />
+                        <path d="M20 30.4c3.2 1.4 6.6 1.4 9.8 0" fill="none" stroke="rgba(255, 255, 255, 0.5)" stroke-width="2.4" stroke-linecap="round" />
+                        <path d="M23.2 20.8c2.5-1.8 5.4-2.9 8.6-3.1" fill="none" stroke="rgba(255, 255, 255, 0.38)" stroke-width="2.2" stroke-linecap="round" />
+                        <path d="M44.2 24.5l2.6 3" stroke="rgba(255, 255, 255, 0.82)" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </span>
+                <span class="logo-wordmark">
+                    <span class="logo-title"><span class="logo-title-text">Pay As You</span><span class="highlight">Mow</span></span>
+                    <span class="logo-tagline">Audenshaw &bull; Denton &bull; Dukinfield</span>
+                </span>
+            </a>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav id="nav">
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#services">Services</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                    <li><a href="#testimonials">Testimonials</a></li>
+                    <li><a href="#booking">Book</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-slide active" style="--hero-image: url('https://image.pollinations.ai/prompt/Ultra%20realistic%20photo%20of%20a%20professional%20male%20gardener%20with%20olive%20skin%20pushing%20a%20lawn%20mower%20across%20a%20lush%20small%20urban%20garden%2C%20wearing%20khaki%20shorts%20and%20a%20green%20t-shirt%2C%20bright%20summer%20day%2C%20hyper-detailed%2C%208k');">
+            <div class="container">
+                <div class="hero-content">
+                    <h1>
+                        <span class="hero-title-desktop">Garden Maintenance Service</span>
+                        <span class="hero-title-mobile">Garden Maintenance</span>
+                    </h1>
+                    <p>Probably the best rates in Tameside.</p>
+                    <div class="hero-actions">
+                        <a href="#booking" class="btn">Get a Free Quote</a>
+                        <a href="#services" class="btn btn-secondary">Our Services</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-slide" style="--hero-image: url('https://image.pollinations.ai/prompt/Ultra%20realistic%20photo%20of%20the%20same%20professional%20male%20gardener%20with%20olive%20skin%20on%20his%20hands%20and%20knees%20weeding%20a%20flower%20border%20in%20a%20well-kept%20urban%20garden%2C%20wearing%20khaki%20shorts%20and%20a%20green%20t-shirt%2C%20bright%20summer%20day%2C%20hyper-detailed%2C%208k');">
+            <div class="container">
+                <div class="hero-content">
+                    <h1>
+                        <span class="hero-title-desktop">Garden Maintenance Service</span>
+                        <span class="hero-title-mobile">Garden Maintenance</span>
+                    </h1>
+                    <p>Detailed border care, weeding, and mowing tailored to your garden.</p>
+                    <div class="hero-actions">
+                        <a href="#booking" class="btn">Get a Free Quote</a>
+                        <a href="#services" class="btn btn-secondary">Our Services</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="mobile-offer-popup" id="mobileOfferPopup" aria-hidden="true">
+        <div class="mobile-offer-card" role="dialog" aria-modal="true" aria-labelledby="mobileOfferTitle" aria-describedby="mobileOfferCopy mobileOfferList">
+            <button type="button" class="mobile-offer-close" id="mobileOfferClose" aria-label="Close special garden offer">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+            <div class="mobile-offer-visual" aria-hidden="true">
+                <img src="https://image.pollinations.ai/prompt/Ultra%20realistic%20photo%20of%20a%20smiling%20gardener%20standing%20with%20arms%20folded%20in%20front%20of%20a%20neatly%20trimmed%20hedge%2C%20golden%20hour%20lighting%2C%20professional%20portrait%2C%208k" alt="Smiling gardener standing with folded arms in front of a neatly trimmed hedge">
+            </div>
+            <div class="mobile-offer-content">
+                <h3 id="mobileOfferTitle">Gardens from only £10</h3>
+                <p id="mobileOfferCopy">Includes mowing, weeding, tidying borders, and bushes.</p>
+                <ul class="mobile-offer-list" id="mobileOfferList">
+                    <li>Mowing</li>
+                    <li>Weeding</li>
+                    <li>Tidying borders</li>
+                    <li>Bushes</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Services Section -->
+    <section class="services" id="services">
+        <div class="container">
+            <div class="section-title">
+                <h2>Our Services</h2>
+                <p>Comprehensive garden care tailored to your needs</p>
+            </div>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-image">
+                        <img src="https://image.pollinations.ai/prompt/Realistic%20photo%20of%20freshly%20mowed%20lawn%20with%20striped%20patterns%2C%20modern%20electric%20lawn%20mower%20parked%2C%20no%20people%2C%20bright%20day" alt="Close-up of a freshly mowed lawn with a modern electric mower and no people">
+                    </div>
+                    <div class="service-content">
+                        <h3>Lawn Mowing</h3>
+                        <p>We provide regular mowing to keep your lawn neat and healthy. Grass is cut to the right length, and edges are trimmed for a clean, polished look. Routine care helps maintain a lush, green lawn.</p>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <div class="service-image">
+                        <img src="https://image.pollinations.ai/prompt/Realistic%20photo%20of%20neatly%20trimmed%20garden%20hedges%20with%20electric%20shears%20resting%20nearby%2C%20detailed%20texture%2C%20no%20people%2C%20soft%20morning%20light" alt="Neatly trimmed hedges with electric shears resting nearby and no people present">
+                    </div>
+                    <div class="service-content">
+                        <h3>Hedge Trimming</h3>
+                        <p>We trim and shape hedges and bushes to maintain a tidy appearance. Overgrown branches are carefully removed for healthy growth. Regular pruning enhances your garden's overall beauty.</p>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <div class="service-image">
+                        <img src="https://image.pollinations.ai/prompt/Realistic%20photo%20of%20eco-friendly%20weed%20control%20tools%20arranged%20next%20to%20flowerbeds%2C%20lush%20greenery%2C%20no%20people%2C%20sunny%20garden" alt="Eco-friendly weed control tools arranged beside colorful flowerbeds with no people in view">
+                    </div>
+                    <div class="service-content">
+                        <h3>Weed Control</h3>
+                        <p>We keep your garden neat by removing weeds from flower beds, borders, and pathways. Edges are trimmed, debris is cleared, and plants are arranged to maintain a tidy and well-kept appearance.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about" id="about">
+        <div class="container">
+            <div class="section-title">
+                <h2>About Andy</h2>
+                <p>Friendly, professional garden maintenance across Audenshaw and Denton</p>
+            </div>
+            <div class="about-content">
+                <div class="about-text">
+                    <h3>Meet Your Gardener</h3>
+                    <p>Hi, I'm Andy, a dedicated garden maintenance professional with 14 years of experience serving Audenshaw and Denton. I take pride in delivering high-quality service at competitive rates while helping customers maintain beautiful outdoor spaces.</p>
+                    <p>Gardening is more than a job—it's my passion. I enjoy working in nature, meeting people, and staying active. As I operate part-time, availability is limited, but I always strive to accommodate my customers. If you're looking for a reliable gardener, feel free to get in touch!</p>
+                    <a href="#booking" class="btn btn-quote">Arrange a Free Quote</a>
+                </div>
+                <div class="about-video">
+                    <div class="video-frame" data-video-id="oJrPPeow__s">
+                        <iframe src="https://www.youtube.com/embed/oJrPPeow__s?si=4qciSvhRowzZ9yMh&amp;rel=0&amp;modestbranding=1&amp;enablejsapi=1" title="Pay As You Mow introduction video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq" id="faq">
+        <div class="container">
+            <div class="section-title">
+                <h2>FAQ</h2>
+            </div>
+            <p class="faq-intro">We know choosing the right gardener raises a few questions. Here are the answers we share with new clients all the time.</p>
+            <div class="faq-grid">
+                <article class="faq-card">
+                    <h3>What areas do you cover?</h3>
+                    <p>The areas I cover are Audenshaw, Denton and some areas of Dukinfield. If you live outside any of these areas, please get in touch and I will look into whether I can accommodate your area.</p>
+                </article>
+                <article class="faq-card">
+                    <h3>Are you a registered business?</h3>
+                    <p>Yes, I am a fully registered gardener and submit my accounts every year.</p>
+                    <p>Payment for my services can be made by cash or online which adds convenience for my customers.</p>
+                </article>
+                <article class="faq-card">
+                    <h3>How much do you charge?</h3>
+                    <p>I constantly receive feedback that my rates are too low for the effort and attention I put into each job.</p>
+                    <p>My rates for a small garden start from £10 per visit, which can be arranged on a regular basis throughout the gardening season or as a one-off tidy up.</p>
+                    <p>I still prefer to see your garden first so I can give you an accurate price.</p>
+                </article>
+                <article class="faq-card">
+                    <h3>What can you do for me?</h3>
+                    <p>I can visit every few weeks or arrange a one-off visit to do a garden tidy.</p>
+                    <p>My work involves keeping your yard looking fresh during the growing season. A typical visit includes mowing, weeding, tidying borders and hedge/bush trimming.</p>
+                    <p>If you need other garden work doing then this can be arranged.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Voices Section -->
+    <section class="video-showcase" id="voices">
+        <div class="container">
+            <div class="section-title">
+                <span class="section-eyebrow"><i class="fas fa-tower-broadcast" aria-hidden="true"></i> Real Voices</span>
+                <h2>See What Our Community Is Saying</h2>
+                <p>Press play on these rapid-fire stories from homeowners who trust Pay As You Mow to keep their lawns lush, welcoming, and worry-free season after season.</p>
+            </div>
+            <div class="video-grid">
+                <article class="video-card">
+                    <div class="video-card-header">
+                        <span class="video-card-label"><i class="fas fa-star" aria-hidden="true"></i> Featured Story</span>
+                        <span class="video-card-metric"><i class="fas fa-clock" aria-hidden="true"></i> 2 min watch</span>
+                    </div>
+                    <h3>"Unbeatable rates, impeccable finish"</h3>
+                    <p>Ray from Data says Pay As You Mow brings unbeatable rates and meticulous work no other local gardener can rival.</p>
+                    <div class="video-frame" data-video-id="pcQuRLu64-g">
+                        <iframe src="https://www.youtube.com/embed/pcQuRLu64-g?si=O2Rt4JNLHxFpcFPf&amp;rel=0&amp;enablejsapi=1" title="Claire talks about Pay As You Mow" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    </div>
+                </article>
+                <article class="video-card">
+                    <div class="video-card-header">
+                        <span class="video-card-label"><i class="fas fa-leaf" aria-hidden="true"></i> Neighbour Spotlight</span>
+                        <span class="video-card-metric"><i class="fas fa-stopwatch" aria-hidden="true"></i> 90 sec watch</span>
+                    </div>
+                    <h3>"Pay as you go was the game changer"</h3>
+                    <p>James explains why flexible visits and tidy finishes make Pay As You Mow the perfect fit for his busy schedule.</p>
+                    <div class="video-frame" data-video-id="hBbBok5MkQY">
+                        <iframe src="https://www.youtube.com/embed/hBbBok5MkQY?si=GS8SKBmV6uUDwKQ9&amp;rel=0&amp;enablejsapi=1" title="James shares his Pay As You Mow experience" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    </div>
+                </article>
+                <article class="video-card">
+                    <div class="video-card-header">
+                        <span class="video-card-label"><i class="fas fa-sun" aria-hidden="true"></i> Garden Glow-Up</span>
+                        <span class="video-card-metric"><i class="fas fa-play" aria-hidden="true"></i> Quick watch</span>
+                    </div>
+                    <h3>"From overgrown to outstanding"</h3>
+                    <p>Helen walks through her transformed borders and the peace of mind that comes with a meticulous gardener.</p>
+                    <div class="video-frame" data-video-id="enB1NOnPrhY">
+                        <iframe src="https://www.youtube.com/embed/enB1NOnPrhY?si=EIDoJoJhiP-LsMMZ&amp;rel=0&amp;enablejsapi=1" title="Helen's Pay As You Mow testimonial" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials" id="testimonials">
+        <div class="container">
+            <div class="section-title">
+                <h2>Customer Testimonials</h2>
+                <p>What our clients say about our services</p>
+            </div>
+            <div class="testimonials-slider" id="testimonialSlider">
+                <div class="testimonial-status" id="testimonialStatus">Loading testimonials…</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Booking Section -->
+    <section class="booking" id="booking">
+        <div class="container">
+            <div class="booking-header">
+                <span class="booking-eyebrow"><i class="fas fa-calendar-check" aria-hidden="true"></i> Book Your Free Quote</span>
+                <h2>Schedule Your Free Garden Quote Visit</h2>
+                <p>Pick a slot for Andy to assess your garden in person — every visit is purely for preparing your no-obligation quote.</p>
+            </div>
+
+            <div class="booking-content">
+                <div class="booking-info">
+                    <div class="booking-intro">
+                        <h3>Effortless free-quote scheduling</h3>
+                        <p>Choose a convenient time for us to stop by, walk the garden with you, and leave you with a tailored quote before any work is booked.</p>
+                    </div>
+                    <ul class="booking-highlights">
+                        <li>Live availability direct from our gardener rota.</li>
+                        <li>Your visit is dedicated to scoping the work and pricing it transparently.</li>
+                        <li>Receive SMS and email confirmation with your quote visit details.</li>
+                    </ul>
+                    <div class="booking-assurance">
+                        <div class="assurance-item">
+                            <strong>Average response</strong>
+                            <span>Under 10 minutes</span>
+                        </div>
+                        <div class="assurance-item">
+                            <strong>Service area</strong>
+                            <span>Tameside</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="booking-form-wrapper">
+                    <form class="booking-form" id="bookingForm">
+                        <div class="form-group">
+                            <label for="customerTime">Available Time Slots</label>
+                            <select id="customerTime" name="time" required>
+                                <option value="">Loading available times...</option>
+                            </select>
+                        </div>
+                        <p class="form-hint"><i class="fas fa-clipboard-check" aria-hidden="true"></i>Choose a time and we'll open a quick contact form to lock in your free quote visit.</p>
+                        <button type="submit" class="booking-submit">Book Free Quote Visit</button>
+                    </form>
+                    <div class="booking-response" id="bookingResponse" role="alert" aria-live="assertive"></div>
+                </div>
+            </div>
+
+            <div class="booking-support">
+                <div class="support-card">
+                    <h3>Prefer to speak first?</h3>
+                    <p>Call Andy and he will arrange a free quote for you.</p>
+                    <a class="btn" href="tel:+447595289669"><i class="fas fa-phone" aria-hidden="true"></i>&nbsp; Call 07595 289 669</a>
+                </div>
+                <div class="support-card">
+                    <h3>Need a different time?</h3>
+                    <p>Tell us what works for you and we'll release bespoke slots outside standard hours.</p>
+                    <form id="contactForm" autocomplete="off">
+                        <div class="field-row">
+                            <input type="text" id="contactName" name="name" placeholder="Your name" required>
+                            <input type="tel" id="contactPhone" name="phone" placeholder="Phone number" required>
+                        </div>
+                        <input type="email" id="contactEmail" name="email" placeholder="Email address" required>
+                        <textarea id="contactEnquiry" name="enquiry" placeholder="How can we help?" required></textarea>
+                        <button type="submit">
+                            <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                            Send enquiry
+                        </button>
+                    </form>
+                    <div class="booking-response" id="contactResponse" role="status" aria-live="polite"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Character spotlight popup removed to prevent it from appearing to visitors -->
+
+    <div class="modal-overlay" id="bookingModal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
+            <button type="button" class="modal-close" id="closeBookingModal" aria-label="Close booking details form">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+            <div class="modal-header">
+                <span class="modal-eyebrow"><i class="fas fa-user-check" aria-hidden="true"></i> Booking contact</span>
+                <h3 id="bookingModalTitle">Tell us how to reach you</h3>
+                <p>We'll confirm your appointment for <strong id="selectedSlotDisplay" aria-live="polite">your chosen slot</strong>.</p>
+            </div>
+            <form class="modal-form" id="bookingDetailsForm">
+                <input type="hidden" id="modalTimeInput" name="time" />
+                <div class="modal-group">
+                    <label for="modalCustomerName">Name</label>
+                    <input type="text" id="modalCustomerName" name="name" placeholder="Full name" autocomplete="name" required />
+                </div>
+                <div class="modal-group">
+                    <label for="modalLocation">Service location</label>
+                    <select id="modalLocation" name="location" required>
+                        <option value="">Select a location</option>
+                        <option value="Audenshaw">Audenshaw</option>
+                        <option value="Denton">Denton</option>
+                        <option value="Dukinfield">Dukinfield</option>
+                    </select>
+                </div>
+                <div class="modal-group">
+                    <label for="modalEmail">Email address</label>
+                    <input type="email" id="modalEmail" name="email" placeholder="name@example.com" autocomplete="email" required />
+                </div>
+                <div class="modal-group">
+                    <label for="modalPhone">Telephone number</label>
+                    <input type="tel" id="modalPhone" name="phone" placeholder="07xxx xxxxxx" autocomplete="tel" required />
+                </div>
+                <div class="modal-feedback" id="modalFeedback" role="alert"></div>
+                <button type="submit" class="modal-submit" id="modalSubmitButton">
+                    <span class="modal-submit-text">Confirm booking</span>
+                    <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="chat-invite-overlay" id="liveChatInviteOverlay" aria-hidden="true">
+        <div class="chat-invite-card" role="dialog" aria-modal="true" aria-labelledby="liveChatInviteTitle" aria-describedby="liveChatInviteMessage">
+            <div class="chat-invite-content">
+                <h3 class="chat-invite-title" id="liveChatInviteTitle">Need a hand?</h3>
+                <p class="chat-invite-message" id="liveChatInviteMessage">We're right here if you have any questions about your garden.</p>
+                <div class="chat-invite-actions">
+                    <button type="button" class="chat-invite-accept" id="liveChatInviteAccept">Start chatting</button>
+                    <button type="button" class="chat-invite-decline" id="liveChatInviteDecline">Not right now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="live-chat-widget" id="liveChatWidget">
+        <button type="button" class="live-chat-toggle" id="liveChatToggle" aria-expanded="false">
+            <span class="live-chat-indicator" id="liveChatIndicator" aria-hidden="true"></span>
+            <span class="live-chat-icon" aria-hidden="true"><i class="fas fa-comments"></i></span>
+            <span class="sr-only">Open live chat</span>
+        </button>
+        <div class="live-chat-window" id="liveChatWindow" aria-hidden="true">
+            <div class="live-chat-header">
+                <div>
+                    <strong>Need a hand?</strong>
+                    <p>Chat with Pay As You Mow</p>
+                </div>
+                <button type="button" class="live-chat-close" id="liveChatClose" aria-label="Close live chat">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="live-chat-body">
+                <a href="https://wa.me/447595289669" class="live-chat-whatsapp" id="liveChatWhatsAppButton" target="_blank" rel="noopener">
+                    <span class="icon"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i></span>
+                    <span>Chat via WhatsApp</span>
+                </a>
+                <div class="live-chat-status-banner visible online" id="liveChatStatusBanner">Typically replies within a few minutes.</div>
+                <div class="live-chat-messages" id="liveChatMessages" role="log" aria-live="polite">
+                    <div class="live-chat-empty" id="liveChatEmptyState">
+                        <i class="fas fa-leaf" aria-hidden="true"></i>
+                        <p>Ask us anything about your garden. We're here to help!</p>
+                    </div>
+                </div>
+                <form class="live-chat-form" id="liveChatForm" novalidate>
+                    <label for="liveChatInput" class="sr-only">Type your message</label>
+                    <textarea id="liveChatInput" name="message" placeholder="Type your message…" rows="2" required aria-label="Type your message"></textarea>
+                    <button type="submit" id="liveChatSubmit">
+                        <span>Send</span>
+                        <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <a href="https://wa.me/447595289669" class="whatsapp-button" target="_blank" rel="noopener" aria-label="Chat with Pay As You Mow on WhatsApp">
+        <span class="icon"><i class="fa-brands fa-whatsapp"></i></span>
+        <div class="whatsapp-text">
+            <span>Message us on</span>
+            <span>WhatsApp</span>
+        </div>
+    </a>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Pay As You Mow</h3>
+                    <p>Professional garden maintenance with flexible payment options. Beautiful gardens, no contracts.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-pinterest"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#services">Services</a></li>
+                        <li><a href="#about">About Us</a></li>
+                        <li><a href="#faq">FAQ</a></li>
+                        <li><a href="#booking">Book</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Our Services</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Lawn Mowing</a></li>
+                        <li><a href="#">Hedge Trimming</a></li>
+                        <li><a href="#">Weed Control</a></li>
+                        <li><a href="#">Garden Cleanups</a></li>
+                        <li><a href="#">Irrigation Systems</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Info</h3>
+                    <ul class="footer-links">
+                        <li><i class="fas fa-map-marker-alt"></i> Leech Brook Close, Audenshaw, Manchester</li>
+                        <li><i class="fas fa-phone"></i> (555) 123-4567</li>
+                        <li><i class="fas fa-envelope"></i> info@payasyoumow.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 Pay As You Mow. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const API_BASE = "https://booking-app-p8q8.onrender.com";
+
+        const PRESENCE_ENDPOINT = `${API_BASE}/presence`;
+        const LIVE_CHAT_ENDPOINTS = {
+            session: `${API_BASE}/chat/session`,
+            messages: `${API_BASE}/chat/messages`,
+            send: `${API_BASE}/chat/send`,
+            status: `${API_BASE}/chat/status`,
+        };
+        const LIVE_CHAT_STORAGE_KEY = 'payAsYouMowChatSession';
+        const LIVE_CHAT_POLL_INTERVAL = 4000;
+        const CHARACTER_POPUP_DELAY = 10000;
+        const CHARACTER_POPUP_STORAGE_KEY = 'payAsYouMowCharacterPopupShown';
+        const MOBILE_OFFER_POPUP_DELAY = 600;
+        const MOBILE_OFFER_POPUP_DURATION = 5000;
+
+        const characterPopup = document.getElementById('heroCharacterPopup');
+        const characterPopupClose = document.getElementById('characterPopupClose');
+        const characterPopupDismiss = document.getElementById('characterPopupDismiss');
+        const characterPopupCta = document.getElementById('characterPopupCta');
+        const mobileOfferPopup = document.getElementById('mobileOfferPopup');
+        const mobileOfferClose = document.getElementById('mobileOfferClose');
+        const mobileOfferBreakpoint = window.matchMedia ? window.matchMedia('(max-width: 768px)') : null;
+
+        let characterPopupTimer = null;
+        let mobileOfferDelayTimer = null;
+        let mobileOfferAutoCloseTimer = null;
+        let mobileOfferShown = false;
+
+        function isMobileOfferViewport() {
+            if (mobileOfferBreakpoint) {
+                return mobileOfferBreakpoint.matches;
+            }
+            return window.innerWidth <= 768;
+        }
+
+        function clearMobileOfferDelayTimer() {
+            if (mobileOfferDelayTimer) {
+                clearTimeout(mobileOfferDelayTimer);
+                mobileOfferDelayTimer = null;
+            }
+        }
+
+        function clearMobileOfferAutoCloseTimer() {
+            if (mobileOfferAutoCloseTimer) {
+                clearTimeout(mobileOfferAutoCloseTimer);
+                mobileOfferAutoCloseTimer = null;
+            }
+        }
+
+        function openMobileOfferPopup() {
+            if (!mobileOfferPopup || mobileOfferPopup.classList.contains('visible')) {
+                return;
+            }
+            mobileOfferPopup.classList.add('visible');
+            mobileOfferPopup.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            mobileOfferShown = true;
+            clearMobileOfferAutoCloseTimer();
+            mobileOfferAutoCloseTimer = window.setTimeout(() => {
+                closeMobileOfferPopup();
+            }, MOBILE_OFFER_POPUP_DURATION);
+            if (mobileOfferClose && typeof mobileOfferClose.focus === 'function') {
+                window.setTimeout(() => {
+                    mobileOfferClose.focus({ preventScroll: true });
+                }, 150);
+            }
+        }
+
+        function closeMobileOfferPopup() {
+            clearMobileOfferDelayTimer();
+            clearMobileOfferAutoCloseTimer();
+            if (!mobileOfferPopup || !mobileOfferPopup.classList.contains('visible')) {
+                return;
+            }
+            mobileOfferPopup.classList.remove('visible');
+            mobileOfferPopup.setAttribute('aria-hidden', 'true');
+            if (!document.querySelector('.modal-overlay.visible') && !(characterPopup && characterPopup.classList.contains('visible'))) {
+                document.body.classList.remove('modal-open');
+            }
+        }
+
+        function scheduleMobileOfferPopup() {
+            if (!mobileOfferPopup || mobileOfferShown || !isMobileOfferViewport()) {
+                return;
+            }
+            clearMobileOfferDelayTimer();
+            mobileOfferDelayTimer = window.setTimeout(() => {
+                openMobileOfferPopup();
+            }, MOBILE_OFFER_POPUP_DELAY);
+        }
+
+        function hasCharacterPopupBeenSeen() {
+            try {
+                return sessionStorage.getItem(CHARACTER_POPUP_STORAGE_KEY) === '1';
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function markCharacterPopupSeen() {
+            try {
+                sessionStorage.setItem(CHARACTER_POPUP_STORAGE_KEY, '1');
+            } catch (error) {
+                // Ignore storage issues (private mode, etc.)
+            }
+        }
+
+        function cancelCharacterPopupTimer() {
+            if (characterPopupTimer) {
+                clearTimeout(characterPopupTimer);
+                characterPopupTimer = null;
+            }
+        }
+
+        function closeCharacterPopup() {
+            cancelCharacterPopupTimer();
+            if (!characterPopup) {
+                return;
+            }
+            characterPopup.classList.remove('visible');
+            characterPopup.setAttribute('aria-hidden', 'true');
+            if (!document.querySelector('.modal-overlay.visible') && !(mobileOfferPopup && mobileOfferPopup.classList.contains('visible'))) {
+                document.body.classList.remove('modal-open');
+            }
+        }
+
+        function openCharacterPopup() {
+            cancelCharacterPopupTimer();
+            if (!characterPopup || characterPopup.classList.contains('visible')) {
+                return;
+            }
+            characterPopup.classList.add('visible');
+            characterPopup.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            markCharacterPopupSeen();
+            const focusTarget = characterPopupClose || characterPopupCta;
+            window.setTimeout(() => {
+                if (focusTarget && typeof focusTarget.focus === 'function') {
+                    focusTarget.focus({ preventScroll: true });
+                }
+            }, 100);
+        }
+
+        function scheduleCharacterPopup() {
+            if (!characterPopup || hasCharacterPopupBeenSeen()) {
+                return;
+            }
+            cancelCharacterPopupTimer();
+            characterPopupTimer = window.setTimeout(() => {
+                openCharacterPopup();
+            }, CHARACTER_POPUP_DELAY);
+        }
+
+        scheduleMobileOfferPopup();
+        scheduleCharacterPopup();
+
+        if (mobileOfferBreakpoint) {
+            if (typeof mobileOfferBreakpoint.addEventListener === 'function') {
+                mobileOfferBreakpoint.addEventListener('change', (event) => {
+                    if (event.matches) {
+                        scheduleMobileOfferPopup();
+                    } else {
+                        closeMobileOfferPopup();
+                    }
+                });
+            } else if (typeof mobileOfferBreakpoint.addListener === 'function') {
+                mobileOfferBreakpoint.addListener((event) => {
+                    if (event.matches) {
+                        scheduleMobileOfferPopup();
+                    } else {
+                        closeMobileOfferPopup();
+                    }
+                });
+            }
+        } else {
+            window.addEventListener('resize', () => {
+                if (isMobileOfferViewport()) {
+                    scheduleMobileOfferPopup();
+                } else {
+                    closeMobileOfferPopup();
+                }
+            });
+        }
+
+        if (mobileOfferPopup) {
+            mobileOfferPopup.addEventListener('click', (event) => {
+                if (event.target === mobileOfferPopup) {
+                    closeMobileOfferPopup();
+                }
+            });
+        }
+
+        if (mobileOfferClose) {
+            mobileOfferClose.addEventListener('click', () => {
+                closeMobileOfferPopup();
+            });
+        }
+
+        if (characterPopup) {
+            characterPopup.addEventListener('click', (event) => {
+                if (event.target === characterPopup) {
+                    closeCharacterPopup();
+                }
+            });
+        }
+
+        if (characterPopupClose) {
+            characterPopupClose.addEventListener('click', () => {
+                closeCharacterPopup();
+            });
+        }
+
+        if (characterPopupDismiss) {
+            characterPopupDismiss.addEventListener('click', () => {
+                closeCharacterPopup();
+            });
+        }
+
+        if (characterPopupCta) {
+            characterPopupCta.addEventListener('click', () => {
+                closeCharacterPopup();
+            });
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape') {
+                return;
+            }
+            if (characterPopup && characterPopup.classList.contains('visible')) {
+                closeCharacterPopup();
+            }
+            if (mobileOfferPopup && mobileOfferPopup.classList.contains('visible')) {
+                closeMobileOfferPopup();
+            }
+        });
+
+        function buildPresencePayload(status = 'online') {
+            return {
+                page: window.location.pathname || '/',
+                timestamp: new Date().toISOString(),
+                status,
+            };
+        }
+
+        async function reportPresence() {
+            const payload = buildPresencePayload('online');
+            try {
+                await fetch(PRESENCE_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    keepalive: true,
+                });
+            } catch (error) {
+                console.warn('Unable to notify presence.', error);
+            }
+        }
+
+        function sendPresenceBeacon(status = 'online') {
+            const payload = JSON.stringify(buildPresencePayload(status));
+            if (navigator.sendBeacon) {
+                try {
+                    const blob = new Blob([payload], { type: 'application/json' });
+                    navigator.sendBeacon(PRESENCE_ENDPOINT, blob);
+                    return;
+                } catch (error) {
+                    console.warn('Presence beacon failed, retrying with fetch.', error);
+                }
+            }
+            fetch(PRESENCE_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload,
+                keepalive: true,
+            }).catch(() => {});
+        }
+
+        reportPresence();
+        setInterval(reportPresence, 60000);
+        window.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                sendPresenceBeacon('online');
+            }
+        });
+        window.addEventListener('pagehide', (event) => {
+            if (!event.persisted) {
+                sendPresenceBeacon('offline');
+            }
+        });
+        window.addEventListener('beforeunload', () => sendPresenceBeacon('offline'));
+
+        function getStoredChatSessionId() {
+            try {
+                return localStorage.getItem(LIVE_CHAT_STORAGE_KEY) || '';
+            } catch (error) {
+                return '';
+            }
+        }
+
+        function storeChatSessionId(value) {
+            try {
+                if (value) {
+                    localStorage.setItem(LIVE_CHAT_STORAGE_KEY, value);
+                }
+            } catch (error) {
+                // Ignore storage errors
+            }
+        }
+
+        const liveChatWidget = document.getElementById('liveChatWidget');
+        if (liveChatWidget) {
+            const liveChatToggle = document.getElementById('liveChatToggle');
+            const liveChatClose = document.getElementById('liveChatClose');
+            const liveChatWindow = document.getElementById('liveChatWindow');
+            const liveChatMessages = document.getElementById('liveChatMessages');
+            const liveChatEmptyState = document.getElementById('liveChatEmptyState');
+            const liveChatForm = document.getElementById('liveChatForm');
+            const liveChatInput = document.getElementById('liveChatInput');
+            const liveChatSubmit = document.getElementById('liveChatSubmit');
+            const liveChatStatusBanner = document.getElementById('liveChatStatusBanner');
+            const liveChatInviteOverlay = document.getElementById('liveChatInviteOverlay');
+            const liveChatInviteMessage = document.getElementById('liveChatInviteMessage');
+            const liveChatInviteAccept = document.getElementById('liveChatInviteAccept');
+            const liveChatInviteDecline = document.getElementById('liveChatInviteDecline');
+            const chatGardener = document.getElementById('chatGardener');
+            const liveChatWhatsAppButton = document.getElementById('liveChatWhatsAppButton');
+
+            let liveChatSessionId = getStoredChatSessionId();
+            let liveChatLastMessageId = 0;
+            let liveChatPollingTimer = null;
+            let liveChatOnline = true;
+            let liveChatWindowOpen = false;
+            let liveChatInitialized = false;
+            let liveChatHasUnread = false;
+            const liveChatHandledInvites = new Set();
+            let liveChatActiveInviteId = null;
+            let chatGardenerTimer = null;
+            let chatGardenerShown = false;
+            let chatGardenerHideTimer = null;
+            let autopilotTypingQueue = Promise.resolve();
+
+            function isDesktopViewport() {
+                return window.matchMedia('(min-width: 992px)').matches;
+            }
+
+            function showChatGardener() {
+                if (!chatGardener || chatGardenerShown || !isDesktopViewport()) {
+                    return;
+                }
+                chatGardenerShown = true;
+                chatGardener.classList.add('visible');
+                chatGardener.setAttribute('aria-hidden', 'false');
+                if (chatGardenerHideTimer) {
+                    clearTimeout(chatGardenerHideTimer);
+                }
+                chatGardenerHideTimer = window.setTimeout(() => {
+                    hideChatGardener();
+                }, 5000);
+            }
+
+            function hideChatGardener() {
+                if (!chatGardener) {
+                    return;
+                }
+                chatGardener.classList.remove('visible');
+                chatGardener.setAttribute('aria-hidden', 'true');
+                chatGardenerShown = false;
+                if (chatGardenerHideTimer) {
+                    clearTimeout(chatGardenerHideTimer);
+                    chatGardenerHideTimer = null;
+                }
+            }
+
+            function scheduleChatGardener() {
+                if (!chatGardener) {
+                    return;
+                }
+                if (!isDesktopViewport()) {
+                    hideChatGardener();
+                    if (chatGardenerTimer) {
+                        clearTimeout(chatGardenerTimer);
+                        chatGardenerTimer = null;
+                    }
+                    return;
+                }
+                if (chatGardenerShown || chatGardenerTimer) {
+                    return;
+                }
+                chatGardenerTimer = window.setTimeout(() => {
+                    showChatGardener();
+                    chatGardenerTimer = null;
+                }, 20000);
+            }
+
+            scheduleChatGardener();
+            window.addEventListener('resize', () => scheduleChatGardener());
+
+            if (liveChatWhatsAppButton) {
+                liveChatWhatsAppButton.setAttribute('aria-label', 'Chat via WhatsApp (opens in a new tab)');
+            }
+
+            function formatLiveChatTime(value) {
+                if (!value) return '';
+                const parsed = new Date(value);
+                if (Number.isNaN(parsed.getTime())) return '';
+                return parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+
+            function createLiveChatMessageElement(message) {
+                if (!message) return null;
+                const sender = typeof message.sender === 'string' ? message.sender : 'visitor';
+                const isAutopilot = sender === 'autopilot';
+                const isAdminMessage = sender === 'admin' || isAutopilot;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = `live-chat-message ${isAdminMessage ? 'from-admin' : 'from-visitor'}`;
+                if (isAutopilot) {
+                    wrapper.classList.add('autopilot');
+                }
+
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble';
+                bubble.textContent = message.text || '';
+                wrapper.appendChild(bubble);
+
+                const meta = document.createElement('span');
+                meta.className = 'message-meta';
+                const senderLabel = isAutopilot ? 'Agent' : isAdminMessage ? 'Team' : 'You';
+                const timeLabel = formatLiveChatTime(message.timestamp);
+                meta.textContent = timeLabel ? `${senderLabel} • ${timeLabel}` : senderLabel;
+                wrapper.appendChild(meta);
+
+                return wrapper;
+            }
+
+            function appendLiveChatMessageElement(element) {
+                if (!element || !liveChatMessages) return;
+                liveChatMessages.appendChild(element);
+                liveChatMessages.scrollTop = liveChatMessages.scrollHeight;
+            }
+
+            function getAutopilotTypingDelay(text) {
+                const content = typeof text === 'string' ? text.trim() : '';
+                if (content.length < 5) {
+                    return 500 + Math.random() * 1000;
+                }
+                const minDelay = 10000;
+                const maxDelay = 20000;
+                return minDelay + Math.random() * (maxDelay - minDelay);
+            }
+
+            function getAutopilotTypingIndicatorDelay() {
+                const minDelay = 3000;
+                const maxDelay = 7000;
+                return minDelay + Math.random() * (maxDelay - minDelay);
+            }
+
+            function createAutopilotTypingIndicator() {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'live-chat-message from-admin autopilot typing';
+
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble';
+                for (let index = 0; index < 3; index += 1) {
+                    const dot = document.createElement('span');
+                    dot.className = 'live-chat-typing-dot';
+                    bubble.appendChild(dot);
+                }
+                wrapper.appendChild(bubble);
+
+                const meta = document.createElement('span');
+                meta.className = 'message-meta';
+                meta.textContent = 'Agent is typing…';
+                wrapper.appendChild(meta);
+
+                return wrapper;
+            }
+
+            function queueAutopilotMessageDisplay(message) {
+                autopilotTypingQueue = autopilotTypingQueue.then(
+                    () =>
+                        new Promise((resolve) => {
+                            if (!liveChatMessages) {
+                                appendLiveChatMessageElement(createLiveChatMessageElement(message));
+                                resolve();
+                                return;
+                            }
+
+                            const indicator = createAutopilotTypingIndicator();
+                            const typingDelay = getAutopilotTypingDelay(message && message.text);
+                            const indicatorDelay = getAutopilotTypingIndicatorDelay();
+
+                            const displayMessage = () => {
+                                const messageElement = createLiveChatMessageElement(message);
+                                if (indicator.parentNode && messageElement) {
+                                    indicator.replaceWith(messageElement);
+                                    liveChatMessages.scrollTop = liveChatMessages.scrollHeight;
+                                } else if (messageElement) {
+                                    appendLiveChatMessageElement(messageElement);
+                                } else if (indicator.parentNode) {
+                                    indicator.remove();
+                                }
+                                resolve();
+                            };
+
+                            window.setTimeout(() => {
+                                appendLiveChatMessageElement(indicator);
+                            }, indicatorDelay);
+
+                            window.setTimeout(() => {
+                                displayMessage();
+                            }, indicatorDelay + typingDelay);
+                        })
+                );
+            }
+
+            function setChatUnreadIndicator(isActive) {
+                liveChatHasUnread = Boolean(isActive);
+                if (liveChatToggle) {
+                    liveChatToggle.classList.toggle('has-unread', liveChatHasUnread);
+                    liveChatToggle.setAttribute(
+                        'aria-label',
+                        liveChatHasUnread ? 'Open live chat (new reply)' : 'Open live chat'
+                    );
+                }
+            }
+
+            function setChatOnlineState(isOnline) {
+                liveChatOnline = Boolean(isOnline);
+                if (liveChatToggle) {
+                    liveChatToggle.classList.toggle('is-offline', !liveChatOnline);
+                }
+                if (liveChatStatusBanner) {
+                    liveChatStatusBanner.classList.remove('error');
+                    liveChatStatusBanner.classList.toggle('offline', !liveChatOnline);
+                    liveChatStatusBanner.classList.toggle('online', liveChatOnline);
+                    liveChatStatusBanner.classList.add('visible');
+                    liveChatStatusBanner.textContent = liveChatOnline
+                        ? 'Typically replies within a few minutes.'
+                        : 'We\'re offline right now. Please reach out via the contact form or WhatsApp.';
+                }
+                if (liveChatForm) {
+                    liveChatForm.classList.toggle('is-disabled', !liveChatOnline);
+                }
+                if (liveChatInput) {
+                    liveChatInput.disabled = !liveChatOnline;
+                    liveChatInput.placeholder = liveChatOnline
+                        ? 'Type your message…'
+                        : 'Live chat is offline right now';
+                }
+                if (liveChatSubmit) {
+                    liveChatSubmit.disabled = !liveChatOnline;
+                }
+                if (liveChatWhatsAppButton) {
+                    liveChatWhatsAppButton.classList.toggle('is-highlighted', !liveChatOnline);
+                }
+            }
+
+            function showChatError(message) {
+                if (!liveChatStatusBanner) return;
+                liveChatStatusBanner.textContent = message;
+                liveChatStatusBanner.classList.add('visible', 'error');
+                liveChatStatusBanner.classList.remove('online');
+                liveChatStatusBanner.classList.remove('offline');
+            }
+
+            function clearChatBanner() {
+                if (!liveChatStatusBanner) return;
+                liveChatStatusBanner.classList.remove('error');
+                liveChatStatusBanner.classList.add(liveChatOnline ? 'online' : 'offline');
+                liveChatStatusBanner.textContent = liveChatOnline
+                    ? 'Typically replies within a few minutes.'
+                    : 'We\'re offline right now. Please reach out via the contact form or WhatsApp.';
+            }
+
+            function hideLiveChatInvite(markHandled = false) {
+                if (!liveChatInviteOverlay) return;
+                if (markHandled && Number.isFinite(liveChatActiveInviteId)) {
+                    liveChatHandledInvites.add(liveChatActiveInviteId);
+                }
+                liveChatActiveInviteId = null;
+                liveChatInviteOverlay.classList.remove('visible');
+                liveChatInviteOverlay.setAttribute('aria-hidden', 'true');
+            }
+
+            function showLiveChatInvite(message) {
+                if (!liveChatInviteOverlay) return;
+                const inviteId = Number(message.id);
+                if (Number.isFinite(inviteId)) {
+                    if (liveChatWindowOpen) {
+                        liveChatHandledInvites.add(inviteId);
+                        return;
+                    }
+                    if (liveChatHandledInvites.has(inviteId)) {
+                        return;
+                    }
+                    liveChatActiveInviteId = inviteId;
+                } else {
+                    liveChatActiveInviteId = null;
+                }
+
+                if (liveChatInviteMessage) {
+                    liveChatInviteMessage.textContent = message.text ||
+                        'We\'re right here if you have any questions about your garden.';
+                }
+
+                liveChatInviteOverlay.classList.add('visible');
+                liveChatInviteOverlay.setAttribute('aria-hidden', 'false');
+                setChatUnreadIndicator(true);
+                if (liveChatInviteAccept) {
+                    setTimeout(() => {
+                        liveChatInviteAccept.focus({ preventScroll: true });
+                    }, 120);
+                }
+            }
+
+            function renderLiveChatMessage(message) {
+                if (!message || typeof message !== 'object' || !liveChatMessages) return;
+                const messageId = Number(message.id);
+                if (Number.isFinite(messageId) && messageId <= liveChatLastMessageId) {
+                    return;
+                }
+                if (Number.isFinite(messageId)) {
+                    liveChatLastMessageId = messageId;
+                }
+                const messageType = typeof message.type === 'string' ? message.type : 'message';
+                if (messageType === 'invite') {
+                    showLiveChatInvite(message);
+                    return;
+                }
+                if (liveChatEmptyState) {
+                    liveChatEmptyState.classList.add('hidden');
+                }
+
+                const sender = typeof message.sender === 'string' ? message.sender : 'visitor';
+                const isAutopilot = sender === 'autopilot';
+
+                if (isAutopilot && liveChatInitialized) {
+                    queueAutopilotMessageDisplay(message);
+                    return;
+                }
+
+                appendLiveChatMessageElement(createLiveChatMessageElement(message));
+            }
+
+            function resetLiveChatMessages(messages = []) {
+                if (!liveChatMessages) return;
+                liveChatMessages.innerHTML = '';
+                liveChatLastMessageId = 0;
+                if (Array.isArray(messages) && messages.length) {
+                    messages.forEach((entry) => renderLiveChatMessage(entry));
+                } else if (liveChatEmptyState) {
+                    liveChatEmptyState.classList.remove('hidden');
+                }
+                liveChatInitialized = true;
+                setChatUnreadIndicator(false);
+            }
+
+            function toggleLiveChatWindow(forceOpen) {
+                if (!liveChatWindow || !liveChatToggle) return;
+                const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !liveChatWindowOpen;
+                liveChatWindowOpen = shouldOpen;
+                liveChatWindow.classList.toggle('visible', shouldOpen);
+                liveChatWindow.setAttribute('aria-hidden', String(!shouldOpen));
+                liveChatToggle.setAttribute('aria-expanded', String(shouldOpen));
+                if (shouldOpen) {
+                    hideLiveChatInvite(true);
+                    setChatUnreadIndicator(false);
+                    fetchLiveChatMessages(true);
+                    setTimeout(() => {
+                        if (liveChatInput && !liveChatInput.disabled) {
+                            liveChatInput.focus();
+                        }
+                    }, 120);
+                }
+            }
+
+            function startLiveChatPolling() {
+                if (liveChatPollingTimer) return;
+                liveChatPollingTimer = setInterval(() => {
+                    fetchLiveChatMessages(false);
+                }, LIVE_CHAT_POLL_INTERVAL);
+            }
+
+            function stopLiveChatPolling() {
+                if (liveChatPollingTimer) {
+                    clearInterval(liveChatPollingTimer);
+                    liveChatPollingTimer = null;
+                }
+            }
+
+            async function fetchLiveChatMessages(forceRefresh = false) {
+                if (!liveChatSessionId) return;
+                const params = new URLSearchParams({ session_id: liveChatSessionId, page: window.location.pathname || '/' });
+                if (!forceRefresh && liveChatLastMessageId) {
+                    params.set('after', String(liveChatLastMessageId));
+                }
+
+                try {
+                    const res = await fetch(`${LIVE_CHAT_ENDPOINTS.messages}?${params.toString()}`);
+                    if (!res.ok) {
+                        throw new Error('Unable to fetch chat updates.');
+                    }
+                    const data = await res.json();
+                    if (typeof data.online === 'boolean') {
+                        setChatOnlineState(data.online);
+                    }
+                    if (Array.isArray(data.messages)) {
+                        let hasAdminMessage = false;
+                        data.messages.forEach((entry) => {
+                            const entryType = entry && typeof entry.type === 'string' ? entry.type : 'message';
+                            const sender = entry && typeof entry.sender === 'string' ? entry.sender : '';
+                            if (entry && entryType !== 'invite' && (sender === 'admin' || sender === 'autopilot')) {
+                                hasAdminMessage = true;
+                            }
+                            renderLiveChatMessage(entry);
+                        });
+                        if (hasAdminMessage && !liveChatWindowOpen) {
+                            setChatUnreadIndicator(true);
+                            if (liveChatInitialized) {
+                                toggleLiveChatWindow(true);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Live chat polling failed.', error);
+                }
+            }
+
+            async function initialiseLiveChat() {
+                if (!liveChatForm) return;
+                try {
+                    const response = await fetch(LIVE_CHAT_ENDPOINTS.session, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            session_id: liveChatSessionId,
+                            page: window.location.pathname || '/',
+                        }),
+                    });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Unable to start live chat.');
+                    }
+                    if (data.session_id) {
+                        liveChatSessionId = data.session_id;
+                        storeChatSessionId(liveChatSessionId);
+                    }
+                    setChatOnlineState(typeof data.online === 'boolean' ? data.online : true);
+                    resetLiveChatMessages(Array.isArray(data.messages) ? data.messages : []);
+                    startLiveChatPolling();
+                } catch (error) {
+                    setChatOnlineState(false);
+                    showChatError('We could not connect to live chat right now.');
+                    console.warn('Unable to initialise live chat.', error);
+                }
+            }
+
+            async function sendLiveChatMessage(event) {
+                event.preventDefault();
+                if (!liveChatForm || !liveChatInput || !liveChatSubmit) return;
+                if (!liveChatOnline || !liveChatSessionId) {
+                    return;
+                }
+
+                const message = liveChatInput.value.trim();
+                if (!message) {
+                    liveChatInput.focus();
+                    return;
+                }
+
+                liveChatSubmit.disabled = true;
+                try {
+                    const res = await fetch(LIVE_CHAT_ENDPOINTS.send, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            session_id: liveChatSessionId,
+                            message,
+                            page: window.location.pathname || '/',
+                        }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        if (res.status === 503) {
+                            setChatOnlineState(false);
+                        }
+                        throw new Error(data.message || 'Unable to send your message.');
+                    }
+                    if (data.entry) {
+                        renderLiveChatMessage(data.entry);
+                    }
+                    if (data.autopilot_entry) {
+                        renderLiveChatMessage(data.autopilot_entry);
+                        if (!liveChatWindowOpen) {
+                            setChatUnreadIndicator(true);
+                        }
+                    }
+                    liveChatInput.value = '';
+                    clearChatBanner();
+                    fetchLiveChatMessages(false);
+                } catch (error) {
+                    showChatError(error.message || 'Unable to send your message.');
+                } finally {
+                    liveChatSubmit.disabled = !liveChatOnline;
+                }
+            }
+
+            if (liveChatToggle) {
+                liveChatToggle.addEventListener('click', () => toggleLiveChatWindow());
+            }
+            if (liveChatClose) {
+                liveChatClose.addEventListener('click', () => toggleLiveChatWindow(false));
+            }
+            if (liveChatForm) {
+                liveChatForm.addEventListener('submit', sendLiveChatMessage);
+            }
+            if (liveChatInviteAccept) {
+                liveChatInviteAccept.addEventListener('click', () => {
+                    hideLiveChatInvite(true);
+                    toggleLiveChatWindow(true);
+                });
+            }
+            if (liveChatInviteDecline) {
+                liveChatInviteDecline.addEventListener('click', () => {
+                    hideLiveChatInvite(true);
+                    setChatUnreadIndicator(false);
+                    if (liveChatToggle) {
+                        liveChatToggle.focus({ preventScroll: true });
+                    }
+                });
+            }
+            if (liveChatInviteOverlay) {
+                liveChatInviteOverlay.addEventListener('click', (event) => {
+                    if (event.target === liveChatInviteOverlay) {
+                        hideLiveChatInvite(true);
+                        setChatUnreadIndicator(false);
+                        if (liveChatToggle) {
+                            liveChatToggle.focus({ preventScroll: true });
+                        }
+                    }
+                });
+            }
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    if (liveChatInviteOverlay && liveChatInviteOverlay.classList.contains('visible')) {
+                        hideLiveChatInvite(true);
+                        setChatUnreadIndicator(false);
+                        if (liveChatToggle) {
+                            liveChatToggle.focus({ preventScroll: true });
+                        }
+                        return;
+                    }
+                    if (liveChatWindowOpen) {
+                        toggleLiveChatWindow(false);
+                    }
+                }
+            });
+
+            initialiseLiveChat();
+        }
+
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const nav = document.getElementById('nav');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            nav.classList.toggle('active');
+            mobileMenuBtn.innerHTML = nav.classList.contains('active') ? 
+                '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+        });
+
+        // Header Scroll Effect
+        const header = document.getElementById('header');
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Hero Slider
+        const heroSlides = document.querySelectorAll('.hero-slide');
+        let currentHeroSlide = 0;
+        const heroInterval = 4000;
+
+        function showHeroSlide(index) {
+            if (index === currentHeroSlide || !heroSlides[index]) {
+                return;
+            }
+
+            const currentSlide = heroSlides[currentHeroSlide];
+            const nextSlide = heroSlides[index];
+
+            nextSlide.classList.add('active');
+            currentSlide.classList.remove('active');
+
+            currentHeroSlide = index;
+        }
+
+        if (heroSlides.length > 0) {
+            heroSlides[0].classList.add('active');
+
+            if (heroSlides.length > 1) {
+                setInterval(() => {
+                    const nextIndex = (currentHeroSlide + 1) % heroSlides.length;
+                    showHeroSlide(nextIndex);
+                }, heroInterval);
+            }
+        }
+
+        // Testimonial Slider
+        const testimonialSlider = document.getElementById('testimonialSlider');
+        let testimonialCards = [];
+        let testimonialDots = [];
+        const BUILT_IN_TESTIMONIALS = [
+            {
+                quote: 'Pay As You Mow transformed my neglected garden into a beautiful oasis. Their flexible payment model meant I could get the help I needed without breaking the bank. Highly recommended!',
+                author: 'Sarah Johnson',
+                location: 'Northwood',
+            },
+            {
+                quote: 'As someone who travels frequently, I love that I can schedule garden maintenance only when I need it. The team is professional, reliable, and does an amazing job every time.',
+                author: 'Michael Chen',
+                location: 'Westfield',
+            },
+            {
+                quote: 'The quality of work is exceptional. My hedges have never looked better, and the lawn is always perfectly manicured. The pay-as-you-go model is perfect for my budget.',
+                author: 'Emma Davis',
+                location: 'Riverside',
+            },
+        ];
+
+        let testimonialTimer = null;
+        let currentTestimonialIndex = 0;
+
+        function clearTestimonialRotation() {
+            if (testimonialTimer) {
+                clearInterval(testimonialTimer);
+                testimonialTimer = null;
+            }
+        }
+
+        function setActiveTestimonial(index) {
+            if (!testimonialCards.length) {
+                return;
+            }
+
+            const nextIndex = ((index % testimonialCards.length) + testimonialCards.length) % testimonialCards.length;
+            testimonialCards.forEach((card, cardIndex) => {
+                card.classList.toggle('active', cardIndex === nextIndex);
+            });
+            testimonialDots.forEach((dot, dotIndex) => {
+                dot.classList.toggle('active', dotIndex === nextIndex);
+            });
+            currentTestimonialIndex = nextIndex;
+        }
+
+        function startTestimonialRotation() {
+            clearTestimonialRotation();
+            if (testimonialCards.length <= 1) {
+                return;
+            }
+            testimonialTimer = setInterval(() => {
+                setActiveTestimonial(currentTestimonialIndex + 1);
+            }, 5000);
+        }
+
+        function showTestimonialStatus(message, isError = false) {
+            if (!testimonialSlider) {
+                return;
+            }
+            testimonialSlider.innerHTML = '';
+            const status = document.createElement('div');
+            status.className = 'testimonial-status';
+            if (isError) {
+                status.classList.add('error');
+            }
+            status.textContent = message;
+            testimonialSlider.appendChild(status);
+        }
+
+        function renderTestimonials(reviews) {
+            if (!testimonialSlider) {
+                return;
+            }
+
+            testimonialSlider.innerHTML = '';
+            testimonialCards = [];
+            testimonialDots = [];
+            clearTestimonialRotation();
+
+            if (!Array.isArray(reviews) || !reviews.length) {
+                showTestimonialStatus('No testimonials have been published yet.');
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            const nav = document.createElement('div');
+            nav.className = 'testimonial-nav';
+
+            reviews.forEach((review, index) => {
+                const card = document.createElement('div');
+                card.className = 'testimonial';
+                if (index === 0) {
+                    card.classList.add('active');
+                }
+
+                const quote = document.createElement('p');
+                quote.className = 'testimonial-text';
+                const quoteText = typeof review.quote === 'string' && review.quote.trim()
+                    ? review.quote.trim()
+                    : '';
+                quote.textContent = quoteText ? `“${quoteText}”` : '“A happy customer story will appear here.”';
+
+                const author = document.createElement('p');
+                author.className = 'testimonial-author';
+                const name = typeof review.author === 'string' ? review.author.trim() : '';
+                const location = typeof review.location === 'string' ? review.location.trim() : '';
+                const authorLine = [name, location].filter(Boolean).join(', ');
+                author.textContent = authorLine ? `- ${authorLine}` : '- Anonymous';
+
+                card.appendChild(quote);
+                card.appendChild(author);
+                fragment.appendChild(card);
+
+                if (reviews.length > 1) {
+                    const dot = document.createElement('span');
+                    dot.className = 'testimonial-dot';
+                    dot.dataset.index = String(index);
+                    if (index === 0) {
+                        dot.classList.add('active');
+                    }
+                    nav.appendChild(dot);
+                }
+            });
+
+            testimonialSlider.appendChild(fragment);
+            if (reviews.length > 1) {
+                testimonialSlider.appendChild(nav);
+            }
+
+            testimonialCards = Array.from(testimonialSlider.querySelectorAll('.testimonial'));
+            testimonialDots = Array.from(testimonialSlider.querySelectorAll('.testimonial-dot'));
+
+            testimonialDots.forEach((dot) => {
+                dot.addEventListener('click', () => {
+                    const index = Number.parseInt(dot.dataset.index || '0', 10);
+                    setActiveTestimonial(index);
+                    startTestimonialRotation();
+                });
+            });
+
+            setActiveTestimonial(0);
+            startTestimonialRotation();
+        }
+
+        async function loadTestimonialsFromEndpoint(endpoint) {
+            const absolutePattern = /^https?:\/\//i;
+            const url = (() => {
+                if (absolutePattern.test(endpoint)) {
+                    return new URL(endpoint);
+                }
+                if (endpoint.startsWith('/api/')) {
+                    return new URL(endpoint, API_BASE || window.location.origin);
+                }
+                if (endpoint.startsWith('/')) {
+                    return new URL(endpoint, window.location.origin);
+                }
+                return new URL(endpoint, window.location.href);
+            })();
+            url.searchParams.set('_', Date.now().toString());
+            const res = await fetch(url.href, { cache: 'no-store' });
+            if (!res.ok) {
+                throw new Error(`Unable to load testimonials from ${endpoint}.`);
+            }
+
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                return data;
+            }
+
+            if (data && Array.isArray(data.reviews)) {
+                return data.reviews;
+            }
+
+            return [];
+        }
+
+        async function fetchTestimonials() {
+            if (!testimonialSlider) {
+                return;
+            }
+            showTestimonialStatus('Loading testimonials…');
+            let lastError = null;
+            try {
+                const reviews = await loadTestimonialsFromEndpoint('/api/reviews');
+                renderTestimonials(reviews);
+                return;
+            } catch (error) {
+                lastError = error;
+                console.warn('Unable to load testimonials from /api/reviews.', error);
+            }
+
+            try {
+                const reviews = await loadTestimonialsFromEndpoint('/reviews.json');
+                renderTestimonials(reviews);
+                return;
+            } catch (error) {
+                lastError = error;
+                console.warn('Unable to load testimonials from /reviews.json.', error);
+            }
+
+            if (Array.isArray(BUILT_IN_TESTIMONIALS) && BUILT_IN_TESTIMONIALS.length) {
+                if (lastError) {
+                    console.warn('Displaying built-in testimonials because the live data could not be loaded.');
+                }
+                renderTestimonials(BUILT_IN_TESTIMONIALS);
+                return;
+            }
+
+            showTestimonialStatus(lastError?.message || 'Testimonials are unavailable at the moment.', true);
+        }
+
+        fetchTestimonials();
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    nav.classList.remove('active');
+                    mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // YouTube video thumbnails
+        const youtubeVideoFrames = Array.from(document.querySelectorAll('.video-frame[data-video-id]'));
+        const youtubePlayers = [];
+        const youtubeOverlays = [];
+
+        function addThumbnailOverlay(frame, index) {
+            const iframe = frame.querySelector('iframe');
+            if (!iframe) return;
+
+            const videoId = frame.dataset.videoId;
+            if (!videoId) return;
+
+            if (!iframe.src.includes('enablejsapi=1')) {
+                const separator = iframe.src.includes('?') ? '&' : '?';
+                iframe.src = `${iframe.src}${separator}enablejsapi=1`;
+            }
+
+            if (!iframe.id) {
+                iframe.id = `video-player-${index}`;
+            }
+
+            const overlay = document.createElement('div');
+            overlay.className = 'video-thumbnail';
+            overlay.style.backgroundImage = `url(https://img.youtube.com/vi/${videoId}/hqdefault.jpg)`;
+            overlay.setAttribute('role', 'button');
+            overlay.setAttribute('tabindex', '0');
+            overlay.setAttribute('aria-label', 'Replay video');
+
+            const replayVideo = () => {
+                overlay.classList.remove('visible');
+                const player = youtubePlayers[index];
+                if (player && typeof player.seekTo === 'function') {
+                    player.seekTo(0);
+                    player.playVideo();
+                }
+            };
+
+            overlay.addEventListener('click', replayVideo);
+            overlay.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    replayVideo();
+                }
+            });
+
+            frame.appendChild(overlay);
+            youtubeOverlays[index] = overlay;
+        }
+
+        function handleYouTubeVideoState(event, overlay) {
+            if (!overlay || typeof YT === 'undefined' || !YT.PlayerState) return;
+
+            if (event.data === YT.PlayerState.ENDED) {
+                if (event.target && typeof event.target.stopVideo === 'function') {
+                    event.target.stopVideo();
+                }
+                overlay.classList.add('visible');
+            } else if (event.data === YT.PlayerState.PLAYING) {
+                overlay.classList.remove('visible');
+            }
+        }
+
+        if (youtubeVideoFrames.length > 0) {
+            youtubeVideoFrames.forEach((frame, index) => {
+                addThumbnailOverlay(frame, index);
+            });
+
+            window.onYouTubeIframeAPIReady = function() {
+                youtubeVideoFrames.forEach((frame, index) => {
+                    const iframe = frame.querySelector('iframe');
+                    if (!iframe) return;
+
+                    const overlay = youtubeOverlays[index];
+
+                    youtubePlayers[index] = new YT.Player(iframe.id, {
+                        events: {
+                            onStateChange: event => handleYouTubeVideoState(event, overlay)
+                        }
+                    });
+                });
+            };
+
+            const ytScript = document.createElement('script');
+            ytScript.src = 'https://www.youtube.com/iframe_api';
+            document.body.appendChild(ytScript);
+        }
+
+        // Booking System
+        const timeSelect = document.getElementById('customerTime');
+        const bookingForm = document.getElementById('bookingForm');
+        const bookingSubmitButton = bookingForm.querySelector('.booking-submit');
+        const bookingResponse = document.getElementById('bookingResponse');
+        const bookingModal = document.getElementById('bookingModal');
+        const bookingDetailsForm = document.getElementById('bookingDetailsForm');
+        const closeBookingModalBtn = document.getElementById('closeBookingModal');
+        const modalTimeInput = document.getElementById('modalTimeInput');
+        const selectedSlotDisplay = document.getElementById('selectedSlotDisplay');
+        const modalFeedback = document.getElementById('modalFeedback');
+        const modalSubmitButton = document.getElementById('modalSubmitButton');
+        const modalSubmitText = modalSubmitButton.querySelector('.modal-submit-text');
+        const modalCustomerName = document.getElementById('modalCustomerName');
+        const modalLocation = document.getElementById('modalLocation');
+        const modalEmail = document.getElementById('modalEmail');
+        const modalPhone = document.getElementById('modalPhone');
+        const contactForm = document.getElementById('contactForm');
+        const contactResponse = document.getElementById('contactResponse');
+        const contactSubmitButton = contactForm ? contactForm.querySelector('button[type="submit"]') : null;
+
+        let lastFocusedElement = null;
+
+        // Load available times
+        async function loadAvailability() {
+            try {
+                const res = await fetch(`${API_BASE}/availability`);
+                const slots = await res.json();
+
+                timeSelect.innerHTML = "";
+
+                if (slots.length === 0) {
+                    const opt = document.createElement("option");
+                    opt.text = "Sorry no slots available at the moment";
+                    opt.disabled = true;
+                    opt.selected = true;
+                    opt.value = "";
+                    timeSelect.add(opt);
+                } else {
+                    const defaultOpt = document.createElement("option");
+                    defaultOpt.text = "Select a time";
+                    defaultOpt.value = "";
+                    timeSelect.add(defaultOpt);
+
+                    slots.forEach((slot) => {
+                        const opt = document.createElement("option");
+                        opt.value = slot;
+                        opt.text = slot;
+                        timeSelect.add(opt);
+                    });
+                }
+            } catch (err) {
+                console.error("Error loading availability:", err);
+                timeSelect.innerHTML = "<option>Error loading times</option>";
+            }
+        }
+
+        function openBookingDetailsModal() {
+            lastFocusedElement = document.activeElement;
+            bookingModal.classList.add('visible');
+            bookingModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            modalFeedback.classList.remove('visible', 'error');
+            modalFeedback.textContent = '';
+            setTimeout(() => modalCustomerName.focus(), 50);
+        }
+
+        function closeBookingDetailsModal({ returnFocus = false, resetForm = false } = {}) {
+            bookingModal.classList.remove('visible');
+            bookingModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            modalFeedback.classList.remove('visible', 'error');
+            modalFeedback.textContent = '';
+            if (resetForm) {
+                bookingDetailsForm.reset();
+            }
+            if (returnFocus) {
+                (lastFocusedElement || bookingSubmitButton).focus();
+            }
+        }
+
+        // Handle booking submission (step 1: choose slot)
+        bookingForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const chosenTime = timeSelect.value;
+
+            bookingResponse.classList.remove('visible', 'success', 'error');
+
+            if (!chosenTime) {
+                bookingResponse.innerText = '❗ Please choose a booking date and time first.';
+                bookingResponse.classList.add('visible', 'error');
+                return;
+            }
+
+            modalTimeInput.value = chosenTime;
+            selectedSlotDisplay.textContent = chosenTime;
+            openBookingDetailsModal();
+        });
+
+        closeBookingModalBtn.addEventListener('click', () => {
+            closeBookingDetailsModal({ returnFocus: true });
+        });
+
+        bookingModal.addEventListener('click', (event) => {
+            if (event.target === bookingModal) {
+                closeBookingDetailsModal({ returnFocus: true });
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && bookingModal.classList.contains('visible')) {
+                closeBookingDetailsModal({ returnFocus: true });
+            }
+        });
+
+        // Handle contact details submission (step 2)
+        bookingDetailsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const payload = {
+                name: modalCustomerName.value.trim(),
+                location: modalLocation.value,
+                email: modalEmail.value.trim(),
+                phone: modalPhone.value.trim(),
+                time: modalTimeInput.value,
+            };
+
+            modalFeedback.classList.remove('visible', 'error');
+            modalFeedback.textContent = '';
+
+            if (!payload.time) {
+                modalFeedback.textContent = '❌ Please choose a booking slot again.';
+                modalFeedback.classList.add('visible', 'error');
+                return;
+            }
+
+            modalSubmitButton.disabled = true;
+            modalSubmitText.textContent = 'Booking...';
+
+            try {
+                const res = await fetch(`${API_BASE}/book`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.message || '❌ Error sending booking!');
+                }
+
+                closeBookingDetailsModal({ returnFocus: true, resetForm: true });
+
+                bookingResponse.classList.remove('visible', 'success', 'error');
+                bookingResponse.innerText = data.message;
+                bookingResponse.classList.add('visible', 'success');
+
+                bookingForm.reset();
+                await loadAvailability();
+
+            } catch (error) {
+                modalFeedback.textContent = error.message || '❌ Error sending booking! Please try again.';
+                modalFeedback.classList.add('visible', 'error');
+            } finally {
+                modalSubmitButton.disabled = false;
+                modalSubmitText.textContent = 'Confirm booking';
+            }
+        });
+
+        if (contactForm) {
+            contactForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const payload = {
+                    name: document.getElementById('contactName').value.trim(),
+                    phone: document.getElementById('contactPhone').value.trim(),
+                    email: document.getElementById('contactEmail').value.trim(),
+                    enquiry: document.getElementById('contactEnquiry').value.trim()
+                };
+
+                contactResponse.classList.remove('visible', 'success', 'error');
+                contactResponse.textContent = '';
+
+                if (contactSubmitButton) {
+                    contactSubmitButton.disabled = true;
+                    contactSubmitButton.classList.add('loading');
+                }
+
+                try {
+                    const res = await fetch(`${API_BASE}/contact`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        throw new Error(data.message || '❌ Unable to send your enquiry.');
+                    }
+                    contactForm.reset();
+                    contactResponse.textContent = data.message || '✅ Thanks! We will be in touch soon.';
+                    contactResponse.classList.add('visible', 'success');
+                } catch (error) {
+                    contactResponse.textContent = error.message || '❌ Unable to send your enquiry. Please try again.';
+                    contactResponse.classList.add('visible', 'error');
+                } finally {
+                    if (contactSubmitButton) {
+                        contactSubmitButton.disabled = false;
+                        contactSubmitButton.classList.remove('loading');
+                    }
+                }
+            });
+        }
+
+        // Load availability on page load
+        loadAvailability();
+    </script>
+</body>
+</html>
