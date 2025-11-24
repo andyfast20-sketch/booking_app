@@ -1533,9 +1533,6 @@ def reinstate_availability(slot):
         save_availability(slots)
 
 
-@app.route("/")
-def home():
-    return "✅ Flask Booking API running. Visit /bookings to manage and /availability to view free slots."
 
 
 # --- Handle booking submissions ---
@@ -2092,8 +2089,13 @@ def admin_unban_visitor(ip_str):
 @app.route("/admin")
 def admin_page():
     return app.send_static_file("admin.html")
+from flask import render_template
+
+@app.route("/")
+def home():
+    return render_template("index.html")
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5002, debug=True)
 

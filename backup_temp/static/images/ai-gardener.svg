@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240" role="img" aria-labelledby="title desc">
+  <title id="title">Friendly gardener assistant portrait</title>
+  <desc id="desc">A softly lit, realistic cartoon illustration of a smiling gardener created with AI style shading.</desc>
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e3f2fd" />
+      <stop offset="100%" stop-color="#c8e6c9" />
+    </linearGradient>
+    <radialGradient id="faceGradient" cx="50%" cy="42%" r="58%">
+      <stop offset="0%" stop-color="#fce8d5" />
+      <stop offset="90%" stop-color="#edc7a0" />
+    </radialGradient>
+    <linearGradient id="hatGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4c8f2f" />
+      <stop offset="100%" stop-color="#2d5f1a" />
+    </linearGradient>
+    <linearGradient id="coatGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1b5e20" />
+      <stop offset="100%" stop-color="#388e3c" />
+    </linearGradient>
+    <linearGradient id="apronGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffcc80" />
+      <stop offset="100%" stop-color="#fb8c00" />
+    </linearGradient>
+    <linearGradient id="shadowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.22" />
+      <stop offset="50%" stop-color="#000" stop-opacity="0.06" />
+      <stop offset="100%" stop-color="#000" stop-opacity="0.22" />
+    </linearGradient>
+  </defs>
+  <rect width="240" height="240" fill="url(#bgGradient)" rx="36" />
+  <ellipse cx="120" cy="208" rx="70" ry="18" fill="url(#shadowGradient)" opacity="0.35" />
+  <g transform="translate(0,6)">
+    <path d="M76 78c20-42 68-42 88 0l10 28c4 12-3 24-15 27l-32 8c-7 2-15 2-22 0l-32-8c-12-3-19-15-15-27z" fill="url(#hatGradient)" />
+    <ellipse cx="120" cy="112" rx="58" ry="60" fill="url(#faceGradient)" />
+    <path d="M120 162c24 0 46 11 60 30l12 18c5 8 2 18-6 22a16 16 0 0 1-7 2H61a16 16 0 0 1-7-2c-8-4-11-14-6-22l12-18c14-19 36-30 60-30z" fill="url(#coatGradient)" />
+    <path d="M120 168c-18 0-34 10-44 26l-6 9c-3 6 1 13 8 13h84c7 0 11-7 8-13l-6-9c-10-16-26-26-44-26z" fill="url(#apronGradient)" />
+    <path d="M120 150c16 0 30-12 32-28 0 0-4 6-18 6s-14-8-14-8-0 8-14 8-18-6-18-6c2 16 16 28 32 28z" fill="#f5b78e" />
+    <path d="M98 118c4 0 8 3 8 8s-4 8-8 8-8-3-8-8 4-8 8-8zm44 0c4 0 8 3 8 8s-4 8-8 8-8-3-8-8 4-8 8-8z" fill="#2d1b0f" opacity="0.85" />
+    <path d="M96 104c6-6 18-8 24-8s18 2 24 8" fill="none" stroke="#2d1b0f" stroke-width="4" stroke-linecap="round" opacity="0.25" />
+    <path d="M104 146c10 6 22 6 32 0" fill="none" stroke="#b65b27" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M80 112c6-22 26-38 40-38" fill="none" stroke="#000" stroke-opacity="0.1" stroke-width="6" stroke-linecap="round" />
+    <path d="M160 112c-6-22-26-38-40-38" fill="none" stroke="#000" stroke-opacity="0.1" stroke-width="6" stroke-linecap="round" />
+    <circle cx="90" cy="146" r="12" fill="#f5cda5" opacity="0.6" />
+    <circle cx="150" cy="146" r="12" fill="#f5cda5" opacity="0.6" />
+  </g>
+</svg>

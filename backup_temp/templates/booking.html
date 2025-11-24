@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Make a Booking</title>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #74ABE2, #5563DE);
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+
+        form {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            width: 300px;
+            text-align: center;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        input {
+            background-color: rgba(255,255,255,0.9);
+            color: #333;
+        }
+
+        button {
+            background-color: #00C9A7;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #00A387;
+            transform: scale(1.05);
+        }
+
+        #response {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>✨ Make a Booking ✨</h1>
+    <form id="bookingForm">
+        <input type="text" id="name" placeholder="Your Name" required>
+        <input type="text" id="time" placeholder="Booking Time (e.g. 12:30)" required>
+        <button type="submit">Book Now</button>
+    </form>
+
+    <p id="response"></p>
+
+    <script>
+        document.getElementById("bookingForm").onsubmit = async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById("name").value;
+            const time = document.getElementById("time").value;
+
+            try {
+                const res = await fetch("/book", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({ name, time })
+                });
+
+                const data = await res.json();
+                document.getElementById("response").innerText = data.message;
+                document.getElementById("response").style.color = "#00FFB3";
+            } catch (error) {
+                document.getElementById("response").innerText = "❌ Error sending booking!";
+                document.getElementById("response").style.color = "red";
+            }
+        };
+    </script>
+</body>
+</html>
