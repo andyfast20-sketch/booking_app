@@ -2709,6 +2709,53 @@
             box-shadow: var(--shadow);
         }
 
+        .admin-access {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 0;
+            background: transparent;
+            z-index: 1400;
+        }
+
+        .admin-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-decoration: none;
+            box-shadow: 0 10px 22px rgba(27, 94, 32, 0.28);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .admin-button:hover,
+        .admin-button:focus-visible {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 26px rgba(27, 94, 32, 0.32);
+        }
+
+        .admin-button:focus-visible {
+            outline: 3px solid rgba(46, 125, 50, 0.35);
+            outline-offset: 3px;
+        }
+
+        @media (max-width: 640px) {
+            .admin-access {
+                bottom: 16px;
+                right: 16px;
+            }
+
+            .admin-button {
+                padding: 9px 12px;
+                font-size: 0.85rem;
+            }
+        }
+
         /* Footer */
         footer {
             background-color: var(--primary-dark);
@@ -3785,6 +3832,14 @@
         </div>
     </a>
 
+    <section class="admin-access" id="admin">
+        <a class="admin-button" href="/admin">
+            <i class="fas fa-lock" aria-hidden="true"></i>
+            <span>Admin</span>
+            <span class="sr-only">Open admin dashboard</span>
+        </a>
+    </section>
+
     <!-- Footer -->
     <footer>
         <div class="container">
@@ -3822,8 +3877,8 @@
                 <div class="footer-column">
                     <h3>Contact Info</h3>
                     <ul class="footer-links">
-                        <li><i class="fas fa-map-marker-alt"></i> Leech Brook Close, Audenshaw, Manchester</li>
-                        <li><i class="fas fa-phone"></i> (555) 123-4567</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Leech Brook Close, Audenshaw. Manchester</li>
+                        <li><i class="fas fa-phone"></i> <a href="tel:+447595289669">07595 289 669</a></li>
                         <li><i class="fas fa-envelope"></i> info@payasyoumow.com</li>
                     </ul>
                 </div>
