@@ -28,6 +28,7 @@ BANNED_IPS_FILE = "banned_ips.json"
 VISITOR_LOG_FILE = "visitor_log.json"
 REVIEWS_FILE = "reviews.json"
 CUSTOMER_SLOTS_FILE = "customer_slots.json"
+CUSTOMER_SETTINGS_FILE = "customer_settings.json"
 
 CUSTOMER_ACCESS_CODE = os.getenv("CUSTOMER_ACCESS_CODE", "GARDENCARE2024")
 
@@ -58,6 +59,8 @@ _visitor_log_lock = Lock()
 _visitor_log = {}
 _banned_ips_lock = Lock()
 _banned_ips = {}
+_customer_settings_lock = Lock()
+_customer_settings = {"access_code": CUSTOMER_ACCESS_CODE}
 
 
 def _ensure_storage_file(path: str, *, default):
@@ -104,6 +107,45 @@ def _default_reviews_payload():
 _ensure_storage_file(VISITOR_LOG_FILE, default={})
 _ensure_storage_file(REVIEWS_FILE, default=_default_reviews_payload())
 _ensure_storage_file(CUSTOMER_SLOTS_FILE, default=[])
+_ensure_storage_file(CUSTOMER_SETTINGS_FILE, default={"access_code": CUSTOMER_ACCESS_CODE})
+
+
+def _load_customer_settings_from_disk() -> dict:
+    if not os.path.exists(CUSTOMER_SETTINGS_FILE):
+        return {"access_code": CUSTOMER_ACCESS_CODE}
+
+    try:
+        with open(CUSTOMER_SETTINGS_FILE, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+            if isinstance(payload, dict):
+                return payload
+    except (OSError, json.JSONDecodeError):
+        return {"access_code": CUSTOMER_ACCESS_CODE}
+    return {"access_code": CUSTOMER_ACCESS_CODE}
+
+
+def _save_customer_settings_to_disk(settings: dict):
+    try:
+        with open(CUSTOMER_SETTINGS_FILE, "w", encoding="utf-8") as handle:
+            json.dump(settings, handle, indent=2)
+    except OSError:
+        pass
+
+
+def _get_customer_access_code() -> str:
+    with _customer_settings_lock:
+        code = _customer_settings.get("access_code") or CUSTOMER_ACCESS_CODE
+    return code
+
+
+def _update_customer_access_code(new_code: str):
+    if not new_code:
+        return
+    global CUSTOMER_ACCESS_CODE
+    with _customer_settings_lock:
+        _customer_settings["access_code"] = new_code
+        CUSTOMER_ACCESS_CODE = new_code
+        _save_customer_settings_to_disk(_customer_settings)
 
 
 def _is_private_ip(ip_str: str) -> bool:
@@ -849,6 +891,13 @@ with _chat_state_lock:
 with _autopilot_lock:
     stored_autopilot = _load_autopilot_config_from_disk()
     _autopilot_config.update(stored_autopilot)
+
+
+with _customer_settings_lock:
+    stored_customer_settings = _load_customer_settings_from_disk()
+    if isinstance(stored_customer_settings, dict):
+        _customer_settings.update(stored_customer_settings)
+        CUSTOMER_ACCESS_CODE = _customer_settings.get("access_code", CUSTOMER_ACCESS_CODE)
 
 
 with _visitor_log_lock:
@@ -1729,6 +1778,45 @@ def _find_customer_slot(slot_id: str):
     return None
 
 
+def _set_customer_slot_status(slot_id: str, status: str):
+    if not slot_id or status not in {"available", "booked", "confirmed"}:
+        return {"message": "Slot ID and a valid status are required."}, 400
+
+    slots = load_customer_slots()
+    updated = False
+    for slot in slots:
+        if slot.get("id") != slot_id:
+            continue
+
+        slot["status"] = status
+        if status == "available":
+            slot.pop("customer_name", None)
+            slot.pop("customer_phone", None)
+            slot.pop("booked_at", None)
+        updated = True
+        break
+
+    if not updated:
+        return {"message": "Slot not found."}, 404
+
+    save_customer_slots(slots)
+    return {"message": "Slot updated.", "status": status}, 200
+
+
+def _delete_customer_slot_by_id(slot_id: str):
+    if not slot_id:
+        return {"message": "Slot ID is required."}, 400
+
+    slots = load_customer_slots()
+    remaining = [slot for slot in slots if slot.get("id") != slot_id]
+
+    if len(remaining) == len(slots):
+        return {"message": "Slot not found."}, 404
+
+    save_customer_slots(remaining)
+    return {"message": "Slot deleted."}, 200
+
+
 @app.route("/")
 def home():
     return render_template('index.html')
@@ -1739,7 +1827,7 @@ def customer_login():
     payload = request.get_json(silent=True) or {}
     code = (payload.get("code") or "").strip()
 
-    if code != CUSTOMER_ACCESS_CODE:
+    if code != _get_customer_access_code():
         return jsonify({"message": "Access code is incorrect."}), 401
 
     return jsonify({"message": "Access granted."})
@@ -1833,28 +1921,71 @@ def update_customer_slot_status():
     slot_id = (payload.get("slot_id") or "").strip()
     status = (payload.get("status") or "").strip().lower()
 
-    if not slot_id or status not in {"available", "booked", "confirmed"}:
-        return jsonify({"message": "Slot ID and a valid status are required."}), 400
+    message, status_code = _set_customer_slot_status(slot_id, status)
+    return jsonify(message), status_code
+
+
+@app.route("/api/customer/slots", methods=["GET", "POST"])
+def api_customer_slots():
+    if request.method == "GET":
+        slots = load_customer_slots()
+        slots.sort(key=lambda entry: (entry.get("date", ""), entry.get("time", "")))
+        return jsonify({"slots": slots})
+
+    payload = request.get_json(silent=True) or {}
+    date_value = (payload.get("date") or "").strip()
+    time_value = (payload.get("time") or "").strip()
+
+    if not date_value or not time_value:
+        return jsonify({"message": "Date and time are required."}), 400
+
+    try:
+        datetime.strptime(date_value, "%Y-%m-%d")
+    except ValueError:
+        return jsonify({"message": "Date format should be YYYY-MM-DD."}), 400
+
+    slot_label = _customer_slot_label(date_value, time_value)
+    if _customer_slot_conflicts(slot_label):
+        return (
+            jsonify(
+                {
+                    "message": "This slot conflicts with an existing quote slot or another customer slot.",
+                    "slot": slot_label,
+                }
+            ),
+            400,
+        )
 
     slots = load_customer_slots()
-    updated = False
-    for slot in slots:
-        if slot.get("id") != slot_id:
-            continue
-
-        slot["status"] = status
-        if status == "available":
-            slot.pop("customer_name", None)
-            slot.pop("customer_phone", None)
-            slot.pop("booked_at", None)
-        updated = True
-        break
-
-    if not updated:
-        return jsonify({"message": "Slot not found."}), 404
-
+    slots.append(
+        {
+            "id": str(uuid4()),
+            "date": date_value,
+            "time": time_value,
+            "label": slot_label,
+            "status": "available",
+            "created_at": datetime.utcnow().isoformat(),
+        }
+    )
     save_customer_slots(slots)
-    return jsonify({"message": "Slot updated.", "status": status})
+
+    return jsonify({"message": "Customer slot added.", "slot": slots[-1]}), 201
+
+
+@app.route("/api/customer/slots/<slot_id>", methods=["PATCH", "DELETE"])
+def api_customer_slot_detail(slot_id):
+    slot_id = (slot_id or "").strip()
+    if not slot_id:
+        return jsonify({"message": "Slot ID is required."}), 400
+
+    if request.method == "DELETE":
+        message, status_code = _delete_customer_slot_by_id(slot_id)
+        return jsonify(message), status_code
+
+    payload = request.get_json(silent=True) or {}
+    status = (payload.get("status") or "").strip().lower()
+    message, status_code = _set_customer_slot_status(slot_id, status)
+    return jsonify(message), status_code
 
 
 # --- Handle booking submissions ---
@@ -2247,6 +2378,21 @@ def submit_contact():
     save_contacts(contacts)
 
     return jsonify({"message": "✅ Thanks! We'll be in touch shortly."})
+
+
+@app.route("/api/customer/settings", methods=["GET", "POST"])
+def api_customer_settings():
+    if request.method == "GET":
+        return jsonify({"access_code": _get_customer_access_code()})
+
+    payload = request.get_json(silent=True) or {}
+    access_code = (payload.get("access_code") or "").strip()
+
+    if not access_code:
+        return jsonify({"message": "Access code is required."}), 400
+
+    _update_customer_access_code(access_code)
+    return jsonify({"message": "Customer access code updated.", "access_code": access_code})
 
 
 @app.route("/api/contacts", methods=["GET"])

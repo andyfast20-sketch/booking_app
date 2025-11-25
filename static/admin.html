@@ -1016,6 +1016,58 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
+    .customer-slots-grid {
+      display: grid;
+      gap: 1.25rem;
+    }
+
+    .customer-slot-list {
+      margin-top: 0.5rem;
+      display: grid;
+      gap: 0.85rem;
+    }
+
+    .customer-slot-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .customer-slot-meta {
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .customer-slot-actions {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .customer-slot-actions button {
+      padding: 0.45rem 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    .customer-slot-detail {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    .customer-access-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      align-items: end;
+      gap: 0.75rem;
+    }
+
     .quick-picks {
       margin-top: 1rem;
       background: rgba(255, 255, 255, 0.06);
@@ -1410,6 +1462,67 @@
       </div>
     </section>
 
+    <section class="panel" aria-labelledby="customer-slots-heading" data-panel data-expanded="false">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="customer-slots-heading">Existing customer bookings</h2>
+          <p>Publish and confirm appointment times reserved for returning customers.</p>
+        </div>
+        <div class="panel-actions">
+          <button id="refreshCustomerSlots" type="button">Refresh</button>
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="customerSlotsPanelBody">Expand</button>
+        </div>
+      </div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight" id="customerSlotsSummaryHighlight">Add slots for priority customers to claim.</p>
+        <p class="panel-summary-note">Expand to update the login access code, add new customer-only times and confirm bookings.</p>
+      </div>
+      <div class="panel-body" id="customerSlotsPanelBody" hidden>
+        <div class="customer-slots-grid">
+          <div>
+            <h3 class="panel-subheading">Customer access code</h3>
+            <p class="panel-summary-note" style="margin-top: 0.2rem;">
+              Share this password with existing customers so they can log in and reserve their slots.
+            </p>
+            <form id="customerAccessForm" class="customer-access-form" autocomplete="off">
+              <label>
+                Access code
+                <input type="text" id="customerAccessCodeInput" name="access_code" minlength="4" required />
+              </label>
+              <button type="submit" class="primary">Save access code</button>
+            </form>
+            <div class="form-feedback" id="customerAccessFeedback" aria-live="polite"></div>
+          </div>
+
+          <div>
+            <h3 class="panel-subheading">Add customer-only slot</h3>
+            <p class="panel-summary-note" style="margin-top: 0.2rem;">Customer slots cannot overlap with quote bookings or other customer slots.</p>
+            <form id="customerSlotForm" class="grid" autocomplete="off">
+              <label>
+                Date
+                <input type="date" name="date" required />
+              </label>
+              <label>
+                Time
+                <select name="time" required>
+                  <option value="">Select a time</option>
+                  <option value="09:00">9:00 AM</option>
+                  <option value="11:00">11:00 AM</option>
+                  <option value="13:00">1:00 PM</option>
+                  <option value="15:00">3:00 PM</option>
+                  <option value="17:00">5:00 PM</option>
+                </select>
+              </label>
+              <button type="submit" class="primary">Add customer slot</button>
+            </form>
+            <div class="form-feedback" id="customerSlotFeedback" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div class="customer-slot-list" id="customerSlotsList" aria-live="polite">Loading customer slots…</div>
+      </div>
+    </section>
+
     <section class="panel" aria-labelledby="enquiries-heading" data-panel data-expanded="false">
       <div class="panel-header">
         <div class="meta">
@@ -1543,6 +1656,7 @@
     const onlineVisitorsContainer = document.getElementById('onlineVisitors');
     const visitorHistoryContainer = document.getElementById('visitorHistory');
     const availabilityList = document.getElementById('availabilityList');
+    const customerSlotsList = document.getElementById('customerSlotsList');
     const contactsTable = document.getElementById('contactsTable');
     const reviewsTable = document.getElementById('reviewsTable');
 
@@ -1551,6 +1665,7 @@
     const chatSummaryHighlight = document.getElementById('chatSummaryHighlight');
     const autopilotSummaryHighlight = document.getElementById('autopilotSummaryHighlight');
     const availabilitySummaryHighlight = document.getElementById('availabilitySummaryHighlight');
+    const customerSlotsSummaryHighlight = document.getElementById('customerSlotsSummaryHighlight');
     const contactsSummaryHighlight = document.getElementById('contactsSummaryHighlight');
     const reviewsSummaryHighlight = document.getElementById('reviewsSummaryHighlight');
 
@@ -1565,6 +1680,12 @@
     const quickTimeShortcuts = document.getElementById('quickTimeShortcuts');
     const autoNextWeekSlotsBtn = document.getElementById('autoNextWeekSlots');
     const autoScheduleFeedback = document.getElementById('autoScheduleFeedback');
+    const customerSlotForm = document.getElementById('customerSlotForm');
+    const customerSlotFeedback = document.getElementById('customerSlotFeedback');
+    const customerAccessForm = document.getElementById('customerAccessForm');
+    const customerAccessFeedback = document.getElementById('customerAccessFeedback');
+    const customerAccessCodeInput = document.getElementById('customerAccessCodeInput');
+    const refreshCustomerSlotsBtn = document.getElementById('refreshCustomerSlots');
     const refreshPresenceBtn = document.getElementById('refreshPresence');
     const refreshAvailabilityBtn = document.getElementById('refreshAvailability');
     const refreshBookingsBtn = document.getElementById('refreshBookings');
@@ -1616,6 +1737,8 @@
     let onlineVisitorsCache = [];
     let visitorHistoryCache = [];
     let availabilityCache = [];
+    let customerSlotsCache = [];
+    let customerAccessCodeValue = '';
     let bannedIpCache = new Map();
     const AUTOPILOT_DEFAULTS = {
       enabled: false,
@@ -1877,6 +2000,173 @@
       if (!res.ok) {
         throw new Error('Unable to add slot. Please try again.');
       }
+    }
+
+    function renderCustomerSlots(slots = []) {
+      if (!customerSlotsList || !customerSlotsSummaryHighlight) return;
+      customerSlotsCache = Array.isArray(slots) ? slots : [];
+
+      if (!slots.length) {
+        customerSlotsList.className = 'empty-state';
+        customerSlotsList.textContent = 'No customer slots added yet.';
+        setSummaryText(customerSlotsSummaryHighlight, 'Add slots for returning customers.');
+        return;
+      }
+
+      const booked = slots.filter((slot) => slot.status === 'booked').length;
+      const confirmed = slots.filter((slot) => slot.status === 'confirmed').length;
+      const available = slots.filter((slot) => slot.status === 'available').length;
+      setSummaryText(
+        customerSlotsSummaryHighlight,
+        `${available} available · ${booked} booked · ${confirmed} confirmed`
+      );
+
+      customerSlotsList.className = 'customer-slot-list';
+      customerSlotsList.innerHTML = slots
+        .map((slot) => {
+          const status = (slot.status || 'available').toLowerCase();
+          const name = escapeHtml(slot.customer_name || '');
+          const phone = escapeHtml(slot.customer_phone || '');
+          const label = escapeHtml(slot.label || `${slot.date || ''} ${slot.time || ''}`.trim());
+          const badgeClass = status === 'confirmed' ? 'badge done' : status === 'booked' ? 'badge new' : 'badge';
+          const badgeLabel = status === 'confirmed' ? 'Confirmed' : status === 'booked' ? 'Booked' : 'Available';
+
+          return `
+            <div class="customer-slot-row">
+              <div class="customer-slot-meta">
+                <div>
+                  <strong>${label}</strong>
+                  <span class="badge ${badgeClass}">${badgeLabel}</span>
+                </div>
+                ${name || phone ? `<p class="customer-slot-detail">${[name, phone].filter(Boolean).join(' · ')}</p>` : ''}
+              </div>
+              <div class="customer-slot-actions" data-slot-id="${slot.id}">
+                ${
+                  status === 'available'
+                    ? '<button type="button" data-status="booked">Reserve</button>'
+                    : ''
+                }
+                ${
+                  status === 'booked'
+                    ? '<button type="button" data-status="confirmed">Confirm</button>'
+                    : ''
+                }
+                ${
+                  status !== 'available'
+                    ? '<button type="button" data-status="available" class="secondary">Release</button>'
+                    : ''
+                }
+                <button type="button" class="danger" data-delete="true">Delete</button>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+
+      customerSlotsList.querySelectorAll('[data-slot-id]').forEach((row) => {
+        const slotId = row.getAttribute('data-slot-id') || '';
+        row.querySelectorAll('button[data-status]').forEach((button) => {
+          button.addEventListener('click', () => updateCustomerSlotStatus(slotId, button.dataset.status));
+        });
+        const deleteBtn = row.querySelector('button[data-delete]');
+        if (deleteBtn) {
+          deleteBtn.addEventListener('click', () => deleteCustomerSlot(slotId));
+        }
+      });
+    }
+
+    async function loadCustomerSlots() {
+      if (!customerSlotsList) return;
+      customerSlotsList.className = 'empty-state';
+      customerSlotsList.textContent = 'Loading customer slots…';
+      setSummaryText(customerSlotsSummaryHighlight, 'Loading customer appointments…');
+      try {
+        const res = await fetch('/api/customer/slots');
+        if (!res.ok) throw new Error('Unable to load customer slots');
+        const data = await res.json();
+        renderCustomerSlots(Array.isArray(data.slots) ? data.slots : []);
+      } catch (error) {
+        customerSlotsList.className = 'empty-state';
+        customerSlotsList.textContent = error.message || 'Unable to load customer slots.';
+        setSummaryText(customerSlotsSummaryHighlight, error.message || 'Customer slots unavailable.');
+      }
+    }
+
+    async function updateCustomerSlotStatus(slotId, status) {
+      if (!slotId || !status) return;
+      try {
+        const res = await fetch(`/api/customer/slots/${encodeURIComponent(slotId)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || 'Unable to update slot');
+        }
+        await loadCustomerSlots();
+      } catch (error) {
+        alert(error.message || 'Unable to update slot right now.');
+      }
+    }
+
+    async function deleteCustomerSlot(slotId) {
+      if (!slotId) return;
+      const confirmed = window.confirm('Delete this customer slot?');
+      if (!confirmed) return;
+      try {
+        const res = await fetch(`/api/customer/slots/${encodeURIComponent(slotId)}`, { method: 'DELETE' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || 'Unable to delete slot');
+        }
+        await loadCustomerSlots();
+      } catch (error) {
+        alert(error.message || 'Unable to delete slot right now.');
+      }
+    }
+
+    async function addCustomerSlot(date, time) {
+      const res = await fetch('/api/customer/slots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, time }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || 'Unable to add customer slot');
+      }
+      return data;
+    }
+
+    async function loadCustomerAccessCode() {
+      if (!customerAccessCodeInput) return;
+      customerAccessFeedback?.classList.remove('visible', 'error', 'success');
+      try {
+        const res = await fetch('/api/customer/settings');
+        if (!res.ok) throw new Error('Unable to load access code');
+        const data = await res.json();
+        customerAccessCodeValue = data.access_code || '';
+        customerAccessCodeInput.value = customerAccessCodeValue;
+        setSummaryText(customerSlotsSummaryHighlight, 'Access code ready to share with customers.');
+      } catch (error) {
+        customerAccessCodeValue = '';
+        setSummaryText(customerSlotsSummaryHighlight, error.message || 'Access code unavailable.');
+      }
+    }
+
+    async function saveCustomerAccessCode(accessCode) {
+      const res = await fetch('/api/customer/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_code: accessCode }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || 'Unable to save access code');
+      }
+      customerAccessCodeValue = accessCode;
+      return data;
     }
 
     function setBannedIpCache(list) {
@@ -3116,6 +3406,59 @@
       });
     }
 
+    if (customerSlotForm) {
+      customerSlotForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        customerSlotFeedback?.classList.remove('visible', 'error', 'success');
+        const formData = new FormData(customerSlotForm);
+        const date = (formData.get('date') || '').toString();
+        const time = (formData.get('time') || '').toString();
+        if (!date || !time) {
+          customerSlotFeedback.textContent = 'Please choose both a date and time.';
+          customerSlotFeedback.classList.add('visible', 'error');
+          return;
+        }
+        try {
+          await addCustomerSlot(date, time);
+          customerSlotFeedback.textContent = 'Customer slot added.';
+          customerSlotFeedback.classList.add('visible', 'success');
+          customerSlotForm.reset();
+          await loadCustomerSlots();
+        } catch (error) {
+          customerSlotFeedback.textContent = error.message || 'Unable to add slot.';
+          customerSlotFeedback.classList.add('visible', 'error');
+        }
+      });
+    }
+
+    if (customerAccessForm) {
+      customerAccessForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        customerAccessFeedback?.classList.remove('visible', 'error', 'success');
+        const accessCode = customerAccessCodeInput ? customerAccessCodeInput.value.trim() : '';
+        if (!accessCode) {
+          customerAccessFeedback.textContent = 'Please enter an access code to save.';
+          customerAccessFeedback.classList.add('visible', 'error');
+          return;
+        }
+        try {
+          await saveCustomerAccessCode(accessCode);
+          customerAccessFeedback.textContent = 'Access code updated.';
+          customerAccessFeedback.classList.add('visible', 'success');
+        } catch (error) {
+          customerAccessFeedback.textContent = error.message || 'Unable to save access code.';
+          customerAccessFeedback.classList.add('visible', 'error');
+        }
+      });
+    }
+
+    if (refreshCustomerSlotsBtn) {
+      refreshCustomerSlotsBtn.addEventListener('click', () => {
+        loadCustomerAccessCode();
+        loadCustomerSlots();
+      });
+    }
+
     async function loadContacts() {
       contactsTable.className = 'empty-state';
       contactsTable.textContent = 'Loading enquiries…';
@@ -4007,6 +4350,8 @@
     refreshPresenceData();
     loadBookings();
     loadAvailability();
+    loadCustomerAccessCode();
+    loadCustomerSlots();
     loadContacts();
     loadReviews();
 
