@@ -2626,6 +2626,15 @@
             color: var(--primary-dark);
         }
 
+        .modal-header .modal-weather {
+            margin-top: 8px;
+            color: var(--primary-dark);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .modal-form {
             position: relative;
             z-index: 1;
@@ -3887,6 +3896,7 @@
                 <span class="modal-eyebrow"><i class="fas fa-user-check" aria-hidden="true"></i> Booking contact</span>
                 <h3 id="bookingModalTitle">Tell us how to reach you</h3>
                 <p>We'll confirm your appointment for <strong id="selectedSlotDisplay" aria-live="polite">your chosen slot</strong>.</p>
+                <p class="modal-weather" id="selectedSlotWeather" aria-live="polite"></p>
             </div>
             <form class="modal-form" id="bookingDetailsForm">
                 <input type="hidden" id="modalTimeInput" name="time" />
@@ -5288,6 +5298,7 @@
         const closeBookingModalBtn = document.getElementById('closeBookingModal');
         const modalTimeInput = document.getElementById('modalTimeInput');
         const selectedSlotDisplay = document.getElementById('selectedSlotDisplay');
+        const selectedSlotWeather = document.getElementById('selectedSlotWeather');
         const modalFeedback = document.getElementById('modalFeedback');
         const modalSubmitButton = document.getElementById('modalSubmitButton');
         const modalSubmitText = modalSubmitButton.querySelector('.modal-submit-text');
@@ -5314,6 +5325,7 @@
         let lastFocusedElement = null;
         let customerLoggedIn = false;
         let selectedCustomerSlot = null;
+        let slotWeatherCache = {};
 
         function formatSlotLabel(slot) {
             if (!slot || typeof slot !== 'string') return slot;
@@ -5340,6 +5352,30 @@
             return `${weekday} ${day}${daySuffix} ${month} ${year} ${timePart}`;
         }
 
+        function updateSelectedSlotDetails(slot) {
+            const friendlyLabel = formatSlotLabel(slot) || (slot || 'your chosen slot');
+            if (selectedSlotDisplay) {
+                selectedSlotDisplay.textContent = friendlyLabel;
+            }
+
+            if (!selectedSlotWeather) return;
+
+            if (!slot) {
+                selectedSlotWeather.textContent = 'Select a slot to preview the forecast for that date.';
+                return;
+            }
+
+            const forecast = slotWeatherCache && typeof slotWeatherCache === 'object' ? slotWeatherCache[slot] : null;
+            if (forecast) {
+                const symbol = forecast.symbol ? `${forecast.symbol} ` : '';
+                const summary = forecast.summary || 'Forecast available';
+                selectedSlotWeather.textContent = `Weather on this day: ${symbol}${summary}`;
+                return;
+            }
+
+            selectedSlotWeather.textContent = 'Weather forecast will appear here once it is available for this slot.';
+        }
+
         async function fetchSlotWeather(slots = []) {
             if (!Array.isArray(slots) || slots.length === 0) return {};
             try {
@@ -5363,6 +5399,7 @@
                 const res = await fetch(`${API_BASE}/availability`);
                 const slots = await res.json();
                 const slotWeather = await fetchSlotWeather(slots);
+                slotWeatherCache = slotWeather || {};
 
                 timeSelect.innerHTML = "";
 
@@ -5496,6 +5533,7 @@
             }
         }
 
+        updateSelectedSlotDetails('');
         setCustomerPortalLocked(true);
 
         if (customerLoginForm) {
@@ -5601,7 +5639,7 @@
             }
 
             modalTimeInput.value = chosenTime;
-            selectedSlotDisplay.textContent = chosenTime;
+            updateSelectedSlotDetails(chosenTime);
             openBookingDetailsModal();
         });
 

@@ -66,7 +66,7 @@ _banned_ips = {}
 _customer_settings_lock = Lock()
 _customer_settings = {"access_code": CUSTOMER_ACCESS_CODE}
 _weather_config_lock = Lock()
-_weather_config = {"api_key": ""}
+_weather_config = {"api_key": "", "api_keys": []}
 _weather_forecast_cache = {}
 
 
@@ -170,7 +170,10 @@ def _load_weather_config_from_disk() -> dict:
         return dict(_weather_config)
 
     api_key = str(payload.get("api_key", "") or "")
-    return {"api_key": api_key}
+    api_keys = _normalize_api_keys(payload.get("api_keys", []))
+    if api_key:
+        api_keys = _merge_api_key(api_key, api_keys)
+    return {"api_key": api_key, "api_keys": api_keys}
 
 
 def _save_weather_config(config=None) -> None:
@@ -185,14 +188,30 @@ def _save_weather_config(config=None) -> None:
 def _weather_config_snapshot(*, include_secret: bool = False) -> dict:
     with _weather_config_lock:
         api_key = str(_weather_config.get("api_key", "") or "")
+        api_keys = list(_weather_config.get("api_keys", []))
 
     env_key = os.environ.get("WEATHER_API_KEY", "").strip()
-    has_api_key = bool(api_key or env_key)
+    has_api_key = bool(api_key or api_keys or env_key)
 
     if include_secret:
-        return {"api_key": api_key or env_key, "has_api_key": has_api_key}
+        return {"api_key": api_key or env_key, "has_api_key": has_api_key, "api_keys": api_keys}
 
-    return {"has_api_key": has_api_key}
+    visible_keys = []
+    if isinstance(api_keys, list):
+        for entry in api_keys:
+            value = str(entry.get("value") or "").strip()
+            if not value:
+                continue
+            visible_keys.append(
+                {
+                    "id": entry.get("id"),
+                    "label": f"Key ending {value[-4:]}" if len(value) >= 4 else "Saved API key",
+                    "created_at": entry.get("created_at", ""),
+                    "last4": value[-4:] if len(value) >= 4 else value,
+                }
+            )
+
+    return {"has_api_key": has_api_key, "api_keys": visible_keys}
 
 
 def _get_weather_api_key() -> str:
@@ -1599,8 +1618,12 @@ def admin_weather_config():
     with _weather_config_lock:
         if incoming_key:
             _weather_config["api_key"] = incoming_key
+            _weather_config["api_keys"] = _merge_api_key(
+                incoming_key, _weather_config.get("api_keys", [])
+            )
         elif "api_key" in payload:
             _weather_config["api_key"] = ""
+            _weather_config["api_keys"] = []
         snapshot = dict(_weather_config)
 
     _save_weather_config(snapshot)

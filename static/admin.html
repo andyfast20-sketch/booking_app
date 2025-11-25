@@ -1470,6 +1470,11 @@
               saved key, or clear it to remove the stored value. The optional <code>WEATHER_API_KEY</code> environment
               variable will be used if set.
             </p>
+            <div class="saved-keys">
+              <p class="eyebrow">Saved API keys</p>
+              <ul id="weatherApiKeyList" class="api-key-list"></ul>
+              <p class="input-note" id="weatherApiKeyListEmpty">No weather API keys saved yet.</p>
+            </div>
           </div>
           <div class="form-feedback" id="weatherFeedback"></div>
           <div class="panel-actions">
@@ -1797,6 +1802,8 @@
     const weatherForm = document.getElementById('weatherForm');
     const weatherApiKeyInput = document.getElementById('weatherApiKey');
     const weatherFeedback = document.getElementById('weatherFeedback');
+    const weatherApiKeyList = document.getElementById('weatherApiKeyList');
+    const weatherApiKeyListEmpty = document.getElementById('weatherApiKeyListEmpty');
 
     const CHAT_POLL_INTERVAL = 4000;
     const DEFAULT_CHAT_INVITE_MESSAGE = 'Hi there! We\'re online if you need a hand with anything.';
@@ -1822,7 +1829,7 @@
       has_api_key: false,
       api_keys: [],
     };
-    const WEATHER_DEFAULTS = { has_api_key: false };
+    const WEATHER_DEFAULTS = { has_api_key: false, api_keys: [] };
     let autopilotConfig = { ...AUTOPILOT_DEFAULTS };
     let weatherConfig = { ...WEATHER_DEFAULTS };
     let autopilotBusy = false;
@@ -2473,6 +2480,7 @@
 
     function renderWeatherState() {
       const hasKey = Boolean(weatherConfig.has_api_key);
+      const savedKeys = Array.isArray(weatherConfig.api_keys) ? weatherConfig.api_keys : [];
 
       if (weatherStatus) {
         weatherStatus.textContent = hasKey ? 'API key saved' : 'No API key saved';
@@ -2489,6 +2497,42 @@
         weatherFeedback.classList.remove('visible', 'success');
         weatherFeedback.textContent = '';
       }
+
+      renderWeatherSavedKeys(savedKeys);
+    }
+
+    function renderWeatherSavedKeys(keys = []) {
+      if (!weatherApiKeyList || !weatherApiKeyListEmpty) return;
+
+      const normalized = Array.isArray(keys) ? keys : [];
+      weatherApiKeyList.innerHTML = '';
+
+      if (!normalized.length) {
+        weatherApiKeyList.hidden = true;
+        weatherApiKeyListEmpty.hidden = false;
+        return;
+      }
+
+      weatherApiKeyList.hidden = false;
+      weatherApiKeyListEmpty.hidden = true;
+
+      normalized.forEach((entry) => {
+        const item = document.createElement('li');
+        item.className = 'api-key-pill';
+
+        const name = document.createElement('strong');
+        name.textContent = entry && entry.label ? entry.label : 'Saved API key';
+
+        const meta = document.createElement('small');
+        const createdAt = entry && entry.created_at ? formatDate(entry.created_at) : '';
+        const last4 = entry && entry.last4 ? `ending ${entry.last4}` : '';
+        const details = [last4, createdAt].filter(Boolean).join(' · ');
+        meta.textContent = details || 'Ready to use for weather overlays';
+
+        item.appendChild(name);
+        item.appendChild(meta);
+        weatherApiKeyList.appendChild(item);
+      });
     }
 
     function applyApiKeyToPayload(payload) {
