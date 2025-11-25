@@ -3841,7 +3841,10 @@
     </footer>
 
     <script>
-        const API_BASE = "https://booking-app-p8q8.onrender.com";
+        const API_BASE =
+            window.APP_API_BASE || // Optional override for custom deployments
+            window.location.origin ||
+            "https://booking-app-p8q8.onrender.com";
 
         const PRESENCE_ENDPOINT = `${API_BASE}/presence`;
         const LIVE_CHAT_ENDPOINTS = {
