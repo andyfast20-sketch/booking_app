@@ -5315,6 +5315,31 @@
         let customerLoggedIn = false;
         let selectedCustomerSlot = null;
 
+        function formatSlotLabel(slot) {
+            if (!slot || typeof slot !== 'string') return slot;
+
+            const [datePart, timePart] = slot.split(' ');
+            if (!datePart || !timePart) return slot;
+
+            const date = new Date(`${datePart}T${timePart}`);
+            if (Number.isNaN(date.getTime())) return slot;
+
+            const weekday = date.toLocaleDateString('en-GB', { weekday: 'short' });
+            const day = date.getDate();
+            const daySuffix =
+                day % 10 === 1 && day % 100 !== 11
+                    ? 'st'
+                    : day % 10 === 2 && day % 100 !== 12
+                    ? 'nd'
+                    : day % 10 === 3 && day % 100 !== 13
+                    ? 'rd'
+                    : 'th';
+            const month = date.toLocaleDateString('en-GB', { month: 'short' });
+            const year = String(date.getFullYear()).slice(-2);
+
+            return `${weekday} ${day}${daySuffix} ${month} ${year} ${timePart}`;
+        }
+
         // Load available times
         async function loadAvailability() {
             try {
@@ -5339,7 +5364,7 @@
                     slots.forEach((slot) => {
                         const opt = document.createElement("option");
                         opt.value = slot;
-                        opt.text = slot;
+                        opt.text = formatSlotLabel(slot);
                         timeSelect.add(opt);
                     });
                 }
