@@ -1387,6 +1387,25 @@ def admin_chat_status():
     return jsonify({"message": "Chat status updated.", "online": online})
 
 
+@app.route("/admin/chat/close", methods=["POST"])
+def admin_chat_close():
+    payload = request.get_json(silent=True) or {}
+    session_id = (payload.get("session_id") or "").strip()
+
+    if not session_id:
+        return jsonify({"message": "Session ID is required."}), 400
+
+    with _chat_state_lock:
+        removed = _chat_state.get("sessions", {}).pop(session_id, None)
+        online = bool(_chat_state.get("online", True))
+
+    if not removed:
+        return jsonify({"message": "Session not found."}), 404
+
+    _save_chat_state()
+    return jsonify({"message": "Chat session closed and hidden from the panel.", "online": online})
+
+
 @app.route("/admin/autopilot/config", methods=["GET", "POST"])
 def admin_autopilot_config():
     if request.method == "GET":
