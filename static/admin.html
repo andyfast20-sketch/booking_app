@@ -220,6 +220,45 @@
       flex: 1;
     }
 
+    .autopilot-api-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 1rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      box-shadow: 0 12px 32px rgba(8, 16, 44, 0.25);
+    }
+
+    .autopilot-api-card .autopilot-api-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .autopilot-api-card .autopilot-api-title {
+      margin: 0;
+      font-size: 1.1rem;
+      letter-spacing: 0.01em;
+    }
+
+    .autopilot-api-card .autopilot-api-description {
+      margin: 0.2rem 0 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .eyebrow {
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
     .status-pill {
       display: inline-flex;
       align-items: center;
@@ -1247,25 +1286,35 @@
               placeholder="Describe your services, service area, pricing guidance, tone of voice and any FAQs you want the assistant to know."
             ></textarea>
           </label>
-          <label for="autopilotApiKey">
-            OpenAI API key
-            <div class="autopilot-api-row">
-              <input
-                id="autopilotApiKey"
-                name="api_key"
-                type="password"
-                inputmode="text"
-                autocomplete="off"
-                spellcheck="false"
-                placeholder="sk-..."
-              />
-              <button type="button" id="clearAutopilotApiKey" class="secondary">Remove key</button>
+          <div class="autopilot-api-card" role="group" aria-labelledby="autopilotApiKeyHeading">
+            <div class="autopilot-api-header">
+              <div>
+                <p class="eyebrow">AI access</p>
+                <h3 id="autopilotApiKeyHeading" class="autopilot-api-title">OpenAI API key</h3>
+                <p class="autopilot-api-description">Used to power the autopilot assistant.</p>
+              </div>
+              <span class="status-pill offline" id="autopilotApiKeyStatus">No key saved</span>
             </div>
+            <label for="autopilotApiKey">
+              <div class="autopilot-api-row">
+                <input
+                  id="autopilotApiKey"
+                  name="api_key"
+                  type="password"
+                  inputmode="text"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="sk-..."
+                />
+                <button type="button" id="clearAutopilotApiKey" class="secondary">Remove key</button>
+              </div>
+            </label>
             <p class="input-note" id="autopilotApiKeyNote">
-              Stored securely on the server. Leave blank to keep your existing key. The <code>OPENAI_API_KEY</code>
-              environment variable will be used as a fallback if no key is saved.
+              Saved securely on the server for autopilot replies. Leave blank to keep your existing key or use the
+              remove button above. The <code>OPENAI_API_KEY</code> environment variable will be used as a fallback if no
+              key is saved.
             </p>
-          </label>
+          </div>
           <div class="form-feedback" id="autopilotFeedback"></div>
           <div class="panel-actions">
             <button type="submit" class="primary">Save autopilot settings</button>
@@ -1516,6 +1565,7 @@
     const autopilotApiKeyInput = document.getElementById('autopilotApiKey');
     const clearAutopilotApiKeyBtn = document.getElementById('clearAutopilotApiKey');
     const autopilotApiKeyNote = document.getElementById('autopilotApiKeyNote');
+    const autopilotApiKeyStatus = document.getElementById('autopilotApiKeyStatus');
 
     const CHAT_POLL_INTERVAL = 4000;
     const DEFAULT_CHAT_INVITE_MESSAGE = 'Hi there! We\'re online if you need a hand with anything.';
@@ -2023,10 +2073,11 @@
 
       const apiKeyValue = autopilotApiKeyInput ? autopilotApiKeyInput.value.trim() : '';
       const apiKeyDirty = autopilotApiKeyInput && autopilotApiKeyInput.dataset.dirty === 'true';
+      const hasExistingKey = autopilotApiKeyInput && autopilotApiKeyInput.dataset.hasExisting === 'true';
 
       // Always propagate a populated API key value (covers password manager autofill) even if
       // the input never fired an `input` event to set the dirty flag.
-      if (apiKeyDirty || apiKeyValue.length > 0) {
+      if (apiKeyDirty || (apiKeyValue.length > 0 && !hasExistingKey)) {
         payload.api_key = apiKeyValue;
       }
 
@@ -2062,14 +2113,29 @@
       if (autopilotPromptInput && typeof autopilotConfig.business_profile === 'string') {
         autopilotPromptInput.value = autopilotConfig.business_profile;
       }
+      if (autopilotApiKeyStatus) {
+        autopilotApiKeyStatus.textContent = hasApiKey
+          ? 'Key saved for autopilot replies'
+          : 'No key saved';
+        autopilotApiKeyStatus.classList.toggle('active', hasApiKey);
+        autopilotApiKeyStatus.classList.toggle('offline', !hasApiKey);
+      }
       if (autopilotApiKeyInput) {
-        autopilotApiKeyInput.value = '';
-        autopilotApiKeyInput.dataset.dirty = 'false';
+        const keepTypedValue =
+          autopilotApiKeyInput.dataset.dirty === 'true' &&
+          autopilotApiKeyInput.value &&
+          autopilotApiKeyInput.value.trim().length > 0;
+
+        if (!keepTypedValue) {
+          autopilotApiKeyInput.value = '';
+        }
+
+        autopilotApiKeyInput.dataset.dirty = keepTypedValue ? 'true' : 'false';
         autopilotApiKeyInput.dataset.hasExisting = hasApiKey ? 'true' : 'false';
       }
       if (autopilotApiKeyNote) {
         autopilotApiKeyNote.textContent = hasApiKey
-          ? 'API key stored securely on this server.'
+          ? 'API key saved securely for future autopilot replies. Leave the box untouched to keep it. The OPENAI_API_KEY environment variable will also be used if set.'
           : 'Add your OpenAI API key so autopilot can reply to visitors.';
         autopilotApiKeyNote.classList.toggle('warning', !hasApiKey);
       }
@@ -2100,6 +2166,10 @@
       }
 
       const payloadWithKey = applyApiKeyToPayload({ ...payload });
+      const submittedApiKey =
+        autopilotApiKeyInput && autopilotApiKeyInput.dataset.dirty === 'true'
+          ? autopilotApiKeyInput.value.trim()
+          : '';
 
       if (autopilotFeedback) {
         autopilotFeedback.classList.remove('visible', 'success');
@@ -2120,6 +2190,11 @@
         const incoming = data && typeof data.config === 'object' ? data.config : {};
         autopilotConfig = { ...AUTOPILOT_DEFAULTS, ...incoming };
         renderAutopilotState();
+        if (submittedApiKey && autopilotApiKeyInput) {
+          autopilotApiKeyInput.value = submittedApiKey;
+          autopilotApiKeyInput.dataset.dirty = 'false';
+          autopilotApiKeyInput.dataset.hasExisting = 'true';
+        }
         updateAutopilotSummary();
         const missingKey = autopilotConfig.enabled && !autopilotConfig.has_api_key;
         if (autopilotFeedback) {
@@ -3765,6 +3840,19 @@
             autopilotApiKeyNote.classList.add('warning');
           }
         }
+        if (autopilotApiKeyStatus) {
+          if (hasValue) {
+            autopilotApiKeyStatus.textContent = 'Key ready to save';
+            autopilotApiKeyStatus.classList.add('active');
+            autopilotApiKeyStatus.classList.remove('offline');
+          } else {
+            autopilotApiKeyStatus.textContent = hasExisting
+              ? 'Key saved for autopilot replies'
+              : 'No key saved';
+            autopilotApiKeyStatus.classList.toggle('active', hasExisting);
+            autopilotApiKeyStatus.classList.toggle('offline', !hasExisting);
+          }
+        }
       });
     }
 
@@ -3776,6 +3864,11 @@
         if (autopilotApiKeyNote) {
           autopilotApiKeyNote.textContent = 'Existing API key will be removed after saving.';
           autopilotApiKeyNote.classList.add('warning');
+        }
+        if (autopilotApiKeyStatus) {
+          autopilotApiKeyStatus.textContent = 'Key will be removed on save';
+          autopilotApiKeyStatus.classList.remove('active');
+          autopilotApiKeyStatus.classList.add('offline');
         }
         autopilotApiKeyInput.focus();
       });
