@@ -1,7 +1,7 @@
 import json
 from uuid import uuid4
 
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template_string, render_template
 from flask_cors import CORS
 import os
 from datetime import datetime, timedelta
@@ -1535,7 +1535,7 @@ def reinstate_availability(slot):
 
 @app.route("/")
 def home():
-    return "✅ Flask Booking API running. Visit /bookings to manage and /availability to view free slots."
+    return render_template('index.html')
 
 
 # --- Handle booking submissions ---
@@ -2093,7 +2093,9 @@ def admin_unban_visitor(ip_str):
 def admin_page():
     return app.send_static_file("admin.html")
 
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+if __name__ == '__main__':
+    import sys
+    # Use 5002 if no port is specified, or read from command line
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 5002
+    app.run(host='0.0.0.0', port=port, debug=True)
 
