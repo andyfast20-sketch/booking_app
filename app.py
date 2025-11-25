@@ -9,6 +9,7 @@ from threading import Lock
 from ipaddress import ip_address
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
+from urllib.parse import quote
 
 app = Flask(__name__)
 
@@ -29,6 +30,7 @@ VISITOR_LOG_FILE = "visitor_log.json"
 REVIEWS_FILE = "reviews.json"
 CUSTOMER_SLOTS_FILE = "customer_slots.json"
 CUSTOMER_SETTINGS_FILE = "customer_settings.json"
+WEATHER_CONFIG_FILE = "weather_config.json"
 
 CUSTOMER_ACCESS_CODE = os.getenv("CUSTOMER_ACCESS_CODE", "GARDENCARE2024")
 
@@ -39,6 +41,8 @@ AUTOPILOT_HISTORY_LIMIT = 12
 
 VISITOR_TIMEOUT = timedelta(minutes=3)
 LOCATION_CACHE_TTL = timedelta(hours=6)
+WEATHER_CACHE_TTL = timedelta(minutes=45)
+WEATHER_LOCATION_QUERY = "Audenshaw,Denton,UK"
 INDEX_PAGES = {"/", "/index", "/index.html"}
 
 _active_visitors = {}
@@ -61,6 +65,9 @@ _banned_ips_lock = Lock()
 _banned_ips = {}
 _customer_settings_lock = Lock()
 _customer_settings = {"access_code": CUSTOMER_ACCESS_CODE}
+_weather_config_lock = Lock()
+_weather_config = {"api_key": ""}
+_weather_forecast_cache = {}
 
 
 def _ensure_storage_file(path: str, *, default):
@@ -108,6 +115,7 @@ _ensure_storage_file(VISITOR_LOG_FILE, default={})
 _ensure_storage_file(REVIEWS_FILE, default=_default_reviews_payload())
 _ensure_storage_file(CUSTOMER_SLOTS_FILE, default=[])
 _ensure_storage_file(CUSTOMER_SETTINGS_FILE, default={"access_code": CUSTOMER_ACCESS_CODE})
+_ensure_storage_file(WEATHER_CONFIG_FILE, default={"api_key": ""})
 
 
 def _load_customer_settings_from_disk() -> dict:
@@ -146,6 +154,159 @@ def _update_customer_access_code(new_code: str):
         _customer_settings["access_code"] = new_code
         CUSTOMER_ACCESS_CODE = new_code
         _save_customer_settings_to_disk(_customer_settings)
+
+
+def _load_weather_config_from_disk() -> dict:
+    if not os.path.exists(WEATHER_CONFIG_FILE):
+        return dict(_weather_config)
+
+    try:
+        with open(WEATHER_CONFIG_FILE, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return dict(_weather_config)
+
+    if not isinstance(payload, dict):
+        return dict(_weather_config)
+
+    api_key = str(payload.get("api_key", "") or "")
+    return {"api_key": api_key}
+
+
+def _save_weather_config(config=None) -> None:
+    snapshot = dict(config or _weather_config)
+    try:
+        with open(WEATHER_CONFIG_FILE, "w", encoding="utf-8") as handle:
+            json.dump(snapshot, handle, indent=2)
+    except OSError:
+        pass
+
+
+def _weather_config_snapshot(*, include_secret: bool = False) -> dict:
+    with _weather_config_lock:
+        api_key = str(_weather_config.get("api_key", "") or "")
+
+    env_key = os.environ.get("WEATHER_API_KEY", "").strip()
+    has_api_key = bool(api_key or env_key)
+
+    if include_secret:
+        return {"api_key": api_key or env_key, "has_api_key": has_api_key}
+
+    return {"has_api_key": has_api_key}
+
+
+def _get_weather_api_key() -> str:
+    with _weather_config_lock:
+        configured = str(_weather_config.get("api_key", "") or "")
+
+    env_key = os.environ.get("WEATHER_API_KEY", "").strip()
+    return configured or env_key
+
+
+def _fetch_forecast_for_date(date_obj: datetime, *, api_key: str):
+    if not api_key or not isinstance(date_obj, datetime):
+        return None
+
+    cache_key = date_obj.strftime("%Y-%m-%d")
+    cached = _weather_forecast_cache.get(cache_key)
+    if cached and datetime.utcnow() - cached.get("timestamp", datetime.min) < WEATHER_CACHE_TTL:
+        return cached.get("data")
+
+    query_date = date_obj.strftime("%Y-%m-%d")
+    encoded_location = quote(WEATHER_LOCATION_QUERY)
+    url = (
+        "https://api.weatherapi.com/v1/forecast.json"
+        f"?key={api_key}&q={encoded_location}&dt={query_date}&aqi=no&alerts=no"
+    )
+
+    try:
+        request = Request(url, headers={"User-Agent": "pay-as-you-mow-weather/1.0"})
+        with urlopen(request, timeout=8) as response:
+            if response.status != 200:
+                return None
+            payload = json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, ValueError, OSError):
+        return None
+
+    _weather_forecast_cache[cache_key] = {"timestamp": datetime.utcnow(), "data": payload}
+    return payload
+
+
+def _summarize_hour_condition(hour_data: dict | None, day_data=None) -> dict:
+    if hour_data is None:
+        hour_data = {}
+    if day_data is None:
+        day_data = {}
+
+    condition = hour_data.get("condition") or day_data.get("condition") or {}
+    condition_text = str(condition.get("text") or "").strip()
+    lower_text = condition_text.lower()
+
+    try:
+        chance_of_rain = float(hour_data.get("chance_of_rain", 0))
+    except (TypeError, ValueError):
+        chance_of_rain = 0.0
+
+    try:
+        cloud_cover = float(hour_data.get("cloud", 0))
+    except (TypeError, ValueError):
+        cloud_cover = 0.0
+
+    precipitation = float(hour_data.get("precip_mm") or 0)
+
+    if (
+        "rain" in lower_text
+        or "shower" in lower_text
+        or "drizzle" in lower_text
+        or chance_of_rain >= 50
+        or precipitation > 0.05
+    ):
+        symbol = "🌧️"
+        summary = condition_text or "Showers expected"
+    elif "sun" in lower_text or ("clear" in lower_text and cloud_cover <= 50):
+        symbol = "☀️"
+        summary = condition_text or "Sunshine expected"
+    else:
+        symbol = "☁️"
+        summary = condition_text or "Cloudy"
+
+    return {"symbol": symbol, "summary": summary}
+
+
+def _forecast_for_slot(slot: str, *, api_key: str | None = None):
+    if not slot or " " not in slot:
+        return None
+
+    try:
+        slot_dt = datetime.strptime(slot, "%Y-%m-%d %H:%M")
+    except ValueError:
+        return None
+
+    api_key = api_key or _get_weather_api_key()
+    if not api_key:
+        return None
+
+    forecast_payload = _fetch_forecast_for_date(slot_dt, api_key=api_key)
+    if not forecast_payload:
+        return None
+
+    date_key = slot_dt.strftime("%Y-%m-%d")
+    time_key = slot_dt.strftime("%H:00")
+
+    forecast_block = None
+    forecast_days = forecast_payload.get("forecast", {}).get("forecastday", [])
+    for day_block in forecast_days:
+        if day_block.get("date") != date_key:
+            continue
+        hours = day_block.get("hour") or []
+        for hour_entry in hours:
+            if str(hour_entry.get("time", "")).endswith(time_key):
+                forecast_block = hour_entry
+                break
+        day_condition = (day_block.get("day") or {}).get("condition") or {}
+        return _summarize_hour_condition(forecast_block, day_condition)
+
+    return None
 
 
 def _is_private_ip(ip_str: str) -> bool:
@@ -893,6 +1054,11 @@ with _autopilot_lock:
     _autopilot_config.update(stored_autopilot)
 
 
+with _weather_config_lock:
+    stored_weather = _load_weather_config_from_disk()
+    _weather_config.update(stored_weather)
+
+
 with _customer_settings_lock:
     stored_customer_settings = _load_customer_settings_from_disk()
     if isinstance(stored_customer_settings, dict):
@@ -1420,6 +1586,26 @@ def admin_autopilot_config():
 
     _save_autopilot_config(snapshot)
     return jsonify({"message": "Autopilot settings updated.", "config": _autopilot_config_snapshot()})
+
+
+@app.route("/admin/weather/config", methods=["GET", "POST"])
+def admin_weather_config():
+    if request.method == "GET":
+        return jsonify({"config": _weather_config_snapshot()})
+
+    payload = request.get_json(silent=True) or {}
+    incoming_key = str(payload.get("api_key", "") or "").strip()
+
+    with _weather_config_lock:
+        if incoming_key:
+            _weather_config["api_key"] = incoming_key
+        elif "api_key" in payload:
+            _weather_config["api_key"] = ""
+        snapshot = dict(_weather_config)
+
+    _save_weather_config(snapshot)
+    _weather_forecast_cache.clear()
+    return jsonify({"message": "Weather settings updated.", "config": _weather_config_snapshot()})
 
 
 @app.route("/admin/chat/sessions", methods=["GET"])
@@ -2070,6 +2256,26 @@ def book():
 @app.route("/availability")
 def get_availability():
     return jsonify(load_availability())
+
+
+@app.route("/weather/slots", methods=["POST"])
+def weather_for_slots():
+    payload = request.get_json(silent=True) or {}
+    slots = payload.get("slots") or []
+    if not isinstance(slots, list):
+        return jsonify({"message": "Slots must be provided as a list."}), 400
+
+    api_key = _get_weather_api_key()
+    if not api_key:
+        return jsonify({"forecasts": {}, "has_api_key": False})
+
+    forecasts = {}
+    for slot in slots:
+        forecast = _forecast_for_slot(slot, api_key=api_key)
+        if forecast:
+            forecasts[slot] = forecast
+
+    return jsonify({"forecasts": forecasts, "has_api_key": True})
 
 
 # --- Admin page: manage bookings + set available times ---
