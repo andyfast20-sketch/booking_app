@@ -1427,6 +1427,58 @@
       </div>
     </section>
 
+    <section class="panel" aria-labelledby="weather-heading" data-panel data-expanded="false">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="weather-heading">Weather overlay</h2>
+          <p>Show a quick weather hint beside each public booking slot.</p>
+        </div>
+        <div class="panel-actions">
+          <span class="status-pill offline" id="weatherStatus">No API key saved</span>
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="weatherPanelBody">Expand</button>
+        </div>
+      </div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight">Add a weather API key to decorate time slots with sunshine, cloud or shower icons.</p>
+        <p class="panel-summary-note">Slots use the Audenshaw / Denton, Manchester forecast for their date and hour.</p>
+      </div>
+      <div class="panel-body" id="weatherPanelBody" hidden>
+        <form id="weatherForm" class="autopilot-controls">
+          <div class="autopilot-api-card" role="group" aria-labelledby="weatherApiKeyHeading">
+            <div class="autopilot-api-header">
+              <div>
+                <p class="eyebrow">Forecast access</p>
+                <h3 id="weatherApiKeyHeading" class="autopilot-api-title">Weather API key</h3>
+                <p class="autopilot-api-description">Stored securely and used to fetch the Audenshaw / Denton forecast.</p>
+              </div>
+            </div>
+            <label for="weatherApiKey">
+              <div class="autopilot-api-row">
+                <input
+                  id="weatherApiKey"
+                  name="api_key"
+                  type="password"
+                  inputmode="text"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="Your weather provider API key"
+                />
+              </div>
+            </label>
+            <p class="input-note">
+              Save a key from your weather provider (for example WeatherAPI.com). Leave the box untouched to keep the existing
+              saved key, or clear it to remove the stored value. The optional <code>WEATHER_API_KEY</code> environment
+              variable will be used if set.
+            </p>
+          </div>
+          <div class="form-feedback" id="weatherFeedback"></div>
+          <div class="panel-actions">
+            <button type="submit" class="primary">Save weather settings</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
     <section class="panel" aria-labelledby="availability-heading" data-panel data-expanded="false">
       <div class="panel-header">
         <div class="meta">
@@ -1741,6 +1793,10 @@
     const autopilotApiKeyStatus = document.getElementById('autopilotApiKeyStatus');
     const autopilotApiKeyList = document.getElementById('autopilotApiKeyList');
     const autopilotApiKeyListEmpty = document.getElementById('autopilotApiKeyListEmpty');
+    const weatherStatus = document.getElementById('weatherStatus');
+    const weatherForm = document.getElementById('weatherForm');
+    const weatherApiKeyInput = document.getElementById('weatherApiKey');
+    const weatherFeedback = document.getElementById('weatherFeedback');
 
     const CHAT_POLL_INTERVAL = 4000;
     const DEFAULT_CHAT_INVITE_MESSAGE = 'Hi there! We\'re online if you need a hand with anything.';
@@ -1766,7 +1822,9 @@
       has_api_key: false,
       api_keys: [],
     };
+    const WEATHER_DEFAULTS = { has_api_key: false };
     let autopilotConfig = { ...AUTOPILOT_DEFAULTS };
+    let weatherConfig = { ...WEATHER_DEFAULTS };
     let autopilotBusy = false;
 
     const bookingDialog = document.getElementById('bookingDialog');
@@ -2413,6 +2471,26 @@
       }
     }
 
+    function renderWeatherState() {
+      const hasKey = Boolean(weatherConfig.has_api_key);
+
+      if (weatherStatus) {
+        weatherStatus.textContent = hasKey ? 'API key saved' : 'No API key saved';
+        weatherStatus.classList.toggle('online', hasKey);
+        weatherStatus.classList.toggle('offline', !hasKey);
+      }
+
+      if (weatherApiKeyInput) {
+        weatherApiKeyInput.dataset.dirty = 'false';
+        weatherApiKeyInput.dataset.hasExisting = hasKey ? 'true' : 'false';
+      }
+
+      if (weatherFeedback) {
+        weatherFeedback.classList.remove('visible', 'success');
+        weatherFeedback.textContent = '';
+      }
+    }
+
     function applyApiKeyToPayload(payload) {
       if (!payload || typeof payload !== 'object') return payload;
 
@@ -2527,6 +2605,74 @@
       }
 
       renderAutopilotSavedKeys();
+    }
+
+    async function loadWeatherConfig() {
+      try {
+        const res = await fetch('/admin/weather/config');
+        if (!res.ok) {
+          throw new Error('Unable to load weather settings.');
+        }
+        const data = await res.json().catch(() => ({}));
+        const incoming = data && typeof data.config === 'object' ? data.config : {};
+        weatherConfig = { ...WEATHER_DEFAULTS, ...incoming };
+        renderWeatherState();
+      } catch (error) {
+        console.error('Unable to load weather settings.', error);
+        if (weatherFeedback) {
+          weatherFeedback.textContent = 'Unable to load weather settings.';
+          weatherFeedback.classList.add('visible');
+        }
+      }
+    }
+
+    async function persistWeatherConfig(event) {
+      if (event) {
+        event.preventDefault();
+      }
+
+      if (weatherFeedback) {
+        weatherFeedback.classList.remove('visible', 'success');
+        weatherFeedback.textContent = '';
+      }
+
+      const payload = {};
+      const apiKeyValue = weatherApiKeyInput ? weatherApiKeyInput.value.trim() : '';
+      const apiKeyDirty = weatherApiKeyInput && weatherApiKeyInput.dataset.dirty === 'true';
+      const hasExistingKey = weatherApiKeyInput && weatherApiKeyInput.dataset.hasExisting === 'true';
+
+      if (apiKeyDirty || (apiKeyValue.length > 0 && !hasExistingKey)) {
+        payload.api_key = apiKeyValue;
+      }
+
+      try {
+        const res = await fetch('/admin/weather/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || 'Unable to save weather settings.');
+        }
+
+        const incoming = data && typeof data.config === 'object' ? data.config : {};
+        weatherConfig = { ...WEATHER_DEFAULTS, ...incoming };
+        renderWeatherState();
+
+        if (weatherFeedback) {
+          weatherFeedback.textContent = 'Weather settings saved.';
+          weatherFeedback.classList.add('visible', 'success');
+        }
+        return true;
+      } catch (error) {
+        console.error('Unable to save weather settings.', error);
+        if (weatherFeedback) {
+          weatherFeedback.textContent = error.message || 'Unable to save weather settings.';
+          weatherFeedback.classList.add('visible');
+        }
+      }
+      return false;
     }
 
     async function loadAutopilotConfig() {
@@ -4338,6 +4484,12 @@
       });
     }
 
+    if (weatherApiKeyInput) {
+      weatherApiKeyInput.addEventListener('input', () => {
+        weatherApiKeyInput.dataset.dirty = 'true';
+      });
+    }
+
     if (clearAutopilotApiKeyBtn && autopilotApiKeyInput) {
       clearAutopilotApiKeyBtn.addEventListener('click', () => {
         autopilotApiKeyInput.value = '';
@@ -4387,6 +4539,10 @@
       });
     }
 
+    if (weatherForm) {
+      weatherForm.addEventListener('submit', persistWeatherConfig);
+    }
+
     renderAutopilotState();
     updateAutopilotSummary();
 
@@ -4395,6 +4551,7 @@
     loadChatSessions();
 
     loadAutopilotConfig();
+    loadWeatherConfig();
 
     if (refreshPresenceBtn) {
       refreshPresenceBtn.addEventListener('click', refreshPresenceData);

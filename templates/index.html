@@ -5340,11 +5340,29 @@
             return `${weekday} ${day}${daySuffix} ${month} ${year} ${timePart}`;
         }
 
+        async function fetchSlotWeather(slots = []) {
+            if (!Array.isArray(slots) || slots.length === 0) return {};
+            try {
+                const res = await fetch(`${API_BASE}/weather/slots`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slots })
+                });
+                if (!res.ok) return {};
+                const data = await res.json();
+                return (data && typeof data.forecasts === 'object' && data.forecasts) || {};
+            } catch (error) {
+                console.error('Error loading slot weather', error);
+                return {};
+            }
+        }
+
         // Load available times
         async function loadAvailability() {
             try {
                 const res = await fetch(`${API_BASE}/availability`);
                 const slots = await res.json();
+                const slotWeather = await fetchSlotWeather(slots);
 
                 timeSelect.innerHTML = "";
 
@@ -5364,7 +5382,12 @@
                     slots.forEach((slot) => {
                         const opt = document.createElement("option");
                         opt.value = slot;
-                        opt.text = formatSlotLabel(slot);
+                        const baseLabel = formatSlotLabel(slot);
+                        const forecast = slotWeather[slot];
+                        opt.text = forecast && forecast.symbol ? `${baseLabel} ${forecast.symbol}` : baseLabel;
+                        if (forecast && forecast.summary) {
+                            opt.title = forecast.summary;
+                        }
                         timeSelect.add(opt);
                     });
                 }
