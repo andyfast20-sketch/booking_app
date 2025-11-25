@@ -1822,6 +1822,11 @@ def home():
     return render_template('index.html')
 
 
+@app.route("/customer-login")
+def customer_login_page():
+    return render_template('customer_login.html')
+
+
 @app.route("/customer/login", methods=["POST"])
 def customer_login():
     payload = request.get_json(silent=True) or {}

@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Login | Pay As You Mow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-dark: #1b5e20;
+            --secondary: #ff9800;
+            --text: #333333;
+            --text-light: #666666;
+            --background: #f9f9f9;
+            --white: #ffffff;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: var(--background);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: var(--white);
+            box-shadow: var(--shadow);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 16px;
+        }
+
+        nav a {
+            font-weight: 600;
+            transition: color var(--transition);
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        .hero {
+            background: linear-gradient(135deg, rgba(46, 125, 50, 0.08), rgba(255, 152, 0, 0.05));
+            padding: 70px 0 40px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            color: var(--text-light);
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .customer-portal {
+            padding: 60px 0 80px;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .section-title h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+        }
+
+        .section-title p {
+            color: var(--text-light);
+            margin-top: 6px;
+        }
+
+        .customer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .customer-card {
+            background: var(--white);
+            padding: 26px;
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+        }
+
+        .customer-card h3 {
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .customer-card p {
+            color: var(--text-light);
+            margin-bottom: 16px;
+        }
+
+        .customer-login-form input,
+        .customer-booking-form input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            transition: border var(--transition), box-shadow var(--transition);
+        }
+
+        .customer-login-form input:focus,
+        .customer-booking-form input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.18);
+        }
+
+        .customer-login-form button,
+        .customer-booking-form button {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .customer-login-form button:hover,
+        .customer-booking-form button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .customer-login-status {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .customer-login-status.success {
+            color: #1b5e20;
+            background: #e8f5e9;
+        }
+
+        .customer-login-status.error {
+            color: #b71c1c;
+            background: #ffebee;
+        }
+
+        .customer-slot-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .customer-slot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            gap: 12px;
+        }
+
+        .customer-slot button {
+            flex-shrink: 0;
+            padding: 10px 14px;
+            background: var(--secondary);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .customer-slot button:hover {
+            background: #f57c00;
+        }
+
+        .customer-booking-form .field-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .customer-booking-form .field-row input {
+            flex: 1 1 200px;
+        }
+
+        .booking-response {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .booking-response.visible {
+            display: block;
+        }
+
+        .booking-response.success {
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+
+        .booking-response.error {
+            background: #ffebee;
+            color: #b71c1c;
+        }
+
+        .customer-selected-slot {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .customer-locked {
+            opacity: 0.75;
+        }
+
+        footer {
+            background: var(--primary-dark);
+            color: #e8f5e9;
+            padding: 26px 0;
+            margin-top: 30px;
+        }
+
+        footer .footer-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        footer a {
+            color: #c8e6c9;
+        }
+
+        @media (max-width: 768px) {
+            nav ul {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 1.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container nav-bar">
+            <a class="logo" href="/">
+                <i class="fas fa-leaf" aria-hidden="true"></i>
+                <span>Pay As You Mow</span>
+            </a>
+            <nav aria-label="Primary navigation">
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/#services">Services</a></li>
+                    <li><a href="/#booking">Book a quote</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Existing Customer Portal</h1>
+            <p>Unlock the customer-only schedule to reserve a slot that suits you, then confirm with your contact details.</p>
+        </div>
+    </section>
+
+    <section class="customer-portal" id="customer-portal">
+        <div class="container">
+            <div class="section-title">
+                <h2>Customer Login</h2>
+                <p>Enter the access code shared with you to manage your reserved appointments.</p>
+            </div>
+            <div class="customer-grid">
+                <div class="customer-card">
+                    <h3>Access the customer schedule</h3>
+                    <p>Use your unique access code to view priority appointment times.</p>
+                    <form class="customer-login-form" id="customerLoginForm">
+                        <input type="password" id="customerAccessCode" name="code" placeholder="Access code" required>
+                        <button type="submit">Unlock customer slots</button>
+                    </form>
+                    <div class="customer-login-status" id="customerLoginStatus" aria-live="polite"></div>
+                </div>
+                <div class="customer-card customer-locked" id="customerPortal" aria-live="polite">
+                    <h3>Your reserved appointments</h3>
+                    <p>Select the day and time that works best, then confirm your details.</p>
+                    <div id="customerSlotList" class="customer-slot-list">
+                        <p class="customer-login-status">Log in to see available customer slots.</p>
+                    </div>
+                    <div class="customer-booking-form">
+                        <p id="customerSelectedSlot">Select a customer slot to continue.</p>
+                        <form id="customerBookingForm">
+                            <div class="field-row">
+                                <input type="text" id="customerName" name="name" placeholder="Your name" required>
+                                <input type="tel" id="customerPhone" name="phone" placeholder="Phone number" required>
+                            </div>
+                            <button type="submit">Book my customer slot</button>
+                        </form>
+                        <div class="booking-response" id="customerBookingFeedback" role="alert"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container footer-content">
+            <span>&copy; 2024 Pay As You Mow</span>
+            <a href="/">Back to home</a>
+        </div>
+    </footer>
+
+    <script>
+        const API_BASE =
+            window.APP_API_BASE ||
+            window.location.origin ||
+            "https://booking-app-p8q8.onrender.com";
+
+        const customerLoginForm = document.getElementById('customerLoginForm');
+        const customerAccessCode = document.getElementById('customerAccessCode');
+        const customerLoginStatus = document.getElementById('customerLoginStatus');
+        const customerPortal = document.getElementById('customerPortal');
+        const customerSlotList = document.getElementById('customerSlotList');
+        const customerSelectedSlot = document.getElementById('customerSelectedSlot');
+        const customerBookingForm = document.getElementById('customerBookingForm');
+        const customerName = document.getElementById('customerName');
+        const customerPhone = document.getElementById('customerPhone');
+        const customerBookingFeedback = document.getElementById('customerBookingFeedback');
+
+        let customerLoggedIn = false;
+        let selectedCustomerSlot = null;
+
+        function setCustomerPortalLocked(locked) {
+            if (!customerPortal) return;
+            customerPortal.classList.toggle('customer-locked', locked);
+            customerPortal.querySelectorAll('input, button').forEach((control) => {
+                control.disabled = locked;
+            });
+        }
+
+        function renderCustomerSlots(slots = []) {
+            if (!customerSlotList || !customerSelectedSlot) return;
+
+            customerSlotList.innerHTML = '';
+            selectedCustomerSlot = null;
+            customerSelectedSlot.textContent = 'Select a customer slot to continue.';
+
+            if (!slots.length) {
+                const empty = document.createElement('p');
+                empty.textContent = 'No customer slots are currently available. Please check back or contact us.';
+                customerSlotList.appendChild(empty);
+                return;
+            }
+
+            slots.forEach((slot) => {
+                const row = document.createElement('div');
+                row.className = 'customer-slot';
+                row.innerHTML = `<div><strong>${slot.label}</strong></div>`;
+
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = 'Select';
+                button.addEventListener('click', () => {
+                    selectedCustomerSlot = slot;
+                    customerSelectedSlot.innerHTML = `Selected: <span class="customer-selected-slot">${slot.label}</span>`;
+                    customerBookingFeedback?.classList.remove('visible', 'error', 'success');
+                    customerBookingFeedback.textContent = '';
+                });
+
+                row.appendChild(button);
+                customerSlotList.appendChild(row);
+            });
+        }
+
+        async function loadCustomerSlotsForPortal() {
+            if (!customerLoggedIn) return;
+            try {
+                const res = await fetch(`${API_BASE}/customer/slots?available_only=1`);
+                const data = await res.json();
+                renderCustomerSlots(Array.isArray(data.slots) ? data.slots : []);
+            } catch (error) {
+                console.error('Unable to load customer slots', error);
+                if (customerSlotList) {
+                    customerSlotList.innerHTML = '<p>Unable to load customer slots right now.</p>';
+                }
+            }
+        }
+
+        setCustomerPortalLocked(true);
+
+        if (customerLoginForm) {
+            customerLoginForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                customerLoginStatus?.classList.remove('error', 'success');
+                if (customerLoginStatus) {
+                    customerLoginStatus.textContent = '';
+                }
+
+                try {
+                    const res = await fetch(`${API_BASE}/customer/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code: customerAccessCode.value.trim() })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        throw new Error(data.message || 'Unable to log in.');
+                    }
+                    customerLoggedIn = true;
+                    setCustomerPortalLocked(false);
+                    customerAccessCode.value = '';
+                    if (customerLoginStatus) {
+                        customerLoginStatus.textContent = data.message || 'Access granted.';
+                        customerLoginStatus.classList.add('success');
+                    }
+                    await loadCustomerSlotsForPortal();
+                } catch (error) {
+                    customerLoggedIn = false;
+                    setCustomerPortalLocked(true);
+                    if (customerLoginStatus) {
+                        customerLoginStatus.textContent = error.message || 'Incorrect access code.';
+                        customerLoginStatus.classList.add('error');
+                    }
+                }
+            });
+        }
+
+        if (customerBookingForm) {
+            customerBookingForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                customerBookingFeedback?.classList.remove('visible', 'success', 'error');
+                if (!customerLoggedIn) {
+                    customerBookingFeedback.textContent = 'Please log in first to view and book customer slots.';
+                    customerBookingFeedback.classList.add('visible', 'error');
+                    return;
+                }
+
+                if (!selectedCustomerSlot) {
+                    customerBookingFeedback.textContent = 'Select a customer slot before booking.';
+                    customerBookingFeedback.classList.add('visible', 'error');
+                    return;
+                }
+
+                const payload = {
+                    slot_id: selectedCustomerSlot.id,
+                    name: customerName.value.trim(),
+                    phone: customerPhone.value.trim(),
+                };
+
+                if (!payload.name || !payload.phone) {
+                    customerBookingFeedback.textContent = 'Name and phone are required to reserve your slot.';
+                    customerBookingFeedback.classList.add('visible', 'error');
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`${API_BASE}/customer/slots/book`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        throw new Error(data.message || 'Unable to book this slot.');
+                    }
+                    customerBookingFeedback.textContent = data.message || 'Slot saved.';
+                    customerBookingFeedback.classList.add('visible', 'success');
+                    customerBookingForm.reset();
+                    selectedCustomerSlot = null;
+                    await loadCustomerSlotsForPortal();
+                } catch (error) {
+                    customerBookingFeedback.textContent = error.message || 'Unable to book this slot right now.';
+                    customerBookingFeedback.classList.add('visible', 'error');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

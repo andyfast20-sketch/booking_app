@@ -3568,7 +3568,7 @@
                     <li><a href="#home">Home</a></li>
                     <li><a href="#services">My Services</a></li>
                     <li><a href="#about">About</a></li>
-                    <li><a href="#customer-portal">Customer Login</a></li>
+                    <li><a href="/customer-login">Customer Login</a></li>
                     <li><a href="#faq">FAQ</a></li>
                     <li><a href="#testimonials">Testimonials</a></li>
                     <li><a href="#booking">Book</a></li>
@@ -3590,7 +3590,7 @@
                     <div class="hero-actions">
                         <a href="#booking" class="btn">Get a Free Quote</a>
                         <a href="#services" class="btn btn-secondary">My Services</a>
-                        <a href="#customer-portal" class="btn btn-secondary" aria-label="Existing customer login">Customer Login</a>
+                        <a href="/customer-login" class="btn btn-secondary" aria-label="Existing customer login">Customer Login</a>
                     </div>
                 </div>
             </div>
@@ -3606,7 +3606,7 @@
                     <div class="hero-actions">
                         <a href="#booking" class="btn">Get a Free Quote</a>
                         <a href="#services" class="btn btn-secondary">My Services</a>
-                        <a href="#customer-portal" class="btn btn-secondary" aria-label="Existing customer login">Customer Login</a>
+                        <a href="/customer-login" class="btn btn-secondary" aria-label="Existing customer login">Customer Login</a>
                     </div>
                 </div>
             </div>
@@ -3690,44 +3690,6 @@
                 <div class="about-video">
                     <div class="video-frame" data-video-id="oJrPPeow__s">
                         <iframe src="https://www.youtube.com/embed/oJrPPeow__s?si=4qciSvhRowzZ9yMh&amp;rel=0&amp;modestbranding=1&amp;enablejsapi=1" title="Pay As You Mow introduction video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="customer-portal" id="customer-portal">
-        <div class="container">
-            <div class="section-title">
-                <h2>Existing Customer Login</h2>
-                <p>Unlock priority slots reserved for ongoing customers, then confirm the time with your details.</p>
-            </div>
-            <div class="customer-grid">
-                <div class="customer-card">
-                    <h3>Customer Login</h3>
-                    <p>Enter the access code shared with you to view the customer-only schedule.</p>
-                    <form class="customer-login-form" id="customerLoginForm">
-                        <input type="password" id="customerAccessCode" name="code" placeholder="Access code" required>
-                        <button type="submit">Unlock customer slots</button>
-                    </form>
-                    <div class="customer-login-status" id="customerLoginStatus" aria-live="polite"></div>
-                </div>
-                <div class="customer-card customer-locked" id="customerPortal" aria-live="polite">
-                    <h3>Your reserved appointments</h3>
-                    <p>Pick the day and time that works best, then confirm your name and phone number.</p>
-                    <div id="customerSlotList" class="customer-slot-list">
-                        <p class="customer-login-status">Log in to see available customer slots.</p>
-                    </div>
-                    <div class="customer-booking-form">
-                        <p id="customerSelectedSlot">Select a customer slot to continue.</p>
-                        <form id="customerBookingForm">
-                            <div class="field-row">
-                                <input type="text" id="customerName" name="name" placeholder="Your name" required>
-                                <input type="tel" id="customerPhone" name="phone" placeholder="Phone number" required>
-                            </div>
-                            <button type="submit">Book my customer slot</button>
-                        </form>
-                        <div class="booking-response" id="customerBookingFeedback" role="alert"></div>
                     </div>
                 </div>
             </div>
