@@ -2020,9 +2020,16 @@
 
     function applyApiKeyToPayload(payload) {
       if (!payload || typeof payload !== 'object') return payload;
-      if (autopilotApiKeyInput && autopilotApiKeyInput.dataset.dirty === 'true') {
-        payload.api_key = autopilotApiKeyInput.value ? autopilotApiKeyInput.value.trim() : '';
+
+      const apiKeyValue = autopilotApiKeyInput ? autopilotApiKeyInput.value.trim() : '';
+      const apiKeyDirty = autopilotApiKeyInput && autopilotApiKeyInput.dataset.dirty === 'true';
+
+      // Always propagate a populated API key value (covers password manager autofill) even if
+      // the input never fired an `input` event to set the dirty flag.
+      if (apiKeyDirty || apiKeyValue.length > 0) {
+        payload.api_key = apiKeyValue;
       }
+
       return payload;
     }
 
