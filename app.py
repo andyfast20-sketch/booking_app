@@ -1674,8 +1674,9 @@ def _normalize_customer_slot(slot: dict) -> dict:
     date_value = (slot.get("date") or "").strip()
     time_value = (slot.get("time") or "").strip()
     label = (slot.get("label") or "").strip()
-    if not label:
-        label = f"{date_value} {time_value}".strip()
+    default_label = f"{date_value} {time_value}".strip()
+    if not label or label == default_label:
+        label = _customer_slot_label(date_value, time_value)
 
     status = (slot.get("status") or "available").strip().lower()
     if status not in {"available", "booked", "confirmed"}:
@@ -1722,7 +1723,19 @@ def save_customer_slots(slots):
 
 
 def _customer_slot_label(date_value: str, time_value: str) -> str:
-    return f"{date_value.strip()} {time_value.strip()}".strip()
+    date_value = (date_value or "").strip()
+    time_value = (time_value or "").strip()
+
+    try:
+        date_obj = datetime.strptime(date_value, "%Y-%m-%d")
+    except ValueError:
+        return f"{date_value} {time_value}".strip()
+
+    month_abbr = date_obj.strftime("%b").lower()
+    formatted_date = date_obj.strftime("%a %d/%b/%y").replace(
+        date_obj.strftime("%b"), month_abbr
+    )
+    return f"{formatted_date} {time_value}".strip()
 
 
 def load_availability():
