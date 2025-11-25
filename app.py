@@ -49,6 +49,7 @@ _autopilot_config = {
     "model": DEFAULT_AUTOPILOT_MODEL,
     "temperature": DEFAULT_AUTOPILOT_TEMPERATURE,
     "api_key": "",
+    "api_keys": [],
 }
 _visitor_log_lock = Lock()
 _visitor_log = {}
@@ -573,14 +574,60 @@ def _safe_int(value, default=0):
         return default
 
 
+def _normalize_api_keys(raw_keys):
+    normalized = []
+    seen = set()
+    if isinstance(raw_keys, list):
+        for entry in raw_keys:
+            if isinstance(entry, dict):
+                value = str(entry.get("value") or entry.get("api_key") or "").strip()
+                key_id = str(entry.get("id") or uuid4())
+                created_at = str(entry.get("created_at") or datetime.utcnow().isoformat())
+            elif isinstance(entry, str):
+                value = entry.strip()
+                if not value:
+                    continue
+                key_id = str(uuid4())
+                created_at = datetime.utcnow().isoformat()
+            else:
+                continue
+
+            if not value or value in seen:
+                continue
+
+            normalized.append({"id": key_id, "value": value, "created_at": created_at})
+            seen.add(value)
+
+    return normalized
+
+
+def _merge_api_key(value: str, existing=None):
+    normalized_existing = _normalize_api_keys(existing or [])
+    if not value:
+        return normalized_existing
+
+    deduped = [entry for entry in normalized_existing if entry.get("value") != value]
+    deduped.insert(
+        0,
+        {
+            "id": str(uuid4()),
+            "value": value,
+            "created_at": datetime.utcnow().isoformat(),
+        },
+    )
+    return deduped
+
+
 def _coerce_autopilot_config(payload: dict, *, base=None) -> dict:
     reference = dict(base or _autopilot_config)
+    api_keys = _normalize_api_keys(reference.get("api_keys", []))
     result = {
         "enabled": bool(reference.get("enabled", False)),
         "business_profile": str(reference.get("business_profile", "") or ""),
         "model": str(reference.get("model", DEFAULT_AUTOPILOT_MODEL) or DEFAULT_AUTOPILOT_MODEL),
         "temperature": float(reference.get("temperature", DEFAULT_AUTOPILOT_TEMPERATURE)),
         "api_key": str(reference.get("api_key", "") or ""),
+        "api_keys": api_keys,
     }
 
     if payload is None:
@@ -611,8 +658,19 @@ def _coerce_autopilot_config(payload: dict, *, base=None) -> dict:
         temperature = max(0.0, min(2.0, temperature))
         result["temperature"] = temperature
 
+    if "api_keys" in payload:
+        incoming_keys = _normalize_api_keys(payload.get("api_keys") or [])
+        if incoming_keys:
+            result["api_keys"] = incoming_keys
+
     if "api_key" in payload:
-        result["api_key"] = str(payload.get("api_key") or "").strip()
+        incoming_key = str(payload.get("api_key") or "").strip()
+        if incoming_key:
+            result["api_key"] = incoming_key
+            result["api_keys"] = _merge_api_key(incoming_key, api_keys)
+        elif "api_keys" not in payload:
+            result["api_key"] = ""
+            result["api_keys"] = []
 
     return result
 
@@ -650,14 +708,34 @@ def _autopilot_config_snapshot(*, include_secret: bool = False) -> dict:
             "model": str(_autopilot_config.get("model", DEFAULT_AUTOPILOT_MODEL) or DEFAULT_AUTOPILOT_MODEL),
             "temperature": float(_autopilot_config.get("temperature", DEFAULT_AUTOPILOT_TEMPERATURE)),
             "api_key": str(_autopilot_config.get("api_key", "") or ""),
+            "api_keys": list(_autopilot_config.get("api_keys", [])),
         }
 
     if include_secret:
         return snapshot
 
     env_key_present = bool((os.environ.get("OPENAI_API_KEY") or "").strip())
-    has_api_key = bool(snapshot.get("api_key")) or env_key_present
+    keys_payload = snapshot.get("api_keys", [])
+    if not isinstance(keys_payload, list):
+        keys_payload = []
+
+    visible_keys = []
+    for entry in keys_payload:
+        value = str(entry.get("value") or "").strip()
+        if not value:
+            continue
+        visible_keys.append(
+            {
+                "id": entry.get("id"),
+                "label": f"Key ending {value[-4:]}" if len(value) >= 4 else "Saved API key",
+                "created_at": entry.get("created_at", ""),
+                "last4": value[-4:] if len(value) >= 4 else value,
+            }
+        )
+
+    has_api_key = bool(snapshot.get("api_key")) or bool(visible_keys) or env_key_present
     snapshot.pop("api_key", None)
+    snapshot["api_keys"] = visible_keys
     snapshot["has_api_key"] = has_api_key
     return snapshot
 
@@ -1026,7 +1104,15 @@ def _request_autopilot_reply(messages, *, model: str, temperature: float, api_ke
 def _resolve_autopilot_api_key() -> str:
     env_key = (os.environ.get("OPENAI_API_KEY") or "").strip()
     with _autopilot_lock:
-        stored_key = str(_autopilot_config.get("api_key") or "").strip()
+        stored_keys = _autopilot_config.get("api_keys") or []
+        primary_key = ""
+        if stored_keys:
+            first_entry = next(
+                (entry for entry in stored_keys if str(entry.get("value") or "").strip()),
+                None,
+            )
+            primary_key = str(first_entry.get("value") or "").strip() if first_entry else ""
+        stored_key = primary_key or str(_autopilot_config.get("api_key") or "").strip()
     return stored_key or env_key
 
 

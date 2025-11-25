@@ -251,6 +251,35 @@
       font-size: 0.95rem;
     }
 
+    .api-key-list {
+      list-style: none;
+      padding: 0;
+      margin: 0.35rem 0 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .api-key-pill {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+      padding: 0.35rem 0.7rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.05rem;
+      font-size: 0.9rem;
+    }
+
+    .api-key-pill strong {
+      letter-spacing: 0.02em;
+    }
+
+    .api-key-pill small {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
     .eyebrow {
       margin: 0;
       text-transform: uppercase;
@@ -1314,6 +1343,11 @@
               remove button above. The <code>OPENAI_API_KEY</code> environment variable will be used as a fallback if no
               key is saved.
             </p>
+            <div class="saved-keys">
+              <p class="eyebrow">Saved API keys</p>
+              <ul id="autopilotApiKeyList" class="api-key-list"></ul>
+              <p class="input-note" id="autopilotApiKeyListEmpty">No API keys saved yet.</p>
+            </div>
           </div>
           <div class="form-feedback" id="autopilotFeedback"></div>
           <div class="panel-actions">
@@ -1566,6 +1600,8 @@
     const clearAutopilotApiKeyBtn = document.getElementById('clearAutopilotApiKey');
     const autopilotApiKeyNote = document.getElementById('autopilotApiKeyNote');
     const autopilotApiKeyStatus = document.getElementById('autopilotApiKeyStatus');
+    const autopilotApiKeyList = document.getElementById('autopilotApiKeyList');
+    const autopilotApiKeyListEmpty = document.getElementById('autopilotApiKeyListEmpty');
 
     const CHAT_POLL_INTERVAL = 4000;
     const DEFAULT_CHAT_INVITE_MESSAGE = 'Hi there! We\'re online if you need a hand with anything.';
@@ -1587,6 +1623,7 @@
       model: 'gpt-3.5-turbo',
       temperature: 0.3,
       has_api_key: false,
+      api_keys: [],
     };
     let autopilotConfig = { ...AUTOPILOT_DEFAULTS };
     let autopilotBusy = false;
@@ -2096,9 +2133,45 @@
       }
     }
 
+    function renderAutopilotSavedKeys() {
+      if (!autopilotApiKeyList || !autopilotApiKeyListEmpty) return;
+
+      const keys = Array.isArray(autopilotConfig.api_keys) ? autopilotConfig.api_keys : [];
+      autopilotApiKeyList.innerHTML = '';
+
+      if (!keys.length) {
+        autopilotApiKeyList.hidden = true;
+        autopilotApiKeyListEmpty.hidden = false;
+        return;
+      }
+
+      autopilotApiKeyList.hidden = false;
+      autopilotApiKeyListEmpty.hidden = true;
+
+      keys.forEach((entry) => {
+        const item = document.createElement('li');
+        item.className = 'api-key-pill';
+
+        const name = document.createElement('strong');
+        name.textContent = entry && entry.label ? entry.label : 'Saved API key';
+
+        const meta = document.createElement('small');
+        const createdAt = entry && entry.created_at ? formatDate(entry.created_at) : '';
+        const last4 = entry && entry.last4 ? `ending ${entry.last4}` : '';
+        const details = [last4, createdAt].filter(Boolean).join(' · ');
+        meta.textContent = details || 'Ready to use for autopilot replies';
+
+        item.appendChild(name);
+        item.appendChild(meta);
+        autopilotApiKeyList.appendChild(item);
+      });
+    }
+
     function renderAutopilotState() {
       const enabled = Boolean(autopilotConfig.enabled);
       const hasApiKey = Boolean(autopilotConfig.has_api_key);
+      const apiKeys = Array.isArray(autopilotConfig.api_keys) ? autopilotConfig.api_keys : [];
+      const savedKeyCount = apiKeys.length;
       if (autopilotStatusBadge) {
         autopilotStatusBadge.textContent = enabled ? 'Autopilot active' : 'Autopilot paused';
         autopilotStatusBadge.classList.toggle('active', enabled);
@@ -2114,9 +2187,14 @@
         autopilotPromptInput.value = autopilotConfig.business_profile;
       }
       if (autopilotApiKeyStatus) {
-        autopilotApiKeyStatus.textContent = hasApiKey
-          ? 'Key saved for autopilot replies'
-          : 'No key saved';
+        if (hasApiKey && savedKeyCount > 0) {
+          autopilotApiKeyStatus.textContent =
+            savedKeyCount === 1 ? '1 saved API key' : `${savedKeyCount} saved API keys`;
+        } else if (hasApiKey) {
+          autopilotApiKeyStatus.textContent = 'Key available for autopilot replies';
+        } else {
+          autopilotApiKeyStatus.textContent = 'No key saved';
+        }
         autopilotApiKeyStatus.classList.toggle('active', hasApiKey);
         autopilotApiKeyStatus.classList.toggle('offline', !hasApiKey);
       }
@@ -2139,6 +2217,8 @@
           : 'Add your OpenAI API key so autopilot can reply to visitors.';
         autopilotApiKeyNote.classList.toggle('warning', !hasApiKey);
       }
+
+      renderAutopilotSavedKeys();
     }
 
     async function loadAutopilotConfig() {
