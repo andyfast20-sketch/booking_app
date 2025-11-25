@@ -2456,6 +2456,98 @@
             pointer-events: auto;
         }
 
+        .booking-thanks-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(15, 23, 42, 0.55);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 2200;
+        }
+
+        .booking-thanks-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .booking-thanks-card {
+            position: relative;
+            max-width: 460px;
+            width: 100%;
+            background: linear-gradient(135deg, #fff7ed, #fff);
+            border-radius: 24px;
+            padding: 32px 30px 28px;
+            box-shadow: 0 35px 70px rgba(15, 23, 42, 0.2);
+            overflow: hidden;
+        }
+
+        .booking-thanks-card::after {
+            content: "";
+            position: absolute;
+            inset: -90px auto auto -60px;
+            width: 240px;
+            height: 240px;
+            background: radial-gradient(circle at center, rgba(255, 152, 0, 0.2), transparent 60%);
+            z-index: 0;
+        }
+
+        .booking-thanks-emoji {
+            width: 70px;
+            height: 70px;
+            border-radius: 18px;
+            background: #fff;
+            display: grid;
+            place-items: center;
+            font-size: 32px;
+            box-shadow: 0 12px 26px rgba(255, 152, 0, 0.2);
+            margin-bottom: 14px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .booking-thanks-title {
+            font-size: 1.6rem;
+            color: var(--text);
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .booking-thanks-text {
+            color: var(--text-light);
+            line-height: 1.6;
+            font-size: 1rem;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .booking-thanks-close {
+            position: relative;
+            z-index: 1;
+            background: linear-gradient(135deg, #ff9800, #ffb74d);
+            color: var(--white);
+            border: none;
+            border-radius: 999px;
+            padding: 12px 20px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 18px 30px rgba(255, 152, 0, 0.25);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .booking-thanks-close:hover,
+        .booking-thanks-close:focus-visible {
+            transform: translateY(-2px);
+            box-shadow: 0 22px 40px rgba(255, 152, 0, 0.35);
+            outline: none;
+        }
+
         .modal-card {
             position: relative;
             width: min(520px, 100%);
@@ -3537,7 +3629,6 @@
                     <li><a href="#home">Home</a></li>
                     <li><a href="#services">My Services</a></li>
                     <li><a href="#about">About</a></li>
-                    <li><a href="/customer-login">Customer Login</a></li>
                     <li><a href="#faq">FAQ</a></li>
                     <li><a href="#testimonials">Testimonials</a></li>
                     <li><a href="#booking">Book</a></li>
@@ -3826,6 +3917,15 @@
                     <i class="fas fa-arrow-right" aria-hidden="true"></i>
                 </button>
             </form>
+        </div>
+    </div>
+
+    <div class="booking-thanks-overlay" id="bookingThankYou" aria-hidden="true">
+        <div class="booking-thanks-card" role="dialog" aria-modal="true" aria-labelledby="bookingThanksTitle">
+            <div class="booking-thanks-emoji" aria-hidden="true">🌼</div>
+            <h3 class="booking-thanks-title" id="bookingThanksTitle">Thanks for booking!</h3>
+            <p class="booking-thanks-text">Thanks, I'll be in touch soon to confirm this.</p>
+            <button type="button" class="booking-thanks-close" id="closeBookingThanks">Lovely!</button>
         </div>
     </div>
 
@@ -5195,6 +5295,8 @@
         const modalLocation = document.getElementById('modalLocation');
         const modalEmail = document.getElementById('modalEmail');
         const modalPhone = document.getElementById('modalPhone');
+        const bookingThankYou = document.getElementById('bookingThankYou');
+        const closeBookingThanksBtn = document.getElementById('closeBookingThanks');
         const contactForm = document.getElementById('contactForm');
         const contactResponse = document.getElementById('contactResponse');
         const contactSubmitButton = contactForm ? contactForm.querySelector('button[type="submit"]') : null;
@@ -5327,6 +5429,25 @@
             }
         }
 
+        function showBookingThankYou() {
+            if (!bookingThankYou) return;
+            bookingThankYou.classList.add('visible');
+            bookingThankYou.setAttribute('aria-hidden', 'false');
+            const closeBtn = bookingThankYou.querySelector('.booking-thanks-close');
+            if (closeBtn) {
+                closeBtn.focus();
+            }
+        }
+
+        function hideBookingThankYou() {
+            if (!bookingThankYou) return;
+            bookingThankYou.classList.remove('visible');
+            bookingThankYou.setAttribute('aria-hidden', 'true');
+            if (bookingSubmitButton) {
+                bookingSubmitButton.focus();
+            }
+        }
+
         setCustomerPortalLocked(true);
 
         if (customerLoginForm) {
@@ -5447,10 +5568,28 @@
         });
 
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && bookingModal.classList.contains('visible')) {
-                closeBookingDetailsModal({ returnFocus: true });
+            if (event.key === 'Escape') {
+                if (bookingModal.classList.contains('visible')) {
+                    closeBookingDetailsModal({ returnFocus: true });
+                    return;
+                }
+                if (bookingThankYou && bookingThankYou.classList.contains('visible')) {
+                    hideBookingThankYou();
+                }
             }
         });
+
+        if (bookingThankYou) {
+            bookingThankYou.addEventListener('click', (event) => {
+                if (event.target === bookingThankYou) {
+                    hideBookingThankYou();
+                }
+            });
+        }
+
+        if (closeBookingThanksBtn) {
+            closeBookingThanksBtn.addEventListener('click', hideBookingThankYou);
+        }
 
         // Handle contact details submission (step 2)
         bookingDetailsForm.addEventListener('submit', async (e) => {
@@ -5496,6 +5635,7 @@
                 bookingResponse.classList.add('visible', 'success');
 
                 bookingForm.reset();
+                showBookingThankYou();
                 await loadAvailability();
 
             } catch (error) {

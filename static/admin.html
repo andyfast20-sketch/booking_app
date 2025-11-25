@@ -696,6 +696,24 @@
       color: var(--warning);
     }
 
+    .chat-session-close {
+      margin-left: auto;
+      background: rgba(255, 255, 255, 0.14);
+      color: var(--text-primary);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 0.3rem 0.7rem;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .chat-session-close:hover,
+    .chat-session-close:focus-visible {
+      background: rgba(255, 255, 255, 0.22);
+      border-color: rgba(255, 255, 255, 0.35);
+      outline: none;
+    }
+
     .chat-thread {
       border-radius: 18px;
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -3946,6 +3964,14 @@
           meta.appendChild(unread);
         }
 
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'chat-session-close';
+        closeButton.textContent = 'Close chat';
+        closeButton.dataset.sessionClose = 'true';
+        closeButton.dataset.sessionId = session.session_id || '';
+        meta.appendChild(closeButton);
+
         button.appendChild(meta);
         chatSessionsContainer.appendChild(button);
       });
@@ -4118,6 +4144,33 @@
       }
     }
 
+    async function closeChatSession(sessionId) {
+      if (!sessionId) return;
+      if (!window.confirm('Close this conversation? It will be removed from the list.')) {
+        return;
+      }
+
+      try {
+        const res = await fetch('/admin/chat/close', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || 'Unable to close chat session.');
+        }
+        chatSessionsCache = chatSessionsCache.filter((session) => session.session_id !== sessionId);
+        if (selectedChatSessionId === sessionId) {
+          clearChatThread();
+        }
+        renderChatSessions();
+        await loadChatSessions(true);
+      } catch (error) {
+        alert(error.message || 'Unable to close chat session.');
+      }
+    }
+
     function selectChatSession(sessionId) {
       if (!sessionId) return;
       if (sessionId === selectedChatSessionId) {
@@ -4168,6 +4221,12 @@
 
     if (chatSessionsContainer) {
       chatSessionsContainer.addEventListener('click', (event) => {
+        const closeButton = event.target.closest('[data-session-close]');
+        if (closeButton && closeButton.dataset.sessionId) {
+          event.stopPropagation();
+          closeChatSession(closeButton.dataset.sessionId);
+          return;
+        }
         const target = event.target.closest('.chat-session');
         if (!target || !target.dataset.sessionId) return;
         selectChatSession(target.dataset.sessionId);
