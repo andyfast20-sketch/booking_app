@@ -48,6 +48,7 @@ _autopilot_config = {
     "business_profile": "",
     "model": DEFAULT_AUTOPILOT_MODEL,
     "temperature": DEFAULT_AUTOPILOT_TEMPERATURE,
+    "api_key": "",
 }
 _visitor_log_lock = Lock()
 _visitor_log = {}
@@ -579,6 +580,7 @@ def _coerce_autopilot_config(payload: dict, *, base=None) -> dict:
         "business_profile": str(reference.get("business_profile", "") or ""),
         "model": str(reference.get("model", DEFAULT_AUTOPILOT_MODEL) or DEFAULT_AUTOPILOT_MODEL),
         "temperature": float(reference.get("temperature", DEFAULT_AUTOPILOT_TEMPERATURE)),
+        "api_key": str(reference.get("api_key", "") or ""),
     }
 
     if payload is None:
@@ -609,6 +611,9 @@ def _coerce_autopilot_config(payload: dict, *, base=None) -> dict:
         temperature = max(0.0, min(2.0, temperature))
         result["temperature"] = temperature
 
+    if "api_key" in payload:
+        result["api_key"] = str(payload.get("api_key") or "").strip()
+
     return result
 
 
@@ -637,14 +642,24 @@ def _save_autopilot_config(config=None) -> None:
         pass
 
 
-def _autopilot_config_snapshot() -> dict:
+def _autopilot_config_snapshot(*, include_secret: bool = False) -> dict:
     with _autopilot_lock:
-        return {
+        snapshot = {
             "enabled": bool(_autopilot_config.get("enabled", False)),
             "business_profile": str(_autopilot_config.get("business_profile", "") or ""),
             "model": str(_autopilot_config.get("model", DEFAULT_AUTOPILOT_MODEL) or DEFAULT_AUTOPILOT_MODEL),
             "temperature": float(_autopilot_config.get("temperature", DEFAULT_AUTOPILOT_TEMPERATURE)),
+            "api_key": str(_autopilot_config.get("api_key", "") or ""),
         }
+
+    if include_secret:
+        return snapshot
+
+    env_key_present = bool((os.environ.get("OPENAI_API_KEY") or "").strip())
+    has_api_key = bool(snapshot.get("api_key")) or env_key_present
+    snapshot.pop("api_key", None)
+    snapshot["has_api_key"] = has_api_key
+    return snapshot
 
 
 def _load_chat_state_from_disk():
@@ -1008,12 +1023,19 @@ def _request_autopilot_reply(messages, *, model: str, temperature: float, api_ke
     return ""
 
 
+def _resolve_autopilot_api_key() -> str:
+    env_key = (os.environ.get("OPENAI_API_KEY") or "").strip()
+    with _autopilot_lock:
+        stored_key = str(_autopilot_config.get("api_key") or "").strip()
+    return stored_key or env_key
+
+
 def _maybe_send_autopilot_reply(session_id: str, conversation=None):
-    config = _autopilot_config_snapshot()
+    config = _autopilot_config_snapshot(include_secret=True)
     if not config.get("enabled"):
         return None
 
-    api_key = (os.environ.get("OPENAI_API_KEY") or "").strip()
+    api_key = _resolve_autopilot_api_key()
     if not api_key:
         return None
 

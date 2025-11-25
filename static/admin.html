@@ -208,6 +208,18 @@
       margin-bottom: 1.25rem;
     }
 
+    .autopilot-api-row {
+      display: flex;
+      gap: 0.65rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .autopilot-api-row input {
+      min-width: 220px;
+      flex: 1;
+    }
+
     .status-pill {
       display: inline-flex;
       align-items: center;
@@ -238,6 +250,17 @@
       display: flex;
       flex-direction: column;
       gap: 1rem;
+    }
+
+    .input-note {
+      margin: 0.4rem 0 0;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .input-note.warning {
+      color: var(--warning);
     }
 
     .autopilot-controls .panel-actions {
@@ -1224,9 +1247,25 @@
               placeholder="Describe your services, service area, pricing guidance, tone of voice and any FAQs you want the assistant to know."
             ></textarea>
           </label>
-          <p class="panel-summary-note">
-            Set the <code>OPENAI_API_KEY</code> environment variable with your ChatGPT API key before enabling autopilot.
-          </p>
+          <label for="autopilotApiKey">
+            OpenAI API key
+            <div class="autopilot-api-row">
+              <input
+                id="autopilotApiKey"
+                name="api_key"
+                type="password"
+                inputmode="text"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="sk-..."
+              />
+              <button type="button" id="clearAutopilotApiKey" class="secondary">Remove key</button>
+            </div>
+            <p class="input-note" id="autopilotApiKeyNote">
+              Stored securely on the server. Leave blank to keep your existing key. The <code>OPENAI_API_KEY</code>
+              environment variable will be used as a fallback if no key is saved.
+            </p>
+          </label>
           <div class="form-feedback" id="autopilotFeedback"></div>
           <div class="panel-actions">
             <button type="submit" class="primary">Save autopilot settings</button>
@@ -1474,6 +1513,9 @@
     const autopilotPromptInput = document.getElementById('autopilotPrompt');
     const autopilotFeedback = document.getElementById('autopilotFeedback');
     const autopilotSaveButton = autopilotForm ? autopilotForm.querySelector('button[type="submit"]') : null;
+    const autopilotApiKeyInput = document.getElementById('autopilotApiKey');
+    const clearAutopilotApiKeyBtn = document.getElementById('clearAutopilotApiKey');
+    const autopilotApiKeyNote = document.getElementById('autopilotApiKeyNote');
 
     const CHAT_POLL_INTERVAL = 4000;
     const DEFAULT_CHAT_INVITE_MESSAGE = 'Hi there! We\'re online if you need a hand with anything.';
@@ -1494,6 +1536,7 @@
       business_profile: '',
       model: 'gpt-3.5-turbo',
       temperature: 0.3,
+      has_api_key: false,
     };
     let autopilotConfig = { ...AUTOPILOT_DEFAULTS };
     let autopilotBusy = false;
@@ -1946,11 +1989,24 @@
       const enabled = Boolean(autopilotConfig.enabled);
       const hasProfile =
         typeof autopilotConfig.business_profile === 'string' && autopilotConfig.business_profile.trim().length > 0;
+      const apiKeyTyped =
+        autopilotApiKeyInput && autopilotApiKeyInput.value && autopilotApiKeyInput.value.trim().length > 0;
+      const apiKeyPendingRemoval =
+        autopilotApiKeyInput &&
+        autopilotApiKeyInput.dataset.dirty === 'true' &&
+        autopilotApiKeyInput.dataset.hasExisting === 'false' &&
+        !apiKeyTyped;
+      const hasKey = (!apiKeyPendingRemoval && Boolean(autopilotConfig.has_api_key)) || Boolean(apiKeyTyped);
 
-      if (enabled && hasProfile) {
+      if (enabled && hasProfile && hasKey) {
         setSummaryText(
           autopilotSummaryHighlight,
           'Autopilot is answering chats using your saved business guide.'
+        );
+      } else if (enabled && !hasKey) {
+        setSummaryText(
+          autopilotSummaryHighlight,
+          'Autopilot is on, but add an OpenAI API key so replies can be generated.'
         );
       } else if (enabled) {
         setSummaryText(
@@ -1960,6 +2016,14 @@
       } else {
         setSummaryText(autopilotSummaryHighlight, 'Autopilot is paused. You will reply to visitors manually.');
       }
+    }
+
+    function applyApiKeyToPayload(payload) {
+      if (!payload || typeof payload !== 'object') return payload;
+      if (autopilotApiKeyInput && autopilotApiKeyInput.dataset.dirty === 'true') {
+        payload.api_key = autopilotApiKeyInput.value ? autopilotApiKeyInput.value.trim() : '';
+      }
+      return payload;
     }
 
     function setAutopilotBusy(isBusy) {
@@ -1976,6 +2040,7 @@
 
     function renderAutopilotState() {
       const enabled = Boolean(autopilotConfig.enabled);
+      const hasApiKey = Boolean(autopilotConfig.has_api_key);
       if (autopilotStatusBadge) {
         autopilotStatusBadge.textContent = enabled ? 'Autopilot active' : 'Autopilot paused';
         autopilotStatusBadge.classList.toggle('active', enabled);
@@ -1989,6 +2054,17 @@
       });
       if (autopilotPromptInput && typeof autopilotConfig.business_profile === 'string') {
         autopilotPromptInput.value = autopilotConfig.business_profile;
+      }
+      if (autopilotApiKeyInput) {
+        autopilotApiKeyInput.value = '';
+        autopilotApiKeyInput.dataset.dirty = 'false';
+        autopilotApiKeyInput.dataset.hasExisting = hasApiKey ? 'true' : 'false';
+      }
+      if (autopilotApiKeyNote) {
+        autopilotApiKeyNote.textContent = hasApiKey
+          ? 'API key stored securely on this server.'
+          : 'Add your OpenAI API key so autopilot can reply to visitors.';
+        autopilotApiKeyNote.classList.toggle('warning', !hasApiKey);
       }
     }
 
@@ -2016,6 +2092,8 @@
         return false;
       }
 
+      const payloadWithKey = applyApiKeyToPayload({ ...payload });
+
       if (autopilotFeedback) {
         autopilotFeedback.classList.remove('visible', 'success');
         autopilotFeedback.textContent = '';
@@ -2026,7 +2104,7 @@
         const res = await fetch('/admin/autopilot/config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(payloadWithKey),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -2036,9 +2114,16 @@
         autopilotConfig = { ...AUTOPILOT_DEFAULTS, ...incoming };
         renderAutopilotState();
         updateAutopilotSummary();
-        if (showSuccess && autopilotFeedback) {
-          autopilotFeedback.textContent = 'Autopilot settings saved.';
-          autopilotFeedback.classList.add('visible', 'success');
+        const missingKey = autopilotConfig.enabled && !autopilotConfig.has_api_key;
+        if (autopilotFeedback) {
+          if (missingKey) {
+            autopilotFeedback.textContent = 'Add your OpenAI API key so autopilot can respond to visitors.';
+            autopilotFeedback.classList.remove('success');
+            autopilotFeedback.classList.add('visible');
+          } else if (showSuccess) {
+            autopilotFeedback.textContent = 'Autopilot settings saved.';
+            autopilotFeedback.classList.add('visible', 'success');
+          }
         }
         return true;
       } catch (error) {
@@ -3656,18 +3741,51 @@
       });
     }
 
+    if (autopilotApiKeyInput) {
+      autopilotApiKeyInput.addEventListener('input', () => {
+        autopilotApiKeyInput.dataset.dirty = 'true';
+        const hasValue = autopilotApiKeyInput.value.trim().length > 0;
+        const hasExisting = autopilotApiKeyInput.dataset.hasExisting === 'true';
+        if (autopilotApiKeyNote) {
+          if (hasValue) {
+            autopilotApiKeyNote.textContent = 'This key will be saved securely and used for autopilot replies.';
+            autopilotApiKeyNote.classList.remove('warning');
+          } else if (hasExisting) {
+            autopilotApiKeyNote.textContent = 'Leave blank to keep your existing key.';
+            autopilotApiKeyNote.classList.remove('warning');
+          } else {
+            autopilotApiKeyNote.textContent = 'Add your OpenAI API key so autopilot can reply to visitors.';
+            autopilotApiKeyNote.classList.add('warning');
+          }
+        }
+      });
+    }
+
+    if (clearAutopilotApiKeyBtn && autopilotApiKeyInput) {
+      clearAutopilotApiKeyBtn.addEventListener('click', () => {
+        autopilotApiKeyInput.value = '';
+        autopilotApiKeyInput.dataset.dirty = 'true';
+        autopilotApiKeyInput.dataset.hasExisting = 'false';
+        if (autopilotApiKeyNote) {
+          autopilotApiKeyNote.textContent = 'Existing API key will be removed after saving.';
+          autopilotApiKeyNote.classList.add('warning');
+        }
+        autopilotApiKeyInput.focus();
+      });
+    }
+
     autopilotToggleButtons.forEach((button) => {
       button.addEventListener('click', () => {
         const nextEnabled = !autopilotConfig.enabled;
         const businessProfile = autopilotPromptInput
           ? autopilotPromptInput.value.trim()
           : autopilotConfig.business_profile || '';
-        persistAutopilotConfig({
+        persistAutopilotConfig(applyApiKeyToPayload({
           enabled: nextEnabled,
           business_profile: businessProfile,
           model: autopilotConfig.model,
           temperature: autopilotConfig.temperature,
-        });
+        }));
       });
     });
 
@@ -3676,12 +3794,12 @@
         event.preventDefault();
         const businessProfile = autopilotPromptInput ? autopilotPromptInput.value.trim() : '';
         persistAutopilotConfig(
-          {
+          applyApiKeyToPayload({
             enabled: autopilotConfig.enabled,
             business_profile: businessProfile,
             model: autopilotConfig.model,
             temperature: autopilotConfig.temperature,
-          },
+          }),
           true
         );
       });
