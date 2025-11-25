@@ -27,6 +27,9 @@ AUTOPILOT_FILE = "autopilot.json"
 BANNED_IPS_FILE = "banned_ips.json"
 VISITOR_LOG_FILE = "visitor_log.json"
 REVIEWS_FILE = "reviews.json"
+CUSTOMER_SLOTS_FILE = "customer_slots.json"
+
+CUSTOMER_ACCESS_CODE = os.getenv("CUSTOMER_ACCESS_CODE", "GARDENCARE2024")
 
 DEFAULT_AUTOPILOT_MODEL = "deepseek-chat"
 DEFAULT_AUTOPILOT_TEMPERATURE = 0.3
@@ -100,6 +103,7 @@ def _default_reviews_payload():
 
 _ensure_storage_file(VISITOR_LOG_FILE, default={})
 _ensure_storage_file(REVIEWS_FILE, default=_default_reviews_payload())
+_ensure_storage_file(CUSTOMER_SLOTS_FILE, default=[])
 
 
 def _is_private_ip(ip_str: str) -> bool:
@@ -1614,6 +1618,64 @@ def save_contacts(contacts):
         json.dump(contacts, file, indent=2)
 
 
+def _normalize_customer_slot(slot: dict) -> dict:
+    if not isinstance(slot, dict):
+        return {}
+
+    date_value = (slot.get("date") or "").strip()
+    time_value = (slot.get("time") or "").strip()
+    label = (slot.get("label") or "").strip()
+    if not label:
+        label = f"{date_value} {time_value}".strip()
+
+    status = (slot.get("status") or "available").strip().lower()
+    if status not in {"available", "booked", "confirmed"}:
+        status = "available"
+
+    entry = {
+        "id": (slot.get("id") or str(uuid4())).strip(),
+        "date": date_value,
+        "time": time_value,
+        "label": label,
+        "status": status,
+        "created_at": slot.get("created_at")
+        or datetime.utcnow().isoformat(),
+    }
+
+    customer_name = slot.get("customer_name") or ""
+    customer_phone = slot.get("customer_phone") or ""
+    if customer_name:
+        entry["customer_name"] = customer_name.strip()
+    if customer_phone:
+        entry["customer_phone"] = customer_phone.strip()
+    if slot.get("booked_at"):
+        entry["booked_at"] = slot.get("booked_at")
+
+    return entry
+
+
+def load_customer_slots():
+    raw = _read_text_file(CUSTOMER_SLOTS_FILE).strip()
+    if not raw:
+        return []
+    try:
+        payload = json.loads(raw)
+        if isinstance(payload, list):
+            return [_normalize_customer_slot(item) for item in payload]
+    except json.JSONDecodeError:
+        return []
+    return []
+
+
+def save_customer_slots(slots):
+    with open(CUSTOMER_SLOTS_FILE, "w", encoding="utf-8") as handle:
+        json.dump(slots, handle, indent=2)
+
+
+def _customer_slot_label(date_value: str, time_value: str) -> str:
+    return f"{date_value.strip()} {time_value.strip()}".strip()
+
+
 def load_availability():
     if not os.path.exists(AVAIL_FILE):
         return []
@@ -1649,9 +1711,150 @@ def reinstate_availability(slot):
         save_availability(slots)
 
 
+def _customer_slot_conflicts(slot_label: str) -> bool:
+    if not slot_label:
+        return True
+
+    existing_booking_times = {booking.get("time", "") for booking in load_bookings()}
+    availability = set(load_availability())
+    customer_slots = {slot.get("label", "") for slot in load_customer_slots()}
+
+    return slot_label in availability or slot_label in existing_booking_times or slot_label in customer_slots
+
+
+def _find_customer_slot(slot_id: str):
+    for slot in load_customer_slots():
+        if slot.get("id") == slot_id:
+            return slot
+    return None
+
+
 @app.route("/")
 def home():
     return render_template('index.html')
+
+
+@app.route("/customer/login", methods=["POST"])
+def customer_login():
+    payload = request.get_json(silent=True) or {}
+    code = (payload.get("code") or "").strip()
+
+    if code != CUSTOMER_ACCESS_CODE:
+        return jsonify({"message": "Access code is incorrect."}), 401
+
+    return jsonify({"message": "Access granted."})
+
+
+@app.route("/customer/slots", methods=["GET", "POST"])
+def customer_slots():
+    if request.method == "POST":
+        payload = request.get_json(silent=True) or request.form
+        date_value = (payload.get("date") or "").strip()
+        time_value = (payload.get("time") or "").strip()
+
+        if not date_value or not time_value:
+            return jsonify({"message": "Date and time are required."}), 400
+
+        try:
+            datetime.strptime(date_value, "%Y-%m-%d")
+        except ValueError:
+            return jsonify({"message": "Date format should be YYYY-MM-DD."}), 400
+
+        slot_label = _customer_slot_label(date_value, time_value)
+        if _customer_slot_conflicts(slot_label):
+            return (
+                jsonify(
+                    {
+                        "message": "This slot conflicts with an existing quote slot or another customer slot.",
+                        "slot": slot_label,
+                    }
+                ),
+                400,
+            )
+
+        slots = load_customer_slots()
+        slots.append(
+            {
+                "id": str(uuid4()),
+                "date": date_value,
+                "time": time_value,
+                "label": slot_label,
+                "status": "available",
+                "created_at": datetime.utcnow().isoformat(),
+            }
+        )
+        save_customer_slots(slots)
+
+        return jsonify({"message": "Customer slot added.", "slot": slots[-1]}), 201
+
+    available_only = (request.args.get("available_only") or "").lower() in {"1", "true", "yes"}
+    slots = load_customer_slots()
+    if available_only:
+        slots = [slot for slot in slots if slot.get("status") == "available"]
+
+    slots.sort(key=lambda entry: (entry.get("date", ""), entry.get("time", "")))
+    return jsonify({"slots": slots})
+
+
+@app.route("/customer/slots/book", methods=["POST"])
+def book_customer_slot():
+    payload = request.get_json(silent=True) or {}
+    slot_id = (payload.get("slot_id") or "").strip()
+    name = (payload.get("name") or "").strip()
+    phone = (payload.get("phone") or "").strip()
+
+    if not slot_id or not name or not phone:
+        return jsonify({"message": "Name, phone, and slot are required."}), 400
+
+    slots = load_customer_slots()
+    updated = False
+    for slot in slots:
+        if slot.get("id") != slot_id:
+            continue
+        if slot.get("status") != "available":
+            return jsonify({"message": "This slot is no longer available."}), 409
+        slot["status"] = "booked"
+        slot["customer_name"] = name
+        slot["customer_phone"] = phone
+        slot["booked_at"] = datetime.utcnow().isoformat()
+        updated = True
+        break
+
+    if not updated:
+        return jsonify({"message": "Slot not found."}), 404
+
+    save_customer_slots(slots)
+    return jsonify({"message": "Your slot is reserved. We will confirm shortly."})
+
+
+@app.route("/customer/slots/status", methods=["POST"])
+def update_customer_slot_status():
+    payload = request.get_json(silent=True) or request.form
+    slot_id = (payload.get("slot_id") or "").strip()
+    status = (payload.get("status") or "").strip().lower()
+
+    if not slot_id or status not in {"available", "booked", "confirmed"}:
+        return jsonify({"message": "Slot ID and a valid status are required."}), 400
+
+    slots = load_customer_slots()
+    updated = False
+    for slot in slots:
+        if slot.get("id") != slot_id:
+            continue
+
+        slot["status"] = status
+        if status == "available":
+            slot.pop("customer_name", None)
+            slot.pop("customer_phone", None)
+            slot.pop("booked_at", None)
+        updated = True
+        break
+
+    if not updated:
+        return jsonify({"message": "Slot not found."}), 404
+
+    save_customer_slots(slots)
+    return jsonify({"message": "Slot updated.", "status": status})
 
 
 # --- Handle booking submissions ---
@@ -1671,6 +1874,9 @@ def book():
 
     if location and location not in allowed_locations:
         return jsonify({"message": "❌ Please choose a valid service location."}), 400
+
+    if any(slot.get("label") == time for slot in load_customer_slots()):
+        return jsonify({"message": "❌ This time is reserved for existing customers."}), 400
 
     bookings = load_bookings()
     booking_entry = {
@@ -1703,18 +1909,56 @@ def get_availability():
 def view_bookings():
     # Add new slot
     if request.method == "POST":
-        date = request.form.get("date")
-        time = request.form.get("time")
-        if date and time:
-            try:
-                datetime.strptime(date, "%Y-%m-%d")
-                slot = f"{date} {time}"
-                add_availability_slot(slot)
-            except ValueError:
-                pass
+        form_type = request.form.get("form_type", "")
+        if form_type == "customer_slot":
+            date = request.form.get("customer_date")
+            time = request.form.get("customer_time")
+            if date and time:
+                try:
+                    datetime.strptime(date, "%Y-%m-%d")
+                except ValueError:
+                    date = None
+                else:
+                    slot_label = _customer_slot_label(date, time)
+                    if _customer_slot_conflicts(slot_label):
+                        return (
+                            jsonify(
+                                {
+                                    "message": "This slot conflicts with an existing quote slot or another customer slot.",
+                                    "slot": slot_label,
+                                }
+                            ),
+                            400,
+                        )
+                    slots = load_customer_slots()
+                    slots.append(
+                        {
+                            "id": str(uuid4()),
+                            "date": date,
+                            "time": time,
+                            "label": slot_label,
+                            "status": "available",
+                            "created_at": datetime.utcnow().isoformat(),
+                        }
+                    )
+                    save_customer_slots(slots)
+        else:
+            date = request.form.get("date")
+            time = request.form.get("time")
+            if date and time:
+                try:
+                    datetime.strptime(date, "%Y-%m-%d")
+                    slot = f"{date} {time}"
+                    add_availability_slot(slot)
+                except ValueError:
+                    pass
 
     bookings = load_bookings()
     avail = load_availability()
+    customer_slots_data = load_customer_slots()
+    available_customer_slots = [slot for slot in customer_slots_data if slot.get("status") == "available"]
+    booked_customer_slots = [slot for slot in customer_slots_data if slot.get("status") == "booked"]
+    confirmed_customer_slots = [slot for slot in customer_slots_data if slot.get("status") == "confirmed"]
 
     # --- Pretty Admin Page ---
     html = """
@@ -1754,7 +1998,7 @@ def view_bookings():
       </style>
     </head>
     <body>
-      <h1>📘 Current Bookings</h1>
+      <h1>📘 Current Quote Bookings</h1>
       {% if bookings %}
       <table>
         <tr><th>Name</th><th>Time</th><th>Location</th><th>Email</th><th>Phone</th></tr>
@@ -1792,13 +2036,114 @@ def view_bookings():
             {% endfor %}
           </table>
         {% else %}
-          <p>No free times set yet</p>
+        <p>No free times set yet</p>
+        {% endif %}
+      </div>
+
+      <div class="section">
+        <h2>👥 Existing Customer Slots</h2>
+        <p>Slots added here will never overlap with quote booking slots.</p>
+        <form method="POST">
+          <input type="hidden" name="form_type" value="customer_slot">
+          <input type="date" name="customer_date" required>
+          <select name="customer_time" required>
+            <option value="09:00">9:00 AM</option>
+            <option value="11:00">11:00 AM</option>
+            <option value="13:00">1:00 PM</option>
+            <option value="15:00">3:00 PM</option>
+            <option value="17:00">5:00 PM</option>
+          </select>
+          <button type="submit">Add Customer Slot</button>
+        </form>
+
+        <h3>Available for Customers</h3>
+        {% if available_customer_slots %}
+        <table>
+          <tr><th>Slot</th><th>Actions</th></tr>
+          {% for slot in available_customer_slots %}
+          <tr>
+            <td>{{ slot.get('label') }}</td>
+            <td>
+              <form method="POST" action="/customer/slots/status" style="display:inline-block;">
+                <input type="hidden" name="slot_id" value="{{ slot.get('id') }}">
+                <input type="hidden" name="status" value="booked">
+                <button type="submit">Mark Reserved</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+        {% else %}
+        <p>No available customer slots yet</p>
+        {% endif %}
+
+        <h3>Booked by Customers</h3>
+        {% if booked_customer_slots %}
+        <table>
+          <tr><th>Slot</th><th>Customer</th><th>Phone</th><th>Actions</th></tr>
+          {% for slot in booked_customer_slots %}
+          <tr>
+            <td>{{ slot.get('label') }}</td>
+            <td>{{ slot.get('customer_name', '—') }}</td>
+            <td>{{ slot.get('customer_phone', '—') }}</td>
+            <td>
+              <form method="POST" action="/customer/slots/status" style="display:inline-block;">
+                <input type="hidden" name="slot_id" value="{{ slot.get('id') }}">
+                <input type="hidden" name="status" value="confirmed">
+                <button type="submit">Confirm with Customer</button>
+              </form>
+              <form method="POST" action="/customer/slots/status" style="display:inline-block; margin-left:8px;">
+                <input type="hidden" name="slot_id" value="{{ slot.get('id') }}">
+                <input type="hidden" name="status" value="available">
+                <button type="submit">Release Slot</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+        {% else %}
+        <p>No customer bookings yet</p>
+        {% endif %}
+
+        <h3>Confirmed with Customers</h3>
+        {% if confirmed_customer_slots %}
+        <table>
+          <tr><th>Slot</th><th>Customer</th><th>Phone</th><th>Actions</th></tr>
+          {% for slot in confirmed_customer_slots %}
+          <tr>
+            <td>{{ slot.get('label') }}</td>
+            <td>{{ slot.get('customer_name', '—') }}</td>
+            <td>{{ slot.get('customer_phone', '—') }}</td>
+            <td>
+              <form method="POST" action="/customer/slots/status" style="display:inline-block;">
+                <input type="hidden" name="slot_id" value="{{ slot.get('id') }}">
+                <input type="hidden" name="status" value="booked">
+                <button type="submit">Mark Pending</button>
+              </form>
+              <form method="POST" action="/customer/slots/status" style="display:inline-block; margin-left:8px;">
+                <input type="hidden" name="slot_id" value="{{ slot.get('id') }}">
+                <input type="hidden" name="status" value="available">
+                <button type="submit">Release Slot</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+        {% else %}
+        <p>No confirmed customer slots</p>
         {% endif %}
       </div>
     </body>
     </html>
     """
-    return render_template_string(html, bookings=bookings, avail=avail)
+    return render_template_string(
+        html,
+        bookings=bookings,
+        avail=avail,
+        available_customer_slots=available_customer_slots,
+        booked_customer_slots=booked_customer_slots,
+        confirmed_customer_slots=confirmed_customer_slots,
+    )
 
 
 # --- NEW: JSON endpoint for bookings dashboard ---
