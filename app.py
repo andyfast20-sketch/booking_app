@@ -28,7 +28,7 @@ BANNED_IPS_FILE = "banned_ips.json"
 VISITOR_LOG_FILE = "visitor_log.json"
 REVIEWS_FILE = "reviews.json"
 
-DEFAULT_AUTOPILOT_MODEL = "gpt-3.5-turbo"
+DEFAULT_AUTOPILOT_MODEL = "deepseek-chat"
 DEFAULT_AUTOPILOT_TEMPERATURE = 0.3
 AUTOPILOT_PROFILE_LIMIT = 4000
 AUTOPILOT_HISTORY_LIMIT = 12
@@ -714,7 +714,13 @@ def _autopilot_config_snapshot(*, include_secret: bool = False) -> dict:
     if include_secret:
         return snapshot
 
-    env_key_present = bool((os.environ.get("OPENAI_API_KEY") or "").strip())
+    env_key_present = bool(
+        (
+            os.environ.get("DEEPSEEK_API_KEY")
+            or os.environ.get("OPENAI_API_KEY")
+            or ""
+        ).strip()
+    )
     keys_payload = snapshot.get("api_keys", [])
     if not isinstance(keys_payload, list):
         keys_payload = []
@@ -1065,7 +1071,7 @@ def _request_autopilot_reply(messages, *, model: str, temperature: float, api_ke
     }
 
     request = Request(
-        "https://api.openai.com/v1/chat/completions",
+        "https://api.deepseek.com/chat/completions",
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "Content-Type": "application/json",
@@ -1102,7 +1108,9 @@ def _request_autopilot_reply(messages, *, model: str, temperature: float, api_ke
 
 
 def _resolve_autopilot_api_key() -> str:
-    env_key = (os.environ.get("OPENAI_API_KEY") or "").strip()
+    env_key = (os.environ.get("DEEPSEEK_API_KEY") or "").strip() or (
+        os.environ.get("OPENAI_API_KEY") or ""
+    ).strip()
     with _autopilot_lock:
         stored_keys = _autopilot_config.get("api_keys") or []
         primary_key = ""

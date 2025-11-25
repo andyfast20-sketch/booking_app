@@ -1287,7 +1287,7 @@
       <div class="panel-header">
         <div class="meta">
           <h2 id="autopilot-heading">Chat autopilot</h2>
-          <p>Let ChatGPT answer routine visitor questions using your business knowledge.</p>
+          <p>Let DeepSeek answer routine visitor questions using your business knowledge.</p>
         </div>
         <div class="panel-actions">
           <button type="button" id="autopilotToggle">Enable autopilot</button>
@@ -1319,7 +1319,7 @@
             <div class="autopilot-api-header">
               <div>
                 <p class="eyebrow">AI access</p>
-                <h3 id="autopilotApiKeyHeading" class="autopilot-api-title">OpenAI API key</h3>
+                <h3 id="autopilotApiKeyHeading" class="autopilot-api-title">DeepSeek API key</h3>
                 <p class="autopilot-api-description">Used to power the autopilot assistant.</p>
               </div>
               <span class="status-pill offline" id="autopilotApiKeyStatus">No key saved</span>
@@ -1340,8 +1340,8 @@
             </label>
             <p class="input-note" id="autopilotApiKeyNote">
               Saved securely on the server for autopilot replies. Leave blank to keep your existing key or use the
-              remove button above. The <code>OPENAI_API_KEY</code> environment variable will be used as a fallback if no
-              key is saved.
+              remove button above. The <code>DEEPSEEK_API_KEY</code> environment variable (or <code>OPENAI_API_KEY</code>
+              for legacy setups) will be used as a fallback if no key is saved.
             </p>
             <div class="saved-keys">
               <p class="eyebrow">Saved API keys</p>
@@ -1620,7 +1620,7 @@
     const AUTOPILOT_DEFAULTS = {
       enabled: false,
       business_profile: '',
-      model: 'gpt-3.5-turbo',
+      model: 'deepseek-chat',
       temperature: 0.3,
       has_api_key: false,
       api_keys: [],
@@ -2093,7 +2093,7 @@
       } else if (enabled && !hasKey) {
         setSummaryText(
           autopilotSummaryHighlight,
-          'Autopilot is on, but add an OpenAI API key so replies can be generated.'
+          'Autopilot is on, but add a DeepSeek API key so replies can be generated.'
         );
       } else if (enabled) {
         setSummaryText(
@@ -2213,8 +2213,8 @@
       }
       if (autopilotApiKeyNote) {
         autopilotApiKeyNote.textContent = hasApiKey
-          ? 'API key saved securely for future autopilot replies. Leave the box untouched to keep it. The OPENAI_API_KEY environment variable will also be used if set.'
-          : 'Add your OpenAI API key so autopilot can reply to visitors.';
+          ? 'API key saved securely for future autopilot replies. Leave the box untouched to keep it. The DEEPSEEK_API_KEY environment variable (or OPENAI_API_KEY for legacy setups) will also be used if set.'
+          : 'Add your DeepSeek API key so autopilot can reply to visitors.';
         autopilotApiKeyNote.classList.toggle('warning', !hasApiKey);
       }
 
@@ -2279,7 +2279,7 @@
         const missingKey = autopilotConfig.enabled && !autopilotConfig.has_api_key;
         if (autopilotFeedback) {
           if (missingKey) {
-            autopilotFeedback.textContent = 'Add your OpenAI API key so autopilot can respond to visitors.';
+            autopilotFeedback.textContent = 'Add your DeepSeek API key so autopilot can respond to visitors.';
             autopilotFeedback.classList.remove('success');
             autopilotFeedback.classList.add('visible');
           } else if (showSuccess) {
@@ -3916,7 +3916,7 @@
             autopilotApiKeyNote.textContent = 'Leave blank to keep your existing key.';
             autopilotApiKeyNote.classList.remove('warning');
           } else {
-            autopilotApiKeyNote.textContent = 'Add your OpenAI API key so autopilot can reply to visitors.';
+            autopilotApiKeyNote.textContent = 'Add your DeepSeek API key so autopilot can reply to visitors.';
             autopilotApiKeyNote.classList.add('warning');
           }
         }
