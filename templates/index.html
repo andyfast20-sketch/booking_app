@@ -2534,11 +2534,11 @@
 
         .modal-card {
             position: relative;
-            width: min(520px, 100%);
+            width: min(440px, 96%);
             background: var(--white);
-            border-radius: 28px;
+            border-radius: 24px;
             box-shadow: 0 40px 70px rgba(15, 23, 42, 0.25);
-            padding: 40px;
+            padding: 28px;
             overflow: hidden;
         }
 
@@ -2596,9 +2596,9 @@
         }
 
         .modal-header h3 {
-            font-size: 1.8rem;
-            margin-top: 18px;
-            margin-bottom: 10px;
+            font-size: 1.6rem;
+            margin-top: 14px;
+            margin-bottom: 8px;
         }
 
         .modal-header p {
@@ -2608,15 +2608,6 @@
 
         .modal-header p strong {
             color: var(--primary-dark);
-        }
-
-        .modal-header .modal-weather {
-            margin-top: 8px;
-            color: var(--primary-dark);
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .modal-form {
@@ -2647,13 +2638,13 @@
             display: block;
             font-weight: 600;
             color: var(--text);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .modal-group input,
         .modal-group select {
             width: 100%;
-            padding: 14px 16px;
+            padding: 12px 14px;
             border-radius: 14px;
             border: 1px solid rgba(46, 125, 50, 0.18);
             background: rgba(255, 255, 255, 0.9);
@@ -3875,7 +3866,6 @@
                 <span class="modal-eyebrow"><i class="fas fa-user-check" aria-hidden="true"></i> Booking contact</span>
                 <h3 id="bookingModalTitle">Tell us how to reach you</h3>
                 <p>We'll confirm your appointment for <strong id="selectedSlotDisplay" aria-live="polite">your chosen slot</strong>.</p>
-                <p class="modal-weather" id="selectedSlotWeather" aria-live="polite"></p>
             </div>
             <form class="modal-form" id="bookingDetailsForm">
                 <input type="hidden" id="modalTimeInput" name="time" />
@@ -5277,7 +5267,6 @@
         const closeBookingModalBtn = document.getElementById('closeBookingModal');
         const modalTimeInput = document.getElementById('modalTimeInput');
         const selectedSlotDisplay = document.getElementById('selectedSlotDisplay');
-        const selectedSlotWeather = document.getElementById('selectedSlotWeather');
         const modalFeedback = document.getElementById('modalFeedback');
         const modalSubmitButton = document.getElementById('modalSubmitButton');
         const modalSubmitText = modalSubmitButton.querySelector('.modal-submit-text');
@@ -5304,7 +5293,6 @@
         let lastFocusedElement = null;
         let customerLoggedIn = false;
         let selectedCustomerSlot = null;
-        let slotWeatherCache = {};
 
         function formatSlotLabel(slot) {
             if (!slot || typeof slot !== 'string') return slot;
@@ -5336,48 +5324,6 @@
             if (selectedSlotDisplay) {
                 selectedSlotDisplay.textContent = friendlyLabel;
             }
-
-            if (!selectedSlotWeather) return;
-
-            if (!slot) {
-                selectedSlotWeather.textContent = '';
-                selectedSlotWeather.removeAttribute('aria-label');
-                return;
-            }
-
-            const forecast = slotWeatherCache && typeof slotWeatherCache === 'object' ? slotWeatherCache[slot] : null;
-            if (forecast) {
-                const symbol = forecast.symbol || '';
-                const summary = forecast.summary || '';
-                const displaySymbol = symbol || summary || '';
-                selectedSlotWeather.textContent = displaySymbol;
-                if (summary) {
-                    selectedSlotWeather.setAttribute('aria-label', `Weather forecast: ${summary}`);
-                } else {
-                    selectedSlotWeather.removeAttribute('aria-label');
-                }
-                return;
-            }
-
-            selectedSlotWeather.textContent = '';
-            selectedSlotWeather.removeAttribute('aria-label');
-        }
-
-        async function fetchSlotWeather(slots = []) {
-            if (!Array.isArray(slots) || slots.length === 0) return {};
-            try {
-                const res = await fetch(`${API_BASE}/weather/slots`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ slots })
-                });
-                if (!res.ok) return {};
-                const data = await res.json();
-                return (data && typeof data.forecasts === 'object' && data.forecasts) || {};
-            } catch (error) {
-                console.error('Error loading slot weather', error);
-                return {};
-            }
         }
 
         // Load available times
@@ -5385,8 +5331,6 @@
             try {
                 const res = await fetch(`${API_BASE}/availability`);
                 const slots = await res.json();
-                const slotWeather = await fetchSlotWeather(slots);
-                slotWeatherCache = slotWeather || {};
 
                 timeSelect.innerHTML = "";
 
@@ -5406,12 +5350,7 @@
                     slots.forEach((slot) => {
                         const opt = document.createElement("option");
                         opt.value = slot;
-                        const baseLabel = formatSlotLabel(slot);
-                        const forecast = slotWeather[slot];
-                        opt.text = forecast && forecast.symbol ? `${baseLabel} ${forecast.symbol}` : baseLabel;
-                        if (forecast && forecast.summary) {
-                            opt.title = forecast.summary;
-                        }
+                        opt.text = formatSlotLabel(slot);
                         timeSelect.add(opt);
                     });
                 }
