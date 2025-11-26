@@ -5340,19 +5340,27 @@
             if (!selectedSlotWeather) return;
 
             if (!slot) {
-                selectedSlotWeather.textContent = 'Select a slot to preview the forecast for that date.';
+                selectedSlotWeather.textContent = '';
+                selectedSlotWeather.removeAttribute('aria-label');
                 return;
             }
 
             const forecast = slotWeatherCache && typeof slotWeatherCache === 'object' ? slotWeatherCache[slot] : null;
             if (forecast) {
-                const symbol = forecast.symbol ? `${forecast.symbol} ` : '';
-                const summary = forecast.summary || 'Forecast available';
-                selectedSlotWeather.textContent = `Weather on this day: ${symbol}${summary}`;
+                const symbol = forecast.symbol || '';
+                const summary = forecast.summary || '';
+                const displaySymbol = symbol || summary || '';
+                selectedSlotWeather.textContent = displaySymbol;
+                if (summary) {
+                    selectedSlotWeather.setAttribute('aria-label', `Weather forecast: ${summary}`);
+                } else {
+                    selectedSlotWeather.removeAttribute('aria-label');
+                }
                 return;
             }
 
-            selectedSlotWeather.textContent = 'Weather forecast will appear here once it is available for this slot.';
+            selectedSlotWeather.textContent = '';
+            selectedSlotWeather.removeAttribute('aria-label');
         }
 
         async function fetchSlotWeather(slots = []) {
