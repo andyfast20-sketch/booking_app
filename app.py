@@ -3413,6 +3413,31 @@ def send_verification_code():
         return jsonify({"message": "An unexpected error occurred. Please try again."}), 500
 
 
+@app.route("/api/sms-config-status", methods=["GET"])
+def sms_config_status():
+    """Public, non-secret diagnostic endpoint.
+
+    Helps confirm whether the running backend instance has SMS configured.
+    Does not expose secrets (API keys are masked).
+    """
+    telnyx_cfg = _telnyx_config_snapshot(include_secret=False)
+    smsapi_cfg = _smsapi_config_snapshot(include_secret=False)
+
+    provider = "none"
+    if telnyx_cfg.get("has_config"):
+        provider = "telnyx"
+    elif smsapi_cfg.get("has_config"):
+        provider = "smsapi"
+
+    return jsonify(
+        {
+            "provider": provider,
+            "telnyx": telnyx_cfg,
+            "smsapi": smsapi_cfg,
+        }
+    )
+
+
 @app.route("/api/verify-code", methods=["POST"])
 def verify_code():
     data = request.get_json(silent=True) or {}
