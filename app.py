@@ -3063,6 +3063,121 @@ def admin_telnyx_config():
     return jsonify({"message": "Telnyx settings updated.", "config": _telnyx_config_snapshot()})
 
 
+@app.route("/admin/telnyx/test", methods=["POST"])
+@require_admin_auth
+def admin_telnyx_test():
+    """Send a real test SMS to verify Telnyx credentials are working."""
+    payload = request.get_json(silent=True) or {}
+    test_phone = str(payload.get("phone", "") or "").strip()
+
+    if not test_phone:
+        return jsonify({"ok": False, "message": "Please enter a phone number to send the test SMS to."}), 400
+
+    # Diagnostic: check what's configured
+    cfg = _telnyx_config_snapshot(include_secret=True)
+    diagnostics = {
+        "api_key_set": bool((cfg.get("api_key") or "").strip()),
+        "api_key_length": len((cfg.get("api_key") or "").strip()),
+        "from_number": cfg.get("from_number", ""),
+        "messaging_profile_id": cfg.get("messaging_profile_id", ""),
+        "has_config": cfg.get("has_config", False),
+    }
+
+    if not diagnostics["api_key_set"]:
+        return jsonify({
+            "ok": False,
+            "message": "API key is empty. Please save your Telnyx API key first.",
+            "diagnostics": diagnostics,
+        }), 400
+
+    if not diagnostics["from_number"]:
+        return jsonify({
+            "ok": False,
+            "message": "From number is empty. Please save your Telnyx phone number first.",
+            "diagnostics": diagnostics,
+        }), 400
+
+    # Normalize and send
+    normalized_phone = _normalize_phone_number(test_phone)
+    if not normalized_phone or not normalized_phone.startswith("+"):
+        return jsonify({"ok": False, "message": f"Invalid phone number format: '{test_phone}'. Use e.g. 07123456789 or +447123456789."}), 400
+
+    test_message = "Test from Pay As You Mow admin panel. If you see this, Telnyx SMS is working!"
+    print(f"[Telnyx-Test] Sending test SMS to {normalized_phone}")
+
+    success, error_msg = _send_sms_via_telnyx(normalized_phone, test_message)
+
+    if success:
+        return jsonify({
+            "ok": True,
+            "message": f"Test SMS sent successfully to {normalized_phone}. Check your phone!",
+            "diagnostics": diagnostics,
+        })
+    else:
+        return jsonify({
+            "ok": False,
+            "message": f"Failed to send: {error_msg}",
+            "diagnostics": diagnostics,
+        }), 500
+
+
+@app.route("/admin/telnyx/diagnostics", methods=["GET"])
+@require_admin_auth
+def admin_telnyx_diagnostics():
+    """Return diagnostic info about Telnyx configuration without sending anything."""
+    cfg = _telnyx_config_snapshot(include_secret=False)
+    cfg_secret = _telnyx_config_snapshot(include_secret=True)
+
+    api_key_raw = (cfg_secret.get("api_key") or "").strip()
+    from_number_raw = (cfg_secret.get("from_number") or "").strip()
+
+    checks = []
+    all_ok = True
+
+    # Check 1: API key
+    if api_key_raw:
+        if api_key_raw.startswith("KEY"):
+            checks.append({"label": "API Key", "status": "ok", "detail": f"Set ({len(api_key_raw)} chars, starts with KEY...)"})
+        else:
+            checks.append({"label": "API Key", "status": "warn", "detail": f"Set ({len(api_key_raw)} chars) but doesn't start with 'KEY' — double-check it's correct"})
+    else:
+        checks.append({"label": "API Key", "status": "fail", "detail": "Not set"})
+        all_ok = False
+
+    # Check 2: From number
+    normalized_from = _normalize_phone_number(from_number_raw)
+    if normalized_from and normalized_from.startswith("+"):
+        checks.append({"label": "From Number", "status": "ok", "detail": normalized_from})
+    elif from_number_raw:
+        checks.append({"label": "From Number", "status": "warn", "detail": f"Set as '{from_number_raw}' but may not be in valid E.164 format"})
+    else:
+        checks.append({"label": "From Number", "status": "fail", "detail": "Not set"})
+        all_ok = False
+
+    # Check 3: Messaging profile
+    profile_id = (cfg.get("messaging_profile_id") or "").strip()
+    if profile_id:
+        checks.append({"label": "Messaging Profile ID", "status": "ok", "detail": profile_id})
+    else:
+        checks.append({"label": "Messaging Profile ID", "status": "info", "detail": "Not set (optional)"})
+
+    # Check 4: Environment variables
+    env_key = os.environ.get("TELNYX_API_KEY", "").strip()
+    env_from = os.environ.get("TELNYX_FROM_NUMBER", "").strip()
+    if env_key or env_from:
+        checks.append({"label": "Environment Variables", "status": "info", "detail": f"TELNYX_API_KEY={'set' if env_key else 'not set'}, TELNYX_FROM_NUMBER={'set' if env_from else 'not set'}"})
+
+    # Check 5: Config file existence
+    config_file_exists = os.path.exists(TELNYX_CONFIG_FILE)
+    checks.append({"label": "Config File", "status": "ok" if config_file_exists else "warn", "detail": f"{'Exists' if config_file_exists else 'Not found'} ({TELNYX_CONFIG_FILE})"})
+
+    return jsonify({
+        "all_ok": all_ok,
+        "has_config": cfg.get("has_config", False),
+        "checks": checks,
+    })
+
+
 @app.route("/admin/email/config", methods=["GET", "POST"])
 @require_admin_auth
 def admin_email_config():
