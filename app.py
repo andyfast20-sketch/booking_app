@@ -1,49 +1,115 @@
 import json
 from uuid import uuid4
 
-from flask import Flask, request, jsonify, render_template_string, render_template
+from flask import Flask, request, jsonify, render_template_string, render_template, session, redirect
 from flask_cors import CORS
+from flask_compress import Compress
 import os
+import re
+import socket
+import base64
+import ssl
+import smtplib
+from email.message import EmailMessage
+from collections import deque
 from datetime import datetime, timedelta
 from threading import Lock
 from ipaddress import ip_address
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
-from urllib.parse import quote
+from urllib.parse import quote, urljoin, urlparse
+from werkzeug.utils import secure_filename
+
+# Import admin security
+from admin_auth import (
+    require_admin_auth, init_admin_security, 
+    hash_password, verify_password,
+    is_ip_locked, record_failed_login
+)
 
 app = Flask(__name__)
+Compress(app)  # Enable gzip compression for all responses
 
-# ✅ Allow your connected sites
-CORS(app, resources={r"/*": {"origins": [
-    "https://payasyounow71.neocities.org",
-    "https://booking-app-p8q8.onrender.com",
-    "https://andyfast20-sketch.github.io"
-]}})
+# Initialize admin security (must be before routes)
+ADMIN_PASSWORD_HASH = init_admin_security(app)
 
-BOOKINGS_FILE = "bookings.txt"
-AVAIL_FILE = "availability.txt"
-CONTACTS_FILE = "contacts.json"
-CHAT_STATE_FILE = "chat_state.json"
-AUTOPILOT_FILE = "autopilot.json"
-BANNED_IPS_FILE = "banned_ips.json"
-VISITOR_LOG_FILE = "visitor_log.json"
-REVIEWS_FILE = "reviews.json"
-CUSTOMER_SLOTS_FILE = "customer_slots.json"
-CUSTOMER_SETTINGS_FILE = "customer_settings.json"
-WEATHER_CONFIG_FILE = "weather_config.json"
+# ✅ CORS
+# Public API endpoints are intentionally callable from various front-end hosts.
+# Admin endpoints remain protected by admin auth.
+CORS(
+    app,
+    resources={
+        r"/api/*": {"origins": "*"},
+        r"/verify-email": {"origins": "*"},
+        r"/*": {
+            "origins": [
+                "https://payasyoumow.org",
+                "https://www.payasyoumow.org",
+                "https://callansweringandy.uk",
+                "https://www.callansweringandy.uk",
+                "https://payasyounow71.neocities.org",
+                "https://booking-app-p8q8.onrender.com",
+                "https://andyfast20-sketch.github.io",
+            ]
+        },
+    },
+)
+
+# Use absolute paths so data persists regardless of the current working directory
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def _data_path(filename: str) -> str:
+    return os.path.join(BASE_DIR, filename)
+
+BOOKINGS_FILE = _data_path("bookings.txt")
+AVAIL_FILE = _data_path("availability.txt")
+CONTACTS_FILE = _data_path("contacts.json")
+CHAT_STATE_FILE = _data_path("chat_state.json")
+AUTOPILOT_FILE = _data_path("autopilot.json")
+BANNED_IPS_FILE = _data_path("banned_ips.json")
+VISITOR_LOG_FILE = _data_path("visitor_log.json")
+REVIEWS_FILE = _data_path("reviews.json")
+CUSTOMER_SLOTS_FILE = _data_path("customer_slots.json")
+CUSTOMER_SETTINGS_FILE = _data_path("customer_settings.json")
+WEATHER_CONFIG_FILE = _data_path("weather_config.json")
+SMSAPI_CONFIG_FILE = _data_path("smsapi_config.json")
+TELNYX_CONFIG_FILE = _data_path("telnyx_config.json")
+SMTP_CONFIG_FILE = _data_path("smtp_config.json")
+EMAIL_MAGIC_FILE = _data_path("email_magic.json")
+ADMIN_AUTH_FILE = _data_path("admin_auth.json")
 
 CUSTOMER_ACCESS_CODE = os.getenv("CUSTOMER_ACCESS_CODE", "GARDENCARE2024")
 
 DEFAULT_AUTOPILOT_MODEL = "deepseek-chat"
 DEFAULT_AUTOPILOT_TEMPERATURE = 0.3
+DEFAULT_AUTOPILOT_PROVIDER = "deepseek"  # "deepseek" or "openrouter"
 AUTOPILOT_PROFILE_LIMIT = 4000
+AUTOPILOT_WEBSITE_KNOWLEDGE_LIMIT = 16000
+AUTOPILOT_WEBSITE_FETCH_BYTES_LIMIT = 1_500_000
+AUTOPILOT_WEBSITE_MAX_PAGES = 25
+AUTOPILOT_WEBSITE_MAX_DEPTH = 3
+AUTOPILOT_WEBSITE_MAX_LINKS_PER_PAGE = 120
 AUTOPILOT_HISTORY_LIMIT = 12
+
+# Safety: scraping private/localhost URLs can be used for SSRF. Keep disabled by default.
+ALLOW_PRIVATE_WEBSITE_SCRAPE = str(os.getenv("ALLOW_PRIVATE_WEBSITE_SCRAPE", "") or "").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
 
 VISITOR_TIMEOUT = timedelta(minutes=3)
 LOCATION_CACHE_TTL = timedelta(hours=6)
 WEATHER_CACHE_TTL = timedelta(minutes=45)
 WEATHER_LOCATION_QUERY = "Audenshaw,Denton,UK"
 INDEX_PAGES = {"/", "/index", "/index.html"}
+STATIC_IMAGES_DIR = os.path.join(app.root_path, "static", "images")
+ALLOWED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico"}
+RASTER_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+
+# Safety cap for uploads (10MB)
+app.config.setdefault("MAX_CONTENT_LENGTH", 10 * 1024 * 1024)
 
 _active_visitors = {}
 _presence_lock = Lock()
@@ -54,10 +120,16 @@ _autopilot_lock = Lock()
 _autopilot_config = {
     "enabled": False,
     "business_profile": "",
+    "business_website_url": "",
+    "business_website_knowledge": "",
+    "business_website_last_scraped": "",
+    "provider": DEFAULT_AUTOPILOT_PROVIDER,
     "model": DEFAULT_AUTOPILOT_MODEL,
     "temperature": DEFAULT_AUTOPILOT_TEMPERATURE,
     "api_key": "",
     "api_keys": [],
+    "openrouter_api_key": "",
+    "openrouter_api_keys": [],
 }
 _visitor_log_lock = Lock()
 _visitor_log = {}
@@ -68,6 +140,27 @@ _customer_settings = {"access_code": CUSTOMER_ACCESS_CODE}
 _weather_config_lock = Lock()
 _weather_config = {"api_key": "", "api_keys": []}
 _weather_forecast_cache = {}
+_smsapi_config_lock = Lock()
+_smsapi_config = {"oauth_token": "", "sender_name": ""}
+_telnyx_config_lock = Lock()
+_telnyx_config = {"api_key": "", "from_number": "", "messaging_profile_id": ""}
+_verification_codes = {}  # Store verification codes temporarily
+
+_smtp_config_lock = Lock()
+_smtp_config = {
+    "host": "",
+    "port": 587,
+    "username": "",
+    "password": "",
+    "from_email": "",
+    "from_name": "Pay As You Mow",
+    "use_starttls": True,
+}
+
+_email_magic_lock = Lock()
+_email_magic_tokens = {}  # token -> {email, expires, created_at}
+_verified_emails = {}  # email -> {verified_at, expires}
+_email_send_rate_limit = {}  # key -> datetime
 
 
 def _ensure_storage_file(path: str, *, default):
@@ -116,6 +209,240 @@ _ensure_storage_file(REVIEWS_FILE, default=_default_reviews_payload())
 _ensure_storage_file(CUSTOMER_SLOTS_FILE, default=[])
 _ensure_storage_file(CUSTOMER_SETTINGS_FILE, default={"access_code": CUSTOMER_ACCESS_CODE})
 _ensure_storage_file(WEATHER_CONFIG_FILE, default={"api_key": ""})
+_ensure_storage_file(SMSAPI_CONFIG_FILE, default={"oauth_token": "", "sender_name": ""})
+_ensure_storage_file(TELNYX_CONFIG_FILE, default={"api_key": "", "from_number": ""})
+_ensure_storage_file(
+    SMTP_CONFIG_FILE,
+    default={
+        "host": "",
+        "port": 587,
+        "username": "",
+        "password": "",
+        "from_email": "",
+        "from_name": "Pay As You Mow",
+        "use_starttls": True,
+    },
+)
+_ensure_storage_file(EMAIL_MAGIC_FILE, default={"tokens": {}, "verified": {}})
+
+
+def _load_smtp_config_from_disk() -> dict:
+    if not os.path.exists(SMTP_CONFIG_FILE):
+        return dict(_smtp_config)
+    try:
+        with open(SMTP_CONFIG_FILE, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+            if isinstance(payload, dict):
+                merged = dict(_smtp_config)
+                merged.update(payload)
+                return merged
+    except (OSError, json.JSONDecodeError):
+        return dict(_smtp_config)
+    return dict(_smtp_config)
+
+
+def _save_smtp_config(snapshot: dict):
+    try:
+        with open(SMTP_CONFIG_FILE, "w", encoding="utf-8") as handle:
+            json.dump(snapshot, handle, indent=2)
+    except OSError:
+        pass
+
+
+def _smtp_config_snapshot(*, include_secret: bool = False) -> dict:
+    with _smtp_config_lock:
+        cfg = dict(_smtp_config)
+    password = (cfg.get("password") or "").strip()
+    has_config = bool((cfg.get("host") or "").strip() and (cfg.get("from_email") or "").strip() and password)
+    if not include_secret:
+        cfg.pop("password", None)
+        cfg["has_password"] = bool(password)
+    cfg["has_config"] = has_config
+    return cfg
+
+
+def _load_email_magic_from_disk() -> tuple[dict, dict]:
+    if not os.path.exists(EMAIL_MAGIC_FILE):
+        return {}, {}
+    try:
+        with open(EMAIL_MAGIC_FILE, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        if not isinstance(payload, dict):
+            return {}, {}
+        tokens = payload.get("tokens")
+        verified = payload.get("verified")
+        return (tokens if isinstance(tokens, dict) else {}), (verified if isinstance(verified, dict) else {})
+    except (OSError, json.JSONDecodeError):
+        return {}, {}
+
+
+def _save_email_magic_to_disk(tokens: dict, verified: dict):
+    try:
+        with open(EMAIL_MAGIC_FILE, "w", encoding="utf-8") as handle:
+            json.dump({"tokens": tokens, "verified": verified}, handle, indent=2)
+    except OSError:
+        pass
+
+
+def _purge_expired_email_magic(now: datetime | None = None):
+    if now is None:
+        now = datetime.utcnow()
+    changed = False
+    with _email_magic_lock:
+        # purge tokens
+        for token, entry in list(_email_magic_tokens.items()):
+            expires_raw = entry.get("expires")
+            try:
+                expires = datetime.fromisoformat(expires_raw) if expires_raw else None
+            except Exception:
+                expires = None
+            if not expires or now > expires:
+                _email_magic_tokens.pop(token, None)
+                changed = True
+
+        # purge verified emails
+        for email, entry in list(_verified_emails.items()):
+            expires_raw = entry.get("expires")
+            try:
+                expires = datetime.fromisoformat(expires_raw) if expires_raw else None
+            except Exception:
+                expires = None
+            if not expires or now > expires:
+                _verified_emails.pop(email, None)
+                changed = True
+
+        if changed:
+            _save_email_magic_to_disk(dict(_email_magic_tokens), dict(_verified_emails))
+
+
+def _is_valid_email(value: str) -> bool:
+    email = (value or "").strip()
+    if not email or len(email) > 254:
+        return False
+    # Simple, pragmatic validation.
+    return bool(re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email))
+
+
+def _send_email_via_smtp(*, to_email: str, subject: str, text_body: str, html_body: str | None = None) -> tuple[bool, str]:
+    cfg = _smtp_config_snapshot(include_secret=True)
+    if not cfg.get("has_config"):
+        return False, "Email verification is not configured in the admin panel."
+
+    host = (cfg.get("host") or "").strip()
+    port = int(cfg.get("port") or 587)
+    username = (cfg.get("username") or "").strip()
+    password = (cfg.get("password") or "").strip()
+    from_email = (cfg.get("from_email") or "").strip()
+    from_name = (cfg.get("from_name") or "Pay As You Mow").strip() or "Pay As You Mow"
+    use_starttls = bool(cfg.get("use_starttls", True))
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = f"{from_name} <{from_email}>"
+    msg["To"] = to_email
+    msg.set_content(text_body)
+    if html_body:
+        msg.add_alternative(html_body, subtype="html")
+
+    try:
+        if port == 465 and not use_starttls:
+            context = ssl.create_default_context()
+            with smtplib.SMTP_SSL(host, port, context=context, timeout=12) as server:
+                if username:
+                    server.login(username, password)
+                server.send_message(msg)
+        else:
+            with smtplib.SMTP(host, port, timeout=12) as server:
+                server.ehlo()
+                if use_starttls:
+                    context = ssl.create_default_context()
+                    server.starttls(context=context)
+                    server.ehlo()
+                if username:
+                    server.login(username, password)
+                server.send_message(msg)
+        return True, ""
+    except Exception as exc:
+        print(f"SMTP email error: {exc}")
+        return False, "Unable to send email right now."
+
+
+# Load persisted email + SMTP settings at startup.
+with _smtp_config_lock:
+    _smtp_config.update(_load_smtp_config_from_disk())
+
+
+def _load_admin_password_hash_from_disk() -> str:
+    try:
+        if not os.path.exists(ADMIN_AUTH_FILE):
+            return ""
+        with open(ADMIN_AUTH_FILE, "r", encoding="utf-8") as handle:
+            data = json.load(handle) or {}
+        return str(data.get("admin_password_hash") or "").strip()
+    except Exception:
+        return ""
+
+
+def _save_admin_password_hash_to_disk(password_hash: str) -> None:
+    try:
+        with open(ADMIN_AUTH_FILE, "w", encoding="utf-8") as handle:
+            json.dump({"admin_password_hash": password_hash}, handle)
+    except Exception:
+        pass
+
+
+def _apply_smtp_env_overrides() -> None:
+    """Allow SMTP settings to be configured via environment variables (Render-friendly)."""
+    host = str(os.getenv("SMTP_HOST", "") or "").strip()
+    port_raw = os.getenv("SMTP_PORT")
+    username = str(os.getenv("SMTP_USERNAME", "") or "").strip()
+    password = str(os.getenv("SMTP_PASSWORD", "") or "").strip()
+    from_email = str(os.getenv("SMTP_FROM_EMAIL", "") or "").strip()
+    from_name = str(os.getenv("SMTP_FROM_NAME", "") or "").strip()
+    starttls_raw = str(os.getenv("SMTP_USE_STARTTLS", "") or "").strip().lower()
+
+    use_starttls = None
+    if starttls_raw in {"1", "true", "yes", "on"}:
+        use_starttls = True
+    elif starttls_raw in {"0", "false", "no", "off"}:
+        use_starttls = False
+
+    port = None
+    if port_raw is not None and str(port_raw).strip() != "":
+        try:
+            port = int(str(port_raw).strip())
+        except Exception:
+            port = None
+
+    with _smtp_config_lock:
+        if host:
+            _smtp_config["host"] = host
+        if port is not None and 1 <= port <= 65535:
+            _smtp_config["port"] = port
+        if username:
+            _smtp_config["username"] = username
+        if password:
+            _smtp_config["password"] = password
+        if from_email:
+            _smtp_config["from_email"] = from_email
+        if from_name:
+            _smtp_config["from_name"] = from_name
+        if use_starttls is not None:
+            _smtp_config["use_starttls"] = use_starttls
+
+
+_apply_smtp_env_overrides()
+
+# If admin password hash isn't provided via config/env, allow loading from disk.
+if not ADMIN_PASSWORD_HASH:
+    disk_hash = _load_admin_password_hash_from_disk()
+    if disk_hash:
+        ADMIN_PASSWORD_HASH = disk_hash
+
+tokens, verified = _load_email_magic_from_disk()
+with _email_magic_lock:
+    _email_magic_tokens.update(tokens)
+    _verified_emails.update(verified)
 
 
 def _load_customer_settings_from_disk() -> dict:
@@ -220,6 +547,279 @@ def _get_weather_api_key() -> str:
 
     env_key = os.environ.get("WEATHER_API_KEY", "").strip()
     return configured or env_key
+
+
+# SMSAPI.com Configuration Functions (Polish provider, cheap, zero compliance)
+def _load_smsapi_config_from_disk() -> dict:
+    if not os.path.exists(SMSAPI_CONFIG_FILE):
+        return {"oauth_token": "", "sender_name": ""}
+
+    try:
+        with open(SMSAPI_CONFIG_FILE, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return {"oauth_token": "", "sender_name": ""}
+
+    if not isinstance(payload, dict):
+        return {"oauth_token": "", "sender_name": ""}
+
+    return {
+        "oauth_token": str(payload.get("oauth_token", "") or ""),
+        "sender_name": str(payload.get("sender_name", "") or "")
+    }
+
+
+def _save_smsapi_config(config=None) -> None:
+    snapshot = dict(config or _smsapi_config)
+    try:
+        with open(SMSAPI_CONFIG_FILE, "w", encoding="utf-8") as handle:
+            json.dump(snapshot, handle, indent=2)
+    except OSError:
+        pass
+
+
+def _smsapi_config_snapshot(*, include_secret: bool = False) -> dict:
+    with _smsapi_config_lock:
+        oauth_token = str(_smsapi_config.get("oauth_token", "") or "")
+        sender_name = str(_smsapi_config.get("sender_name", "") or "")
+
+    has_config = bool(oauth_token)
+
+    if include_secret:
+        return {
+            "oauth_token": oauth_token,
+            "sender_name": sender_name,
+            "has_config": has_config
+        }
+
+    masked_token = ("*" * (len(oauth_token) - 8) + oauth_token[-8:]) if len(oauth_token) >= 8 else "****"
+    
+    return {
+        "oauth_token": masked_token,
+        "sender_name": sender_name,
+        "has_config": has_config
+    }
+
+
+def _load_telnyx_config_from_disk() -> dict:
+    if not os.path.exists(TELNYX_CONFIG_FILE):
+        return {"api_key": "", "from_number": "", "messaging_profile_id": ""}
+
+    try:
+        with open(TELNYX_CONFIG_FILE, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return {"api_key": "", "from_number": "", "messaging_profile_id": ""}
+
+    if not isinstance(payload, dict):
+        return {"api_key": "", "from_number": "", "messaging_profile_id": ""}
+
+    return {
+        "api_key": str(payload.get("api_key", "") or ""),
+        "from_number": str(payload.get("from_number", "") or ""),
+        "messaging_profile_id": str(payload.get("messaging_profile_id", "") or ""),
+    }
+
+
+def _save_telnyx_config(config=None) -> None:
+    snapshot = dict(config or _telnyx_config)
+    try:
+        with open(TELNYX_CONFIG_FILE, "w", encoding="utf-8") as handle:
+            json.dump(snapshot, handle, indent=2)
+    except OSError:
+        pass
+
+
+def _telnyx_config_snapshot(*, include_secret: bool = False) -> dict:
+    with _telnyx_config_lock:
+        api_key = str(_telnyx_config.get("api_key", "") or "")
+        from_number = str(_telnyx_config.get("from_number", "") or "")
+        messaging_profile_id = str(_telnyx_config.get("messaging_profile_id", "") or "")
+
+    env_key = os.environ.get("TELNYX_API_KEY", "").strip()
+    env_from = os.environ.get("TELNYX_FROM_NUMBER", "").strip()
+    env_profile = os.environ.get("TELNYX_MESSAGING_PROFILE_ID", "").strip()
+
+    effective_key = api_key or env_key
+    effective_from = from_number or env_from
+    effective_profile = messaging_profile_id or env_profile
+
+    has_config = bool(effective_key and effective_from)
+
+    if include_secret:
+        return {
+            "api_key": effective_key,
+            "from_number": effective_from,
+            "messaging_profile_id": effective_profile,
+            "has_config": has_config,
+        }
+
+    masked = ""
+    if effective_key:
+        masked = ("*" * (len(effective_key) - 6) + effective_key[-6:]) if len(effective_key) >= 6 else "****"
+
+    return {
+        "api_key": masked,
+        "from_number": effective_from,
+        "messaging_profile_id": effective_profile,
+        "has_config": has_config,
+    }
+
+
+def _normalize_phone_number(phone: str) -> str:
+    raw = str(phone or "").strip()
+    if not raw:
+        return ""
+
+    # Keep digits and leading + only.
+    cleaned = []
+    for ch in raw:
+        if ch.isdigit():
+            cleaned.append(ch)
+        elif ch == "+" and not cleaned:
+            cleaned.append(ch)
+    normalized = "".join(cleaned)
+
+    # Convert 00 prefix to +
+    if normalized.startswith("00"):
+        normalized = "+" + normalized[2:]
+
+    # UK-friendly normalization for common mobile formats.
+    if normalized.startswith("0") and len(normalized) == 11:
+        normalized = "+44" + normalized[1:]
+    elif normalized.startswith("44") and len(normalized) in {12, 13}:
+        normalized = "+" + normalized
+    elif normalized.startswith("7") and len(normalized) == 10:
+        normalized = "+44" + normalized
+
+    return normalized
+
+
+def _send_sms_via_smsapi(to_number: str, message: str) -> tuple[bool, str]:
+    """Send SMS using SMSAPI.com (Polish provider, ~2-3p per SMS, zero compliance)"""
+    config = _smsapi_config_snapshot(include_secret=True)
+
+    if not config.get("has_config"):
+        return False, "SMS verification is not configured in the admin panel."
+
+    try:
+        import requests
+
+        # SMSAPI.com simple REST API
+        url = "https://api.smsapi.com/sms.do"
+        
+        # Clean phone number (remove spaces, keep +)
+        to_clean = to_number.replace(" ", "")
+        
+        payload = {
+            "oauth_token": config["oauth_token"],
+            "to": to_clean,
+            "message": message,
+            "from": config.get("sender_name", "Info"),
+            "format": "json"
+        }
+
+        response = requests.post(url, data=payload, timeout=10)
+        
+        if response.status_code != 200:
+            return False, f"SMSAPI returned HTTP {response.status_code}."
+        
+        data = response.json() if response.content else {}
+        
+        # SMSAPI returns count > 0 on success
+        count = data.get("count", 0)
+        if count > 0:
+            return True, ""
+        
+        # Check for error
+        error_code = data.get("error")
+        error_msg = data.get("message", "Unknown error")
+        
+        if error_code:
+            return False, f"SMSAPI error {error_code}: {error_msg}"
+        
+        return False, "SMSAPI rejected the SMS request."
+    except Exception as e:
+        print(f"SMSAPI SMS error: {e}")
+        return False, "Unable to send SMS right now."
+
+
+def _send_sms_via_telnyx(to_number: str, message: str) -> tuple[bool, str]:
+    """Send SMS using Telnyx Messages API."""
+    config = _telnyx_config_snapshot(include_secret=True)
+
+    if not config.get("has_config"):
+        return False, "SMS verification is not configured in the admin panel."
+
+    api_key = str(config.get("api_key") or "").strip()
+    from_number = _normalize_phone_number(str(config.get("from_number") or "").strip())
+    to_clean = _normalize_phone_number(to_number)
+
+    if not api_key or not from_number:
+        return False, "Telnyx SMS is missing API key or from number."
+    if not to_clean or not to_clean.startswith("+"):
+        return False, "Invalid destination number."
+
+    try:
+        import requests
+
+        url = "https://api.telnyx.com/v2/messages"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        payload = {
+            "from": from_number,
+            "to": to_clean,
+            "text": message,
+            "type": "SMS",
+        }
+        profile_id = str(config.get("messaging_profile_id") or "").strip()
+        if profile_id:
+            payload["messaging_profile_id"] = profile_id
+        print(f"[Telnyx] Sending SMS from {from_number} to {to_clean}")
+        response = requests.post(url, headers=headers, json=payload, timeout=15)
+
+        if 200 <= response.status_code < 300:
+            print(f"[Telnyx] SMS sent successfully to {to_clean}")
+            return True, ""
+
+        detail = ""
+        try:
+            body = response.json() if response.content else {}
+            errors = body.get("errors")
+            if isinstance(errors, list) and errors:
+                first = errors[0] if isinstance(errors[0], dict) else {}
+                title = str(first.get("title") or "").strip()
+                err_detail = str(first.get("detail") or "").strip()
+                detail = title or err_detail
+                if title and err_detail and title != err_detail:
+                    detail = f"{title}: {err_detail}"
+        except Exception:
+            detail = ""
+
+        if detail:
+            print(f"[Telnyx] Error: {detail} (HTTP {response.status_code})")
+            return False, f"Telnyx error: {detail}"
+        print(f"[Telnyx] Unexpected HTTP {response.status_code}: {response.text[:300]}")
+        return False, f"Telnyx returned HTTP {response.status_code}."
+    except Exception as exc:
+        print(f"[Telnyx] SMS exception: {exc}")
+        return False, f"Unable to send SMS right now. ({type(exc).__name__})"
+
+
+def _send_sms_for_verification(to_number: str, message: str) -> tuple[bool, str]:
+    """Send SMS using the best configured provider.
+
+    Preference order:
+    1) Telnyx (if configured)
+    2) SMSAPI.com (legacy fallback)
+    """
+    telnyx_cfg = _telnyx_config_snapshot(include_secret=False)
+    if telnyx_cfg.get("has_config"):
+        return _send_sms_via_telnyx(to_number, message)
+    return _send_sms_via_smsapi(to_number, message)
 
 
 def _fetch_forecast_for_date(date_obj: datetime, *, api_key: str):
@@ -847,13 +1447,20 @@ def _merge_api_key(value: str, existing=None):
 def _coerce_autopilot_config(payload: dict, *, base=None) -> dict:
     reference = dict(base or _autopilot_config)
     api_keys = _normalize_api_keys(reference.get("api_keys", []))
+    openrouter_api_keys = _normalize_api_keys(reference.get("openrouter_api_keys", []))
     result = {
         "enabled": bool(reference.get("enabled", False)),
         "business_profile": str(reference.get("business_profile", "") or ""),
+        "business_website_url": str(reference.get("business_website_url", "") or ""),
+        "business_website_knowledge": str(reference.get("business_website_knowledge", "") or ""),
+        "business_website_last_scraped": str(reference.get("business_website_last_scraped", "") or ""),
+        "provider": str(reference.get("provider", DEFAULT_AUTOPILOT_PROVIDER) or DEFAULT_AUTOPILOT_PROVIDER),
         "model": str(reference.get("model", DEFAULT_AUTOPILOT_MODEL) or DEFAULT_AUTOPILOT_MODEL),
         "temperature": float(reference.get("temperature", DEFAULT_AUTOPILOT_TEMPERATURE)),
         "api_key": str(reference.get("api_key", "") or ""),
         "api_keys": api_keys,
+        "openrouter_api_key": str(reference.get("openrouter_api_key", "") or ""),
+        "openrouter_api_keys": openrouter_api_keys,
     }
 
     if payload is None:
@@ -870,6 +1477,21 @@ def _coerce_autopilot_config(payload: dict, *, base=None) -> dict:
         if len(text) > AUTOPILOT_PROFILE_LIMIT:
             text = text[:AUTOPILOT_PROFILE_LIMIT]
         result["business_profile"] = text
+
+    if "business_website_url" in payload:
+        url_text = str(payload.get("business_website_url") or "").strip()
+        # Keep this as a plain string; the scrape endpoint performs stricter validation.
+        result["business_website_url"] = url_text[:500]
+
+    if payload.get("clear_business_website_knowledge") is True:
+        result["business_website_knowledge"] = ""
+        result["business_website_last_scraped"] = ""
+
+    if "provider" in payload:
+        provider = str(payload.get("provider") or "").strip().lower()
+        if provider not in {"deepseek", "openrouter"}:
+            provider = DEFAULT_AUTOPILOT_PROVIDER
+        result["provider"] = provider
 
     if "model" in payload:
         model = str(payload.get("model") or "").strip() or DEFAULT_AUTOPILOT_MODEL
@@ -897,6 +1519,20 @@ def _coerce_autopilot_config(payload: dict, *, base=None) -> dict:
         elif "api_keys" not in payload:
             result["api_key"] = ""
             result["api_keys"] = []
+
+    if "openrouter_api_keys" in payload:
+        incoming_keys = _normalize_api_keys(payload.get("openrouter_api_keys") or [])
+        if incoming_keys:
+            result["openrouter_api_keys"] = incoming_keys
+
+    if "openrouter_api_key" in payload:
+        incoming_key = str(payload.get("openrouter_api_key") or "").strip()
+        if incoming_key:
+            result["openrouter_api_key"] = incoming_key
+            result["openrouter_api_keys"] = _merge_api_key(incoming_key, openrouter_api_keys)
+        elif "openrouter_api_keys" not in payload:
+            result["openrouter_api_key"] = ""
+            result["openrouter_api_keys"] = []
 
     return result
 
@@ -931,32 +1567,44 @@ def _autopilot_config_snapshot(*, include_secret: bool = False) -> dict:
         snapshot = {
             "enabled": bool(_autopilot_config.get("enabled", False)),
             "business_profile": str(_autopilot_config.get("business_profile", "") or ""),
+            "business_website_url": str(_autopilot_config.get("business_website_url", "") or ""),
+            "business_website_last_scraped": str(_autopilot_config.get("business_website_last_scraped", "") or ""),
+            "provider": str(_autopilot_config.get("provider", DEFAULT_AUTOPILOT_PROVIDER) or DEFAULT_AUTOPILOT_PROVIDER),
             "model": str(_autopilot_config.get("model", DEFAULT_AUTOPILOT_MODEL) or DEFAULT_AUTOPILOT_MODEL),
             "temperature": float(_autopilot_config.get("temperature", DEFAULT_AUTOPILOT_TEMPERATURE)),
             "api_key": str(_autopilot_config.get("api_key", "") or ""),
             "api_keys": list(_autopilot_config.get("api_keys", [])),
+            "openrouter_api_key": str(_autopilot_config.get("openrouter_api_key", "") or ""),
+            "openrouter_api_keys": list(_autopilot_config.get("openrouter_api_keys", [])),
         }
 
+        website_knowledge = str(_autopilot_config.get("business_website_knowledge", "") or "")
+        website_knowledge_preview = website_knowledge.strip()[:1200]
+        website_chars = len(website_knowledge.strip())
+
     if include_secret:
+        snapshot["business_website_knowledge"] = str(_autopilot_config.get("business_website_knowledge", "") or "")
         return snapshot
 
-    env_key_present = bool(
+    env_deepseek_present = bool(
         (
             os.environ.get("DEEPSEEK_API_KEY")
             or os.environ.get("OPENAI_API_KEY")
             or ""
         ).strip()
     )
-    keys_payload = snapshot.get("api_keys", [])
-    if not isinstance(keys_payload, list):
-        keys_payload = []
+    env_openrouter_present = bool((os.environ.get("OPENROUTER_API_KEY") or "").strip())
 
-    visible_keys = []
-    for entry in keys_payload:
+    deepseek_keys_payload = snapshot.get("api_keys", [])
+    if not isinstance(deepseek_keys_payload, list):
+        deepseek_keys_payload = []
+
+    deepseek_visible_keys = []
+    for entry in deepseek_keys_payload:
         value = str(entry.get("value") or "").strip()
         if not value:
             continue
-        visible_keys.append(
+        deepseek_visible_keys.append(
             {
                 "id": entry.get("id"),
                 "label": f"Key ending {value[-4:]}" if len(value) >= 4 else "Saved API key",
@@ -965,11 +1613,453 @@ def _autopilot_config_snapshot(*, include_secret: bool = False) -> dict:
             }
         )
 
-    has_api_key = bool(snapshot.get("api_key")) or bool(visible_keys) or env_key_present
+    openrouter_keys_payload = snapshot.get("openrouter_api_keys", [])
+    if not isinstance(openrouter_keys_payload, list):
+        openrouter_keys_payload = []
+
+    openrouter_visible_keys = []
+    for entry in openrouter_keys_payload:
+        value = str(entry.get("value") or "").strip()
+        if not value:
+            continue
+        openrouter_visible_keys.append(
+            {
+                "id": entry.get("id"),
+                "label": f"Key ending {value[-4:]}" if len(value) >= 4 else "Saved API key",
+                "created_at": entry.get("created_at", ""),
+                "last4": value[-4:] if len(value) >= 4 else value,
+            }
+        )
+
+    has_api_key = bool(snapshot.get("api_key")) or bool(deepseek_visible_keys) or env_deepseek_present
+    has_openrouter_api_key = (
+        bool(snapshot.get("openrouter_api_key"))
+        or bool(openrouter_visible_keys)
+        or env_openrouter_present
+    )
+
     snapshot.pop("api_key", None)
-    snapshot["api_keys"] = visible_keys
+    snapshot.pop("openrouter_api_key", None)
+    snapshot["api_keys"] = deepseek_visible_keys
+    snapshot["openrouter_api_keys"] = openrouter_visible_keys
     snapshot["has_api_key"] = has_api_key
+    snapshot["has_openrouter_api_key"] = has_openrouter_api_key
+    snapshot["has_business_website_knowledge"] = website_chars > 0
+    snapshot["business_website_knowledge_chars"] = website_chars
+    snapshot["business_website_knowledge_preview"] = website_knowledge_preview
     return snapshot
+
+
+def _normalize_website_url(raw_url: str) -> str:
+    text = str(raw_url or "").strip()
+    if not text:
+        return ""
+
+    if not re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*://", text):
+        text = f"https://{text}"
+
+    parsed = urlparse(text)
+    if parsed.scheme not in {"http", "https"}:
+        raise ValueError("Only http(s) URLs are allowed.")
+    if not parsed.netloc:
+        raise ValueError("Please enter a full website URL.")
+
+    # Strip fragments/query to avoid crawl explosions and tracking URLs.
+    parsed = parsed._replace(fragment="", query="")
+    return parsed.geturl()
+
+
+def _is_disallowed_ip_address(candidate: str) -> bool:
+    try:
+        ip_obj = ip_address(candidate)
+    except ValueError:
+        return True
+
+    return bool(
+        ip_obj.is_private
+        or ip_obj.is_loopback
+        or ip_obj.is_link_local
+        or ip_obj.is_multicast
+        or ip_obj.is_reserved
+    )
+
+
+def _assert_safe_public_url(url: str) -> None:
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"}:
+        raise ValueError("Only http(s) URLs are allowed.")
+    hostname = (parsed.hostname or "").strip()
+    if not hostname:
+        raise ValueError("Invalid website URL.")
+
+    lowered = hostname.lower()
+    if lowered in {"localhost"} or lowered.endswith(".local"):
+        if not ALLOW_PRIVATE_WEBSITE_SCRAPE:
+            raise ValueError(
+                "Localhost/private website scraping is blocked for safety. "
+                "To allow it for local testing, set ALLOW_PRIVATE_WEBSITE_SCRAPE=1 on the server."
+            )
+        return
+
+    # If the hostname is an IP literal, validate directly.
+    try:
+        ip_address(hostname)
+        if _is_disallowed_ip_address(hostname) and not ALLOW_PRIVATE_WEBSITE_SCRAPE:
+            raise ValueError(
+                "Private IP website scraping is blocked for safety. "
+                "To allow it for local testing, set ALLOW_PRIVATE_WEBSITE_SCRAPE=1 on the server."
+            )
+        return
+    except ValueError:
+        # Not an IP literal; continue to DNS resolution.
+        pass
+
+    try:
+        resolved = socket.getaddrinfo(hostname, None)
+    except OSError:
+        raise ValueError("Unable to resolve that website address.")
+
+    for entry in resolved:
+        sockaddr = entry[4]
+        if not sockaddr:
+            continue
+        ip_value = sockaddr[0]
+        if _is_disallowed_ip_address(ip_value) and not ALLOW_PRIVATE_WEBSITE_SCRAPE:
+            raise ValueError(
+                "That website resolves to a private/loopback IP which is blocked for safety. "
+                "To allow it for local testing, set ALLOW_PRIVATE_WEBSITE_SCRAPE=1 on the server."
+            )
+
+
+def _fetch_html(url: str) -> tuple[str, str]:
+    import requests
+
+    _assert_safe_public_url(url)
+    headers = {
+        "User-Agent": "BookingAppAutopilotScraper/1.0",
+        "Accept": "text/html,application/xhtml+xml",
+    }
+
+    response = requests.get(url, timeout=12, headers=headers, allow_redirects=True, stream=True)
+    final_url = response.url or url
+    _assert_safe_public_url(final_url)
+
+    content_type = str(response.headers.get("content-type") or "").lower()
+    if "text/html" not in content_type and "application/xhtml" not in content_type:
+        raise ValueError("Only HTML pages can be scraped.")
+
+    collected = bytearray()
+    for chunk in response.iter_content(chunk_size=8192):
+        if not chunk:
+            continue
+        collected.extend(chunk)
+        if len(collected) > AUTOPILOT_WEBSITE_FETCH_BYTES_LIMIT:
+            raise ValueError("That page is too large to scrape.")
+
+    encoding = response.encoding or "utf-8"
+    try:
+        html_text = collected.decode(encoding, errors="ignore")
+    except LookupError:
+        html_text = collected.decode("utf-8", errors="ignore")
+
+    return html_text, final_url
+
+
+def _extract_website_text(html: str) -> dict:
+    title = ""
+    description = ""
+    headings = []
+    plain_text = ""
+
+    try:
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup(html or "", "html.parser")
+        for tag in soup(["script", "style", "noscript", "svg", "canvas"]):
+            tag.decompose()
+
+        if soup.title and soup.title.string:
+            title = str(soup.title.string).strip()
+
+        meta = soup.find("meta", attrs={"name": re.compile(r"^description$", re.I)})
+        if meta and meta.get("content"):
+            description = str(meta.get("content") or "").strip()
+
+        for h in soup.find_all(["h1", "h2", "h3"], limit=30):
+            text = h.get_text(" ", strip=True)
+            if text:
+                headings.append(text)
+
+        plain_text = soup.get_text(" ", strip=True)
+    except Exception:
+        # Fallback: very basic stripping.
+        plain_text = re.sub(r"<[^>]+>", " ", html or "")
+
+    plain_text = re.sub(r"\s+", " ", plain_text).strip()
+
+    sections = []
+    if title:
+        sections.append(f"Title: {title}")
+    if description:
+        sections.append(f"Description: {description}")
+    if headings:
+        sections.append("Headings: " + "; ".join(headings[:20]))
+
+    if plain_text:
+        sections.append("Content: " + plain_text)
+
+    combined = "\n".join(sections).strip()
+    return {
+        "title": title,
+        "description": description,
+        "text": combined,
+    }
+
+
+def _canonicalize_crawl_url(candidate: str) -> str:
+    """Normalize URLs so we don't crawl duplicates.
+
+    We intentionally drop query/fragment to avoid crawl explosions.
+    """
+    parsed = urlparse(candidate)
+    cleaned = parsed._replace(query="", fragment="")
+    return cleaned.geturl()
+
+
+def _is_scrapable_internal_url(candidate: str, *, base_host: str) -> bool:
+    try:
+        parsed = urlparse(candidate)
+    except Exception:
+        return False
+
+    if parsed.scheme not in {"http", "https"}:
+        return False
+
+    hostname = (parsed.hostname or "").lower()
+    if not hostname or hostname != (base_host or "").lower():
+        return False
+
+    path = (parsed.path or "").lower()
+    if not path:
+        path = "/"
+
+    # Skip any admin-ish areas.
+    if path.startswith("/admin") or "/admin/" in path:
+        return False
+    if "wp-admin" in path:
+        return False
+
+    # Skip obvious non-content / app endpoints.
+    if path.startswith("/api") or "/api/" in path:
+        return False
+    if path.startswith("/static") or "/static/" in path:
+        return False
+
+    # Skip common binary assets by extension.
+    for ext in (
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".webp",
+        ".svg",
+        ".ico",
+        ".pdf",
+        ".zip",
+        ".rar",
+        ".7z",
+        ".mp3",
+        ".mp4",
+        ".mov",
+        ".avi",
+        ".woff",
+        ".woff2",
+        ".ttf",
+        ".eot",
+        ".css",
+        ".js",
+    ):
+        if path.endswith(ext):
+            return False
+
+    return True
+
+
+def _scrape_website_knowledge(start_url: str) -> dict:
+    # Crawl internal pages on the same domain, excluding admin areas.
+    start_html, start_final_url = _fetch_html(start_url)
+    base_host = (urlparse(start_final_url).hostname or "").lower()
+
+    queue = deque([(start_final_url, start_html, 0)])
+    visited = set()
+    pages = []
+    combined_sections = []
+
+    while queue and len(pages) < AUTOPILOT_WEBSITE_MAX_PAGES:
+        current_url, current_html, depth = queue.popleft()
+        canonical = _canonicalize_crawl_url(current_url)
+        if canonical in visited:
+            continue
+        visited.add(canonical)
+
+        # Safety: apply URL filters again.
+        if not _is_scrapable_internal_url(canonical, base_host=base_host):
+            continue
+
+        extracted = _extract_website_text(current_html)
+        extracted_text = extracted.get("text") or ""
+
+        combined_sections.append(f"Source: {canonical}\n{extracted_text}")
+        pages.append({"url": canonical, "title": extracted.get("title") or "", "chars": len(extracted_text)})
+
+        # Stop expanding if we hit depth limit or are near the knowledge cap.
+        approx_len = sum(len(section) for section in combined_sections)
+        if depth >= AUTOPILOT_WEBSITE_MAX_DEPTH or approx_len >= AUTOPILOT_WEBSITE_KNOWLEDGE_LIMIT:
+            continue
+
+        # Extract and enqueue next links.
+        try:
+            from bs4 import BeautifulSoup
+
+            soup = BeautifulSoup(current_html or "", "html.parser")
+            found = 0
+            for a in soup.find_all("a", href=True):
+                if found >= AUTOPILOT_WEBSITE_MAX_LINKS_PER_PAGE:
+                    break
+                href = str(a.get("href") or "").strip()
+                if not href:
+                    continue
+                absolute = urljoin(canonical, href)
+                next_url = _canonicalize_crawl_url(absolute)
+                if next_url in visited:
+                    continue
+                if not _is_scrapable_internal_url(next_url, base_host=base_host):
+                    continue
+
+                try:
+                    next_html, next_final = _fetch_html(next_url)
+                except Exception:
+                    continue
+
+                next_final_canonical = _canonicalize_crawl_url(next_final)
+                if next_final_canonical in visited:
+                    continue
+                if not _is_scrapable_internal_url(next_final_canonical, base_host=base_host):
+                    continue
+
+                queue.append((next_final_canonical, next_html, depth + 1))
+                found += 1
+        except Exception:
+            continue
+
+    combined_text = "\n\n".join([section for section in combined_sections if section]).strip()
+    if len(combined_text) > AUTOPILOT_WEBSITE_KNOWLEDGE_LIMIT:
+        combined_text = combined_text[:AUTOPILOT_WEBSITE_KNOWLEDGE_LIMIT]
+
+    return {
+        "url": start_url,
+        "final_url": start_final_url,
+        "pages": pages,
+        "text": combined_text,
+    }
+
+
+def _ensure_static_images_dir() -> None:
+    try:
+        os.makedirs(STATIC_IMAGES_DIR, exist_ok=True)
+    except OSError:
+        pass
+
+
+def _is_allowed_image_filename(filename: str) -> bool:
+    name = str(filename or "")
+    _, ext = os.path.splitext(name.lower())
+    return ext in ALLOWED_IMAGE_EXTENSIONS
+
+
+def _guess_image_extension(filename: str, mimetype: str) -> str:
+    _, ext = os.path.splitext(str(filename or "").lower())
+    if ext in ALLOWED_IMAGE_EXTENSIONS:
+        return ext
+
+    mt = str(mimetype or "").lower()
+    if mt == "image/png":
+        return ".png"
+    if mt in {"image/jpg", "image/jpeg"}:
+        return ".jpg"
+    if mt == "image/gif":
+        return ".gif"
+    if mt == "image/webp":
+        return ".webp"
+    if mt == "image/svg+xml":
+        return ".svg"
+    if mt == "image/x-icon" or mt == "image/vnd.microsoft.icon":
+        return ".ico"
+    return ""
+
+
+def _wrap_raster_bytes_in_svg(image_bytes: bytes, mimetype: str) -> str:
+    mt = str(mimetype or "").strip().lower() or "image/png"
+    # Basic hardening: only allow common raster types.
+    if mt not in {"image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"}:
+        mt = "image/png"
+    b64 = base64.b64encode(image_bytes or b"").decode("ascii")
+    # Use a generic viewBox; preserveAspectRatio keeps it nicely cropped/contained by CSS.
+    return (
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1600\" height=\"900\" viewBox=\"0 0 1600 900\" preserveAspectRatio=\"xMidYMid slice\">"
+        f"<image href=\"data:{mt};base64,{b64}\" x=\"0\" y=\"0\" width=\"1600\" height=\"900\" preserveAspectRatio=\"xMidYMid slice\"/>"
+        "</svg>"
+    )
+
+
+def _safe_image_relative_path(raw_path: str) -> str:
+    """Return a safe relative path under static/images.
+
+    Allows subfolders but blocks traversal and strips dangerous names.
+    """
+    text = str(raw_path or "").strip().replace("\\", "/")
+    if not text:
+        raise ValueError("Image path is required.")
+
+    if text.startswith("/"):
+        text = text.lstrip("/")
+
+    # Allow callers to pass either "ai.png" or "images/ai.png".
+    if text.lower().startswith("images/"):
+        text = text[7:]
+
+    parts = [p for p in text.split("/") if p and p not in {".", ".."}]
+    if not parts:
+        raise ValueError("Invalid image path.")
+
+    sanitized_parts = []
+    for part in parts[:-1]:
+        safe_part = secure_filename(part)
+        if not safe_part:
+            continue
+        sanitized_parts.append(safe_part)
+
+    filename = secure_filename(parts[-1])
+    if not filename:
+        raise ValueError("Invalid image filename.")
+    if not _is_allowed_image_filename(filename):
+        raise ValueError("Only common image types are allowed (png/jpg/webp/svg/etc).")
+
+    sanitized_parts.append(filename)
+    rel_path = "/".join(sanitized_parts)
+
+    # Final traversal safety check.
+    abs_path = os.path.abspath(os.path.join(STATIC_IMAGES_DIR, *sanitized_parts))
+    base_abs = os.path.abspath(STATIC_IMAGES_DIR)
+    if os.path.commonpath([abs_path, base_abs]) != base_abs:
+        raise ValueError("Invalid image path.")
+
+    return rel_path
+
+
+def _image_abs_path_from_rel(rel_path: str) -> str:
+    parts = [p for p in str(rel_path).split("/") if p]
+    return os.path.abspath(os.path.join(STATIC_IMAGES_DIR, *parts))
 
 
 def _load_chat_state_from_disk():
@@ -1076,6 +2166,16 @@ with _autopilot_lock:
 with _weather_config_lock:
     stored_weather = _load_weather_config_from_disk()
     _weather_config.update(stored_weather)
+
+
+with _smsapi_config_lock:
+    stored_smsapi = _load_smsapi_config_from_disk()
+    _smsapi_config.update(stored_smsapi)
+
+
+with _telnyx_config_lock:
+    stored_telnyx = _load_telnyx_config_from_disk()
+    _telnyx_config.update(stored_telnyx)
 
 
 with _customer_settings_lock:
@@ -1267,17 +2367,22 @@ def _build_autopilot_messages(conversation, config: dict) -> list:
     if not business_profile:
         business_profile = "No additional business context has been provided."
 
+    website_knowledge = str(config.get("business_website_knowledge", "") or "").strip()
+    if not website_knowledge:
+        website_knowledge = "No website knowledge has been scraped yet."
+
     instructions = (
-        "You are Autopilot, a friendly live chat assistant for a gardening and maintenance business. "
-        "Answer website visitor questions using the business knowledge provided below and the ongoing conversation. "
-        "If you are unsure or the visitor asks for something that is not covered, politely let them know a member of the team will follow up. "
-        "Keep replies concise, helpful and avoid making up details."
+        "You are Autopilot, a friendly, down-to-earth live chat assistant for a UK gardening and maintenance business. "
+        "Write like a real person: use natural phrasing and contractions, and keep it warm and helpful (not robotic or overly formal). "
+        "Keep replies short (usually 1–3 sentences). Ask one quick clarifying question if it helps. "
+        "Use the business knowledge below and the conversation; do not invent details, prices, or availability. "
+        "If you are unsure, say you will pass it to the team and offer to take their postcode and preferred day/time."
     )
 
     messages = [
         {
             "role": "system",
-            "content": f"{instructions}\n\nBusiness knowledge:\n{business_profile}",
+            "content": f"{instructions}\n\nBusiness knowledge (manual notes):\n{business_profile}\n\nBusiness knowledge (website):\n{website_knowledge}",
         }
     ]
 
@@ -1297,24 +2402,49 @@ def _build_autopilot_messages(conversation, config: dict) -> list:
     return messages
 
 
-def _request_autopilot_reply(messages, *, model: str, temperature: float, api_key: str) -> str:
+def _request_autopilot_reply(messages, *, provider: str, model: str, temperature: float, api_key: str) -> str:
     if not api_key or not messages:
         return ""
 
+    provider = (provider or DEFAULT_AUTOPILOT_PROVIDER).strip().lower()
+    resolved_model = (model or DEFAULT_AUTOPILOT_MODEL).strip() or DEFAULT_AUTOPILOT_MODEL
+    if provider == "openrouter" and "/" not in resolved_model:
+        # OpenRouter model identifiers are typically namespaced (e.g. deepseek/deepseek-chat).
+        # Keep backwards compatibility with existing DeepSeek defaults.
+        if resolved_model == "deepseek-chat":
+            resolved_model = "deepseek/deepseek-chat"
+
     payload = {
-        "model": model or DEFAULT_AUTOPILOT_MODEL,
+        "model": resolved_model,
         "messages": messages,
         "temperature": float(temperature),
         "max_tokens": 350,
     }
 
-    request = Request(
-        "https://api.deepseek.com/chat/completions",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
+    if provider == "openrouter":
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}",
-        },
+        }
+        try:
+            referer = str(request.host_url or "").strip()
+        except Exception:
+            referer = ""
+        if referer:
+            headers["HTTP-Referer"] = referer
+        headers["X-Title"] = "Booking App Autopilot"
+    else:
+        url = "https://api.deepseek.com/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        }
+
+    request = Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers=headers,
     )
 
     try:
@@ -1345,20 +2475,33 @@ def _request_autopilot_reply(messages, *, model: str, temperature: float, api_ke
     return ""
 
 
-def _resolve_autopilot_api_key() -> str:
+def _resolve_primary_api_key_from_list(keys_payload) -> str:
+    if not isinstance(keys_payload, list):
+        return ""
+    entry = next(
+        (item for item in keys_payload if isinstance(item, dict) and str(item.get("value") or "").strip()),
+        None,
+    )
+    return str(entry.get("value") or "").strip() if entry else ""
+
+
+def _resolve_autopilot_api_key(provider: str, config: dict) -> str:
+    provider = (provider or DEFAULT_AUTOPILOT_PROVIDER).strip().lower()
+    if provider == "openrouter":
+        env_key = (os.environ.get("OPENROUTER_API_KEY") or "").strip()
+        stored_key = (
+            _resolve_primary_api_key_from_list(config.get("openrouter_api_keys"))
+            or str(config.get("openrouter_api_key") or "").strip()
+        )
+        return stored_key or env_key
+
     env_key = (os.environ.get("DEEPSEEK_API_KEY") or "").strip() or (
         os.environ.get("OPENAI_API_KEY") or ""
     ).strip()
-    with _autopilot_lock:
-        stored_keys = _autopilot_config.get("api_keys") or []
-        primary_key = ""
-        if stored_keys:
-            first_entry = next(
-                (entry for entry in stored_keys if str(entry.get("value") or "").strip()),
-                None,
-            )
-            primary_key = str(first_entry.get("value") or "").strip() if first_entry else ""
-        stored_key = primary_key or str(_autopilot_config.get("api_key") or "").strip()
+    stored_key = (
+        _resolve_primary_api_key_from_list(config.get("api_keys"))
+        or str(config.get("api_key") or "").strip()
+    )
     return stored_key or env_key
 
 
@@ -1367,7 +2510,8 @@ def _maybe_send_autopilot_reply(session_id: str, conversation=None):
     if not config.get("enabled"):
         return None
 
-    api_key = _resolve_autopilot_api_key()
+    provider = str(config.get("provider", DEFAULT_AUTOPILOT_PROVIDER) or DEFAULT_AUTOPILOT_PROVIDER)
+    api_key = _resolve_autopilot_api_key(provider, config)
     if not api_key:
         return None
 
@@ -1377,6 +2521,7 @@ def _maybe_send_autopilot_reply(session_id: str, conversation=None):
 
     reply_text = _request_autopilot_reply(
         messages,
+        provider=provider,
         model=config.get("model", DEFAULT_AUTOPILOT_MODEL),
         temperature=config.get("temperature", DEFAULT_AUTOPILOT_TEMPERATURE),
         api_key=api_key,
@@ -1556,6 +2701,7 @@ def chat_send():
 
 
 @app.route("/admin/chat/status", methods=["POST"])
+@require_admin_auth
 def admin_chat_status():
     payload = request.get_json(silent=True) or {}
     requested_state = payload.get("online")
@@ -1573,6 +2719,7 @@ def admin_chat_status():
 
 
 @app.route("/admin/chat/close", methods=["POST"])
+@require_admin_auth
 def admin_chat_close():
     payload = request.get_json(silent=True) or {}
     session_id = (payload.get("session_id") or "").strip()
@@ -1592,6 +2739,7 @@ def admin_chat_close():
 
 
 @app.route("/admin/autopilot/config", methods=["GET", "POST"])
+@require_admin_auth
 def admin_autopilot_config():
     if request.method == "GET":
         return jsonify({"config": _autopilot_config_snapshot()})
@@ -1607,7 +2755,227 @@ def admin_autopilot_config():
     return jsonify({"message": "Autopilot settings updated.", "config": _autopilot_config_snapshot()})
 
 
+@app.route("/admin/autopilot/scrape", methods=["POST"])
+@require_admin_auth
+def admin_autopilot_scrape_website():
+    payload = request.get_json(silent=True) or {}
+    raw_url = payload.get("url") or payload.get("business_website_url") or ""
+
+    try:
+        normalized = _normalize_website_url(str(raw_url))
+        if not normalized:
+            return jsonify({"message": "Website address is required."}), 400
+
+        scraped = _scrape_website_knowledge(normalized)
+        scraped_text = str(scraped.get("text") or "").strip()
+        if not scraped_text:
+            return jsonify({"message": "We couldn't extract any useful text from that page."}), 400
+
+        now = datetime.utcnow().isoformat()
+
+        with _autopilot_lock:
+            _autopilot_config["business_website_url"] = str(scraped.get("final_url") or normalized)
+            _autopilot_config["business_website_knowledge"] = scraped_text
+            _autopilot_config["business_website_last_scraped"] = now
+            snapshot = dict(_autopilot_config)
+
+        _save_autopilot_config(snapshot)
+        return jsonify(
+            {
+                "message": "Website scraped and saved for autopilot.",
+                "pages": scraped.get("pages") or [],
+                "config": _autopilot_config_snapshot(),
+            }
+        )
+    except ValueError as error:
+        return jsonify({"message": str(error) or "Unable to scrape that website."}), 400
+    except ModuleNotFoundError:
+        return (
+            jsonify(
+                {
+                    "message": (
+                        "Website scraping dependencies are not installed on the server. "
+                        "Install `requests` and `beautifulsoup4` (or run `pip install -r requirements.txt`) and restart the app."
+                    )
+                }
+            ),
+            500,
+        )
+    except Exception:
+        return jsonify({"message": "Unable to scrape that website right now."}), 500
+
+
+@app.route("/admin/autopilot/scrape/clear", methods=["POST"])
+@require_admin_auth
+def admin_autopilot_clear_website_knowledge():
+    with _autopilot_lock:
+        _autopilot_config["business_website_knowledge"] = ""
+        _autopilot_config["business_website_last_scraped"] = ""
+        snapshot = dict(_autopilot_config)
+    _save_autopilot_config(snapshot)
+    return jsonify({"message": "Website knowledge cleared.", "config": _autopilot_config_snapshot()})
+
+
+@app.route("/admin/assets/images", methods=["GET"])
+@require_admin_auth
+def admin_list_site_images():
+    _ensure_static_images_dir()
+
+    images = []
+    for root, _, files in os.walk(STATIC_IMAGES_DIR):
+        for filename in files:
+            if not _is_allowed_image_filename(filename):
+                continue
+
+            abs_path = os.path.join(root, filename)
+            try:
+                stat = os.stat(abs_path)
+            except OSError:
+                continue
+
+            rel_under_images = os.path.relpath(abs_path, STATIC_IMAGES_DIR).replace("\\", "/")
+            url_path = f"/static/images/{rel_under_images}"
+            images.append(
+                {
+                    "path": f"images/{rel_under_images}",
+                    "url": url_path,
+                    "size": int(getattr(stat, "st_size", 0) or 0),
+                    "modified": datetime.utcfromtimestamp(getattr(stat, "st_mtime", 0) or 0).isoformat(),
+                }
+            )
+
+    images.sort(key=lambda item: item.get("path") or "")
+    return jsonify({"images": images})
+
+
+@app.route("/admin/assets/images/upload", methods=["POST"])
+@require_admin_auth
+def admin_upload_site_image():
+    _ensure_static_images_dir()
+
+    uploaded = request.files.get("file")
+    if not uploaded:
+        return jsonify({"message": "No file uploaded."}), 400
+
+    upload_ext = _guess_image_extension(uploaded.filename or "", getattr(uploaded, "mimetype", "") or "")
+    if not upload_ext:
+        return jsonify({"message": "Unsupported image type. Please upload png/jpg/webp/gif/svg."}), 400
+
+    target_path = (request.form.get("target_path") or request.form.get("path") or "").strip()
+    if target_path:
+        try:
+            rel_path = _safe_image_relative_path(target_path)
+        except ValueError as error:
+            return jsonify({"message": str(error)}), 400
+    else:
+        filename = secure_filename(uploaded.filename or "")
+        if not filename:
+            return jsonify({"message": "Invalid filename."}), 400
+        if not _is_allowed_image_filename(filename):
+            return jsonify({"message": "Only common image types are allowed (png/jpg/webp/svg/etc)."}), 400
+        rel_path = filename
+
+    _, target_ext = os.path.splitext(rel_path.lower())
+    if target_path:
+        # Allow replacing an .svg slot with a raster upload by wrapping it into an SVG container.
+        if target_ext == ".svg" and upload_ext in RASTER_IMAGE_EXTENSIONS:
+            try:
+                content = uploaded.read()
+            except Exception:
+                return jsonify({"message": "Unable to read uploaded image."}), 400
+
+            try:
+                svg_payload = _wrap_raster_bytes_in_svg(content, getattr(uploaded, "mimetype", "") or "")
+            except Exception:
+                return jsonify({"message": "Unable to process uploaded image."}), 400
+
+            abs_path = _image_abs_path_from_rel(rel_path)
+            abs_dir = os.path.dirname(abs_path)
+            try:
+                os.makedirs(abs_dir, exist_ok=True)
+                with open(abs_path, "w", encoding="utf-8") as handle:
+                    handle.write(svg_payload)
+            except OSError:
+                return jsonify({"message": "Unable to save uploaded image."}), 500
+
+            rel_url = rel_path.replace("\\", "/")
+            return jsonify(
+                {
+                    "message": "Image uploaded.",
+                    "image": {
+                        "path": f"images/{rel_url}",
+                        "url": f"/static/images/{rel_url}",
+                    },
+                }
+            )
+
+        # For other targets, require the extension to match so existing references remain valid.
+        if target_ext and upload_ext and target_ext != upload_ext:
+            return (
+                jsonify(
+                    {
+                        "message": (
+                            f"This image slot expects a {target_ext.upper()} file. "
+                            f"Upload a matching file type or upload as a new image instead."
+                        )
+                    }
+                ),
+                400,
+            )
+
+    abs_path = _image_abs_path_from_rel(rel_path)
+    abs_dir = os.path.dirname(abs_path)
+    try:
+        os.makedirs(abs_dir, exist_ok=True)
+    except OSError:
+        return jsonify({"message": "Unable to create image folder."}), 500
+
+    try:
+        # Ensure stream is positioned at start (in case it was inspected).
+        try:
+            uploaded.stream.seek(0)
+        except Exception:
+            pass
+        uploaded.save(abs_path)
+    except Exception:
+        return jsonify({"message": "Unable to save uploaded image."}), 500
+
+    rel_url = rel_path.replace("\\", "/")
+    return jsonify(
+        {
+            "message": "Image uploaded.",
+            "image": {
+                "path": f"images/{rel_url}",
+                "url": f"/static/images/{rel_url}",
+            },
+        }
+    )
+
+
+@app.route("/admin/assets/images/delete", methods=["POST"])
+@require_admin_auth
+def admin_delete_site_image():
+    payload = request.get_json(silent=True) or {}
+    raw_path = payload.get("path") or ""
+    try:
+        rel_path = _safe_image_relative_path(raw_path)
+    except ValueError as error:
+        return jsonify({"message": str(error)}), 400
+
+    abs_path = _image_abs_path_from_rel(rel_path)
+    if not os.path.exists(abs_path):
+        return jsonify({"message": "Image not found."}), 404
+
+    try:
+        os.remove(abs_path)
+    except OSError:
+        return jsonify({"message": "Unable to delete image."}), 500
+
+    return jsonify({"message": "Image deleted.", "path": f"images/{rel_path}"})
+
+
 @app.route("/admin/weather/config", methods=["GET", "POST"])
+@require_admin_auth
 def admin_weather_config():
     if request.method == "GET":
         return jsonify({"config": _weather_config_snapshot()})
@@ -1631,7 +2999,335 @@ def admin_weather_config():
     return jsonify({"message": "Weather settings updated.", "config": _weather_config_snapshot()})
 
 
+@app.route("/admin/smsapi/config", methods=["GET", "POST"])
+@require_admin_auth
+def admin_smsapi_config():
+    if request.method == "GET":
+        return jsonify({"config": _smsapi_config_snapshot()})
+
+    payload = request.get_json(silent=True) or {}
+    oauth_token = str(payload.get("oauth_token", "") or "").strip()
+    sender_name = str(payload.get("sender_name", "") or "").strip()
+
+    with _smsapi_config_lock:
+        _smsapi_config["oauth_token"] = oauth_token
+        _smsapi_config["sender_name"] = sender_name
+        snapshot = dict(_smsapi_config)
+
+    _save_smsapi_config(snapshot)
+    return jsonify({"message": "SMSAPI settings updated.", "config": _smsapi_config_snapshot()})
+
+
+@app.route("/admin/telnyx/config", methods=["GET", "POST"])
+@require_admin_auth
+def admin_telnyx_config():
+    if request.method == "GET":
+        return jsonify({"config": _telnyx_config_snapshot()})
+
+    payload = request.get_json(silent=True) or {}
+    api_key_present = "api_key" in payload
+    from_present = "from_number" in payload
+    profile_present = "messaging_profile_id" in payload
+    api_key = str(payload.get("api_key", "") or "").strip()
+    from_number = str(payload.get("from_number", "") or "").strip()
+    messaging_profile_id = str(payload.get("messaging_profile_id", "") or "").strip()
+
+    # Normalize from number if provided.
+    if from_number:
+        from_number = _normalize_phone_number(from_number)
+
+    with _telnyx_config_lock:
+        # Only overwrite stored values if the caller provided a value.
+        # This prevents the UI from accidentally clearing secrets when the admin
+        # clicks save without re-typing them.
+        if api_key_present:
+            if api_key:
+                _telnyx_config["api_key"] = api_key
+            elif api_key_present:
+                # Explicit clear.
+                _telnyx_config["api_key"] = ""
+
+        if from_present:
+            if from_number:
+                _telnyx_config["from_number"] = from_number
+            elif from_present:
+                _telnyx_config["from_number"] = ""
+
+        if profile_present:
+            _telnyx_config["messaging_profile_id"] = messaging_profile_id
+
+        snapshot = dict(_telnyx_config)
+
+    _save_telnyx_config(snapshot)
+    return jsonify({"message": "Telnyx settings updated.", "config": _telnyx_config_snapshot()})
+
+
+@app.route("/admin/email/config", methods=["GET", "POST"])
+@require_admin_auth
+def admin_email_config():
+    if request.method == "GET":
+        return jsonify({"config": _smtp_config_snapshot()})
+
+    payload = request.get_json(silent=True) or {}
+
+    host = str(payload.get("host", "") or "").strip()
+    port_raw = payload.get("port", 587)
+    username = str(payload.get("username", "") or "").strip()
+    password = str(payload.get("password", "") or "").strip()
+    from_email = str(payload.get("from_email", "") or "").strip()
+    from_name = str(payload.get("from_name", "") or "").strip()
+    use_starttls = bool(payload.get("use_starttls", True))
+
+    # Helpful defaults for Gmail-style setups.
+    if not from_email and _is_valid_email(username):
+        from_email = username
+
+    try:
+        port = int(port_raw)
+    except Exception:
+        port = 587
+    if port <= 0 or port > 65535:
+        return jsonify({"message": "SMTP port must be between 1 and 65535."}), 400
+
+    if from_email and not _is_valid_email(from_email):
+        return jsonify({"message": "From email address is not valid."}), 400
+
+    with _smtp_config_lock:
+        _smtp_config["host"] = host
+        _smtp_config["port"] = port
+        _smtp_config["username"] = username
+        # Only overwrite password if provided, so admin can edit other fields safely.
+        if password:
+            _smtp_config["password"] = password
+        _smtp_config["from_email"] = from_email
+        if from_name:
+            _smtp_config["from_name"] = from_name
+        _smtp_config["use_starttls"] = use_starttls
+        snapshot = dict(_smtp_config)
+
+    _save_smtp_config(snapshot)
+    return jsonify({"message": "Email settings updated.", "config": _smtp_config_snapshot()})
+
+
+@app.route("/api/send-email-verification", methods=["POST"])
+def api_send_email_verification():
+    payload = request.get_json(silent=True) or {}
+    email = str(payload.get("email", "") or "").strip().lower()
+    if not _is_valid_email(email):
+        return jsonify({"message": "Please enter a valid email address."}), 400
+
+    _purge_expired_email_magic()
+
+    # Very small rate-limit to avoid abuse.
+    now = datetime.utcnow()
+    ip = (request.headers.get("X-Forwarded-For") or request.remote_addr or "").split(",")[0].strip()
+    rate_key_email = f"email:{email}"
+    rate_key_ip = f"ip:{ip}"
+    with _email_magic_lock:
+        last_email = _email_send_rate_limit.get(rate_key_email)
+        last_ip = _email_send_rate_limit.get(rate_key_ip)
+        if last_email and (now - last_email) < timedelta(seconds=25):
+            return jsonify({"message": "Please wait a moment before requesting another email."}), 429
+        if last_ip and (now - last_ip) < timedelta(seconds=10):
+            return jsonify({"message": "Please wait a moment before requesting another email."}), 429
+        _email_send_rate_limit[rate_key_email] = now
+        _email_send_rate_limit[rate_key_ip] = now
+
+    token = str(uuid4())
+    expires = now + timedelta(minutes=30)
+
+    verify_url = urljoin(request.host_url, f"verify-email?token={token}")
+    subject = "Confirm your quote request"
+    text_body = (
+        "Please confirm your quote request by clicking the link below:\n\n"
+        f"{verify_url}\n\n"
+        "If you didn't request this, you can ignore this email."
+    )
+    html_body = f"""
+    <div style="font-family: Arial, sans-serif; line-height: 1.5;">
+      <h2 style="margin: 0 0 12px 0;">Confirm your quote request</h2>
+      <p style="margin: 0 0 14px 0;">Please confirm it's really you by clicking this link:</p>
+      <p style="margin: 0 0 18px 0;"><a href="{verify_url}">{verify_url}</a></p>
+      <p style="color: #666; font-size: 13px; margin: 0;">If you didn't request this, you can ignore this email.</p>
+    </div>
+    """
+
+    ok, err = _send_email_via_smtp(to_email=email, subject=subject, text_body=text_body, html_body=html_body)
+    if not ok:
+        return jsonify({"message": err or "Unable to send verification email."}), 500
+
+    with _email_magic_lock:
+        _email_magic_tokens[token] = {
+            "email": email,
+            "created_at": now.isoformat(),
+            "expires": expires.isoformat(),
+        }
+        _save_email_magic_to_disk(dict(_email_magic_tokens), dict(_verified_emails))
+
+    return jsonify({"message": "Verification email sent.", "email": email})
+
+
+@app.route("/verify-email", methods=["GET"])
+def verify_email_magic_link():
+    token = str(request.args.get("token", "") or "").strip()
+    if not token:
+        return "Missing token.", 400
+
+    _purge_expired_email_magic()
+    now = datetime.utcnow()
+
+    with _email_magic_lock:
+        record = _email_magic_tokens.get(token)
+
+        if not record:
+            return (
+                "This verification link is invalid or has expired. Please go back and request a new one.",
+                400,
+            )
+
+        email = str(record.get("email") or "").strip().lower()
+        # Mark verified for 30 minutes.
+        _verified_emails[email] = {
+            "verified_at": now.isoformat(),
+            "expires": (now + timedelta(minutes=30)).isoformat(),
+        }
+        # One-time link
+        _email_magic_tokens.pop(token, None)
+        _save_email_magic_to_disk(dict(_email_magic_tokens), dict(_verified_emails))
+
+    html = f"""
+    <!doctype html>
+    <html lang=\"en\">
+      <head>
+        <meta charset=\"utf-8\" />
+        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+        <title>Email verified</title>
+        <style>
+          body {{ font-family: Arial, sans-serif; padding: 24px; max-width: 720px; margin: 0 auto; }}
+          .card {{ border: 1px solid #e6e6e6; border-radius: 14px; padding: 18px 20px; }}
+          .ok {{ color: #2e7d32; font-weight: 700; }}
+          a {{ color: #2e7d32; }}
+        </style>
+      </head>
+      <body>
+        <div class=\"card\">
+          <p class=\"ok\">✅ Email verified</p>
+          <p>Thanks — you can now return to the website and continue your quote request.</p>
+          <p style=\"color:#666; font-size: 13px;\">Verified for: {email}</p>
+        </div>
+      </body>
+    </html>
+    """
+    return html
+
+
+@app.route("/api/email-verification-status", methods=["GET"])
+def api_email_verification_status():
+    email = str(request.args.get("email", "") or "").strip().lower()
+    if not _is_valid_email(email):
+        return jsonify({"verified": False, "message": "Invalid email."}), 400
+
+    _purge_expired_email_magic()
+    with _email_magic_lock:
+        entry = _verified_emails.get(email)
+        if not entry:
+            return jsonify({"verified": False})
+
+        try:
+            expires = datetime.fromisoformat(entry.get("expires") or "")
+        except Exception:
+            expires = None
+
+        if not expires or datetime.utcnow() > expires:
+            _verified_emails.pop(email, None)
+            _save_email_magic_to_disk(dict(_email_magic_tokens), dict(_verified_emails))
+            return jsonify({"verified": False})
+
+    return jsonify({"verified": True})
+
+
+@app.route("/api/health", methods=["GET"])
+def api_health():
+    """Lightweight health/version endpoint for deployment verification."""
+    return jsonify(
+        {
+            "ok": True,
+            "utc": datetime.utcnow().isoformat() + "Z",
+            "render_git_commit": os.getenv("RENDER_GIT_COMMIT", ""),
+            "email_magic_enabled": True,
+        }
+    )
+
+
+@app.route("/api/send-verification", methods=["POST"])
+def send_verification_code():
+    try:
+        data = request.get_json(silent=True) or {}
+        raw_phone = data.get("phone", "")
+        phone = _normalize_phone_number(raw_phone)
+
+        if not phone:
+            return jsonify({"message": "Phone number is required"}), 400
+
+        if not phone.startswith("+"):
+            return jsonify({"message": "Please enter a valid mobile number (e.g. 07123 456789)."}), 400
+
+        # Generate 4-digit code
+        import random
+        code = str(random.randint(1000, 9999))
+
+        # Store code with expiry (5 minutes)
+        _verification_codes[phone] = {
+            "code": code,
+            "expires": (datetime.utcnow() + timedelta(minutes=5)).isoformat()
+        }
+
+        # Send SMS
+        message = f"Your Pay As You Mow verification code is: {code}. Valid for 5 minutes."
+        print(f"[Verify] Sending code to {phone} (raw input: {raw_phone})")
+        success, error_message = _send_sms_for_verification(phone, message)
+
+        if success:
+            return jsonify({"message": "Verification code sent successfully"})
+        else:
+            print(f"[Verify] SMS failed for {phone}: {error_message}")
+            return jsonify({"message": error_message or "Failed to send verification code. Please check SMS settings."}), 500
+    except Exception as exc:
+        print(f"[Verify] Unexpected error: {exc}")
+        return jsonify({"message": "An unexpected error occurred. Please try again."}), 500
+
+
+@app.route("/api/verify-code", methods=["POST"])
+def verify_code():
+    data = request.get_json(silent=True) or {}
+    phone = _normalize_phone_number(data.get("phone", ""))
+    code = data.get("code", "").strip()
+    
+    if not phone or not code:
+        return jsonify({"message": "Phone and code are required"}), 400
+    
+    stored = _verification_codes.get(phone)
+    
+    if not stored:
+        return jsonify({"message": "No verification code found for this number"}), 400
+    
+    # Check if expired
+    expires = datetime.fromisoformat(stored["expires"])
+    if datetime.utcnow() > expires:
+        del _verification_codes[phone]
+        return jsonify({"message": "Verification code has expired"}), 400
+    
+    # Check if code matches
+    if stored["code"] != code:
+        return jsonify({"message": "Invalid verification code"}), 400
+    
+    # Code is valid, remove it
+    del _verification_codes[phone]
+    return jsonify({"message": "Phone number verified successfully"})
+
+
 @app.route("/admin/chat/sessions", methods=["GET"])
+@require_admin_auth
 def admin_chat_sessions():
     with _chat_state_lock:
         online = bool(_chat_state.get("online", True))
@@ -1664,6 +3360,7 @@ def admin_chat_sessions():
 
 
 @app.route("/admin/chat/messages/<session_id>", methods=["GET"])
+@require_admin_auth
 def admin_chat_messages(session_id):
     after_id = _safe_int(request.args.get("after"), 0)
 
@@ -1682,6 +3379,7 @@ def admin_chat_messages(session_id):
 
 
 @app.route("/admin/chat/send", methods=["POST"])
+@require_admin_auth
 def admin_chat_send():
     payload = request.get_json(silent=True) or {}
     session_id = (payload.get("session_id") or "").strip()
@@ -1709,6 +3407,7 @@ def admin_chat_send():
 
 
 @app.route("/admin/chat/invite", methods=["POST"])
+@require_admin_auth
 def admin_chat_invite():
     payload = request.get_json(silent=True) or {}
     ip_str = (payload.get("ip") or "").strip()
@@ -2060,7 +3759,7 @@ def _delete_customer_slot_by_id(slot_id: str):
 
 @app.route("/")
 def home():
-    return render_template('index.html')
+    return render_template('index.html', reviews=load_reviews(), availability=load_availability())
 
 
 @app.route("/customer-login")
@@ -2245,6 +3944,9 @@ def book():
     location = data.get("location", "").strip()
     email = data.get("email", "").strip()
     phone = data.get("phone", "").strip()
+    service_type = data.get("service_type", "").strip()
+    photos = data.get("photos", [])
+    verified = data.get("verified", False)
 
     if not name or not time or not email or not phone:
         return jsonify({"message": "❌ Please complete all booking details."}), 400
@@ -2263,6 +3965,9 @@ def book():
         "location": location,
         "email": email,
         "phone": phone,
+        "service_type": service_type,
+        "photos": photos if isinstance(photos, list) else [],
+        "verified": verified,
         "created_at": datetime.utcnow().isoformat(),
     }
     bookings.append(booking_entry)
@@ -2693,7 +4398,32 @@ def api_modify_contact(contact_id):
 @app.route("/api/reviews", methods=["GET", "POST"])
 def api_reviews():
     if request.method == "GET":
-        return jsonify({"reviews": load_reviews()})
+        reviews = load_reviews()
+
+        def _parse_review_time(value):
+            if not isinstance(value, str) or not value.strip():
+                return 0.0
+            text = value.strip()
+            # Support common ISO forms including trailing 'Z'.
+            if text.endswith("Z"):
+                text = text[:-1] + "+00:00"
+            try:
+                return datetime.fromisoformat(text).timestamp()
+            except ValueError:
+                return 0.0
+
+        # Show newest/most-recently-updated testimonials first.
+        reviews.sort(
+            key=lambda item: _parse_review_time((item or {}).get("updated_at") or (item or {}).get("created_at")),
+            reverse=True,
+        )
+
+        response = jsonify({"reviews": reviews})
+        # Prevent browser/proxy caching so the homepage always shows the latest admin edits.
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
 
     data = request.get_json(silent=True) or {}
     quote = (data.get("quote") or "").strip()
@@ -2822,6 +4552,7 @@ def presence():
 
 
 @app.route("/admin/visitors", methods=["GET"])
+@require_admin_auth
 def admin_visitors():
     now = datetime.utcnow()
     _prune_visitors(now)
@@ -2884,6 +4615,7 @@ def admin_visitors():
 
 
 @app.route("/admin/visitors/<ip_str>", methods=["DELETE"])
+@require_admin_auth
 def admin_delete_visitor(ip_str):
     ip_clean = (ip_str or "").strip()
     if not ip_clean:
@@ -2909,6 +4641,7 @@ def admin_delete_visitor(ip_str):
 
 
 @app.route("/admin/visitors/banned", methods=["GET"])
+@require_admin_auth
 def admin_list_banned_visitors():
     with _banned_ips_lock:
         banned_list = [dict(details) for details in _banned_ips.values()]
@@ -2917,6 +4650,7 @@ def admin_list_banned_visitors():
 
 
 @app.route("/admin/visitors/banned", methods=["POST"])
+@require_admin_auth
 def admin_ban_visitor():
     data = request.get_json(silent=True) or {}
     ip_clean = (data.get("ip") or "").strip()
@@ -2942,6 +4676,7 @@ def admin_ban_visitor():
 
 
 @app.route("/admin/visitors/banned/<ip_str>", methods=["DELETE"])
+@require_admin_auth
 def admin_unban_visitor(ip_str):
     ip_clean = (ip_str or "").strip()
     if not ip_clean:
@@ -2964,11 +4699,216 @@ def admin_unban_visitor(ip_str):
 # --- Serve admin.html file ---
 @app.route("/admin")
 def admin_page():
+    # Check if authenticated
+    if not session.get('admin_authenticated'):
+        # Return login page instead
+        return render_template_string('''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Login - Pay As You Mow</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 400px;
+        }
+        h1 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #4caf50;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #2e7d32;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .security-note {
+            margin-top: 20px;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #666;
+        }
+        .icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="icon">🔒</div>
+        <h1>Admin Login</h1>
+        <p class="subtitle">Pay As You Mow</p>
+        <div class="error" id="error"></div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" autocomplete="current-password" required autofocus>
+            </div>
+            <button type="submit" id="submitBtn">Login</button>
+        </form>
+        <div class="security-note">
+            🛡️ <strong>Security:</strong> This admin panel is protected with rate limiting, IP tracking, and session timeouts.
+        </div>
+    </div>
+    <script>
+        const form = document.getElementById('loginForm');
+        const error = document.getElementById('error');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            error.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Logging in...';
+            
+            try {
+                const password = document.getElementById('password').value;
+                const res = await fetch('/admin/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({password})
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    window.location.href = '/admin';
+                } else {
+                    error.textContent = data.error || 'Login failed';
+                    error.style.display = 'block';
+                    document.getElementById('password').value = '';
+                }
+            } catch (err) {
+                error.textContent = 'Connection error. Please try again.';
+                error.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Login';
+            }
+        });
+    </script>
+</body>
+</html>
+        ''')
+    
     return app.send_static_file("admin.html")
+
+@app.route("/admin/login", methods=["POST"])
+def admin_login():
+    global ADMIN_PASSWORD_HASH
+    
+    client_ip = request.remote_addr
+    
+    # Check if IP is locked
+    if is_ip_locked(client_ip):
+        return jsonify({"error": "Too many failed attempts. Please try again later."}), 429
+    
+    data = request.get_json()
+    password = data.get('password', '')
+    
+    # If no password is set yet, set it now (first-time setup)
+    if not ADMIN_PASSWORD_HASH:
+        if len(password) < 8:
+            return jsonify({"error": "Password must be at least 8 characters"}), 400
+        
+        ADMIN_PASSWORD_HASH = hash_password(password)
+
+        _save_admin_password_hash_to_disk(ADMIN_PASSWORD_HASH)
+        
+        session['admin_authenticated'] = True
+        session['last_activity'] = datetime.utcnow().timestamp()
+        return jsonify({"success": True, "message": "Password set successfully"})
+    
+    # Verify password
+    if verify_password(password, ADMIN_PASSWORD_HASH):
+        session['admin_authenticated'] = True
+        session['last_activity'] = datetime.utcnow().timestamp()
+        return jsonify({"success": True})
+    else:
+        # Record failed attempt
+        locked = record_failed_login(client_ip)
+        if locked:
+            return jsonify({"error": "Too many failed attempts. Account locked for 30 minutes."}), 429
+        return jsonify({"error": "Invalid password"}), 401
+
+@app.route("/admin/logout", methods=["POST"])
+def admin_logout():
+    session.clear()
+    return jsonify({"success": True})
 
 if __name__ == '__main__':
     import sys
-    # Use 5002 if no port is specified, or read from command line
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 5002
+    # Port selection order:
+    # 1) CLI arg (python app.py 5015)
+    # 2) PORT env var (common in hosting providers)
+    # 3) Default to 5015 (matches configure_tunnel_route.py)
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.getenv('PORT', '5015'))
     app.run(host='0.0.0.0', port=port, debug=True)
 

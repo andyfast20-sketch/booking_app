@@ -113,6 +113,124 @@
       box-shadow: 0 18px 45px rgba(8, 16, 44, 0.45);
     }
 
+    .image-library-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-top: 0.75rem;
+    }
+
+    .image-library-card {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 16px;
+      padding: 0.85rem;
+      background: rgba(0, 0, 0, 0.16);
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+    }
+
+    .image-library-card.is-drop-target {
+      border-color: rgba(48, 195, 166, 0.65);
+      box-shadow: 0 18px 42px rgba(48, 195, 166, 0.18);
+      transform: translateY(-2px);
+    }
+
+    .image-library-thumb {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.08);
+      display: grid;
+      place-items: center;
+      position: relative;
+    }
+
+    .image-library-card.is-drop-target .image-library-thumb::after {
+      content: 'Drop to replace';
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(16, 24, 40, 0.62);
+      color: var(--text-primary);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      font-size: 0.82rem;
+      border: 2px dashed rgba(48, 195, 166, 0.6);
+      border-radius: 12px;
+    }
+
+    .image-library-grid.is-drop-target {
+      outline: 2px dashed rgba(48, 195, 166, 0.75);
+      outline-offset: 10px;
+      border-radius: 18px;
+    }
+
+    .image-library-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .image-library-meta {
+      display: grid;
+      gap: 0.25rem;
+    }
+
+    .image-library-meta strong {
+      font-size: 0.92rem;
+      word-break: break-word;
+    }
+
+    .image-library-meta small {
+      color: var(--text-muted);
+    }
+
+    .image-library-meta .image-library-usage {
+      color: rgba(210, 255, 243, 0.85);
+    }
+
+    .image-library-card.is-unmapped .image-library-meta .image-library-usage {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .image-library-card.is-unmapped {
+      border-style: dashed;
+    }
+
+    .image-library-actions {
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .image-library-actions input[type="file"] {
+      width: 100%;
+      padding: 0.55rem 0.65rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(0, 0, 0, 0.12);
+      color: var(--text-primary);
+    }
+
+    .image-library-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    .image-library-toolbar .input-note {
+      margin: 0;
+    }
+
     .panel-header {
       display: flex;
       flex-wrap: wrap;
@@ -207,6 +325,18 @@
       gap: 0.75rem;
       flex-wrap: wrap;
       margin-bottom: 1.25rem;
+    }
+
+    .autopilot-provider-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .autopilot-provider-row select {
+      min-width: 260px;
+      flex: 1;
     }
 
     .autopilot-api-row {
@@ -1240,6 +1370,7 @@
   <header class="page-header">
     <h1>Booking Operations Hub</h1>
     <p>Review, edit or remove bookings, manage available slots and keep on top of new enquiries.</p>
+    <button id="logoutBtn" style="position: absolute; top: 20px; right: 20px; background: rgba(255,107,107,0.9); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.2); backdrop-filter: blur(10px);">🔒 Logout</button>
   </header>
 
   <main class="panel-grid">
@@ -1358,7 +1489,7 @@
       <div class="panel-header">
         <div class="meta">
           <h2 id="autopilot-heading">Chat autopilot</h2>
-          <p>Let DeepSeek answer routine visitor questions using your business knowledge.</p>
+          <p>Let an AI assistant answer routine visitor questions using your business knowledge.</p>
         </div>
         <div class="panel-actions">
           <button type="button" id="autopilotToggle">Enable autopilot</button>
@@ -1386,12 +1517,67 @@
               placeholder="Describe your services, service area, pricing guidance, tone of voice and any FAQs you want the assistant to know."
             ></textarea>
           </label>
+
+          <div class="autopilot-api-card" role="group" aria-labelledby="autopilotWebsiteHeading">
+            <div class="autopilot-api-header">
+              <div>
+                <p class="eyebrow">Website knowledge</p>
+                <h3 id="autopilotWebsiteHeading" class="autopilot-api-title">Scrape your website</h3>
+                <p class="autopilot-api-description">
+                  Add your website address and fetch useful business details automatically. This is used alongside your manual notes.
+                </p>
+              </div>
+              <span class="status-pill offline" id="autopilotWebsiteStatus">Not scraped yet</span>
+            </div>
+            <label for="autopilotWebsiteUrl">
+              <div class="autopilot-api-row">
+                <input
+                  id="autopilotWebsiteUrl"
+                  name="business_website_url"
+                  type="url"
+                  inputmode="url"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="https://yourwebsite.com"
+                />
+                <button type="button" id="autopilotWebsiteScrape" class="secondary">Scrape</button>
+                <button type="button" id="autopilotWebsiteClear" class="secondary">Clear</button>
+              </div>
+            </label>
+            <p class="input-note" id="autopilotWebsiteNote">
+              Tip: use your homepage URL. We'll crawl internal pages on the same domain and skip any /admin areas. (Localhost/private URLs are blocked unless enabled on the server.)
+            </p>
+            <div class="saved-keys">
+              <p class="eyebrow">Scrape preview</p>
+              <p class="input-note" id="autopilotWebsiteMeta">No website knowledge saved yet.</p>
+              <textarea id="autopilotWebsitePreview" rows="6" readonly placeholder="Scraped text will appear here."></textarea>
+            </div>
+          </div>
+
+          <div class="autopilot-api-card" role="group" aria-labelledby="autopilotProviderHeading">
+            <div class="autopilot-api-header">
+              <div>
+                <p class="eyebrow">Default provider</p>
+                <h3 id="autopilotProviderHeading" class="autopilot-api-title">Autopilot reply source</h3>
+                <p class="autopilot-api-description">Choose which provider should generate automatic live chat replies.</p>
+              </div>
+            </div>
+            <label for="autopilotProvider">
+              <div class="autopilot-provider-row">
+                <select id="autopilotProvider" name="provider">
+                  <option value="deepseek">DeepSeek (direct)</option>
+                  <option value="openrouter">OpenRouter</option>
+                </select>
+              </div>
+            </label>
+            <p class="input-note">You can save keys for both providers below, then switch the default at any time.</p>
+          </div>
           <div class="autopilot-api-card" role="group" aria-labelledby="autopilotApiKeyHeading">
             <div class="autopilot-api-header">
               <div>
                 <p class="eyebrow">AI access</p>
                 <h3 id="autopilotApiKeyHeading" class="autopilot-api-title">DeepSeek API key</h3>
-                <p class="autopilot-api-description">Used to power the autopilot assistant.</p>
+                <p class="autopilot-api-description">Used when the default provider is set to DeepSeek (direct).</p>
               </div>
               <span class="status-pill offline" id="autopilotApiKeyStatus">No key saved</span>
             </div>
@@ -1418,6 +1604,40 @@
               <p class="eyebrow">Saved API keys</p>
               <ul id="autopilotApiKeyList" class="api-key-list"></ul>
               <p class="input-note" id="autopilotApiKeyListEmpty">No API keys saved yet.</p>
+            </div>
+          </div>
+
+          <div class="autopilot-api-card" role="group" aria-labelledby="openrouterApiKeyHeading">
+            <div class="autopilot-api-header">
+              <div>
+                <p class="eyebrow">AI access</p>
+                <h3 id="openrouterApiKeyHeading" class="autopilot-api-title">OpenRouter API key</h3>
+                <p class="autopilot-api-description">Used when the default provider is set to OpenRouter.</p>
+              </div>
+              <span class="status-pill offline" id="openrouterApiKeyStatus">No key saved</span>
+            </div>
+            <label for="openrouterApiKey">
+              <div class="autopilot-api-row">
+                <input
+                  id="openrouterApiKey"
+                  name="openrouter_api_key"
+                  type="password"
+                  inputmode="text"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="or-..."
+                />
+                <button type="button" id="clearOpenrouterApiKey" class="secondary">Remove key</button>
+              </div>
+            </label>
+            <p class="input-note" id="openrouterApiKeyNote">
+              Saved securely on the server for autopilot replies. Leave blank to keep your existing key or use the
+              remove button above. The <code>OPENROUTER_API_KEY</code> environment variable will be used as a fallback.
+            </p>
+            <div class="saved-keys">
+              <p class="eyebrow">Saved API keys</p>
+              <ul id="openrouterApiKeyList" class="api-key-list"></ul>
+              <p class="input-note" id="openrouterApiKeyListEmpty">No API keys saved yet.</p>
             </div>
           </div>
           <div class="form-feedback" id="autopilotFeedback"></div>
@@ -1480,6 +1700,339 @@
           <div class="form-feedback" id="weatherFeedback"></div>
           <div class="panel-actions">
             <button type="submit" class="primary">Save weather settings</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="images-heading" data-panel data-expanded="false">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="images-heading">Website images</h2>
+          <p>View and replace images stored in <code>/static/images</code>.</p>
+        </div>
+        <div class="panel-actions">
+          <button type="button" id="refreshImages" class="secondary">Refresh</button>
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="imagesPanelBody">Expand</button>
+        </div>
+      </div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight" id="imagesSummaryHighlight">Manage uploaded site images.</p>
+        <p class="panel-summary-note">Replace a file to update it anywhere it’s used on the site.</p>
+      </div>
+      <div class="panel-body" id="imagesPanelBody" hidden>
+        <div class="image-library-toolbar">
+          <p class="input-note" id="imagesHelpText">
+            Tip: to update an existing image on the site, replace it using the same filename.
+          </p>
+          <div class="panel-actions">
+            <input id="uploadNewImage" type="file" accept="image/*" />
+            <button type="button" id="uploadNewImageBtn" class="primary">Upload new</button>
+          </div>
+        </div>
+        <div class="form-feedback" id="imagesFeedback"></div>
+        <div class="image-library-grid" id="imageLibraryGrid"></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="telnyx-heading" data-panel data-expanded="false">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="telnyx-heading">SMS Verification (Telnyx)</h2>
+          <p>Use your Telnyx number to send verification codes to customers (preferred SMS provider).</p>
+        </div>
+        <div class="panel-actions">
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="telnyxPanelBody">Expand</button>
+        </div>
+      </div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight" id="telnyxSummaryHighlight">Verify customer phone numbers via Telnyx SMS.</p>
+        <p class="panel-summary-note">Expand to add your Telnyx API key and your Telnyx phone number.</p>
+      </div>
+      <div class="panel-body" id="telnyxPanelBody" hidden>
+        <form id="telnyxForm" class="grid" autocomplete="off" novalidate>
+          <div class="section">
+            <div class="autopilot-api-header">
+              <div>
+                <p class="eyebrow">SMS Configuration</p>
+                <h3 class="autopilot-api-title">Telnyx Setup</h3>
+                <p class="autopilot-api-description">
+                  Add your Telnyx <strong>API key</strong> and the <strong>Telnyx phone number</strong> you want to send from.
+                  If Telnyx is configured, the website will use it to send verification codes.
+                </p>
+              </div>
+            </div>
+
+            <div style="background: rgba(48, 195, 166, 0.08); border: 1px solid rgba(48, 195, 166, 0.25); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+              <p style="margin: 0 0 12px 0; font-weight: 600; color: var(--accent);">📱 What you need from Telnyx:</p>
+              <ol style="margin: 0; padding-left: 20px; line-height: 1.8;">
+                <li>Create an API key in your Telnyx Mission Control Portal</li>
+                <li>Make sure your Telnyx number can send SMS</li>
+                <li>Enter the number in international format (E.164), e.g. <strong>+447123456789</strong></li>
+              </ol>
+            </div>
+
+            <label for="telnyxApiKey">
+              <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">
+                1️⃣ Telnyx API Key <span style="color: var(--danger);">*</span>
+              </strong>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 8px 0;">
+                Stored securely and used to send verification SMS. Leave blank to keep the saved key.
+              </p>
+              <div class="autopilot-api-row">
+                <input
+                  id="telnyxApiKey"
+                  name="api_key"
+                  type="password"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="Enter your Telnyx API key"
+                />
+              </div>
+            </label>
+
+            <label for="telnyxFromNumber">
+              <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">
+                2️⃣ From number (your Telnyx number) <span style="color: var(--danger);">*</span>
+              </strong>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 8px 0;">
+                Must be your Telnyx phone number in E.164 format.
+              </p>
+              <div class="autopilot-api-row">
+                <input
+                  id="telnyxFromNumber"
+                  name="from_number"
+                  type="tel"
+                  inputmode="tel"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="e.g. +447123456789"
+                />
+              </div>
+            </label>
+
+            <label for="telnyxMessagingProfileId">
+              <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">
+                3️⃣ Messaging Profile ID <span style="font-size: 0.8rem; color: var(--text-muted);">(optional)</span>
+              </strong>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 8px 0;">
+                Found in your Telnyx Mission Control &gt; Messaging &gt; Profiles. Leave blank if you have only one profile.
+              </p>
+              <div class="autopilot-api-row">
+                <input
+                  id="telnyxMessagingProfileId"
+                  name="messaging_profile_id"
+                  type="text"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="e.g. 40017e1c-…"
+                />
+              </div>
+            </label>
+
+            <p class="input-note" id="telnyxStatus" style="font-weight: 600; font-size: 1rem; margin-top: 16px;"></p>
+          </div>
+          <div class="form-feedback" id="telnyxFeedback"></div>
+          <div class="panel-actions">
+            <button type="submit" class="primary">Save Telnyx settings</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="smsapi-heading" data-panel data-expanded="false">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="smsapi-heading">SMS Verification (SMSAPI.com)</h2>
+          <p>Configure SMS verification for quote requests using SMSAPI.com (cheap, simple, zero compliance).</p>
+        </div>
+        <div class="panel-actions">
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="smsapiPanelBody">Expand</button>
+        </div>
+      </div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight" id="smsapiSummaryHighlight">Verify customer phone numbers via SMS (~2-3p per message).</p>
+        <p class="panel-summary-note">Expand to configure your SMSAPI.com credentials for sending verification codes.</p>
+      </div>
+      <div class="panel-body" id="smsapiPanelBody" hidden>
+        <form id="smsapiForm" class="grid" autocomplete="off" novalidate>
+          <div class="section">
+            <div class="autopilot-api-header">
+              <div>
+                <p class="eyebrow">SMS Configuration</p>
+                <h3 class="autopilot-api-title">SMSAPI.com Setup</h3>
+                <p class="autopilot-api-description">
+                  Configure your SMSAPI.com account to send verification codes to customers via SMS. 
+                  <strong>OAuth token is required</strong> for SMS verification to work.
+                </p>
+              </div>
+            </div>
+            
+            <div style="background: rgba(48, 195, 166, 0.08); border: 1px solid rgba(48, 195, 166, 0.25); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+              <p style="margin: 0 0 12px 0; font-weight: 600; color: var(--accent);">📱 How to get your SMSAPI.com credentials:</p>
+              <ol style="margin: 0; padding-left: 20px; line-height: 1.8;">
+                <li>Sign up at <a href="https://www.smsapi.com/" target="_blank" rel="noopener" style="color: var(--accent); text-decoration: underline;">smsapi.com</a> (free trial credits included)</li>
+                <li>Log in and go to <strong>Settings → API Password</strong></li>
+                <li>Generate an <strong>OAuth token</strong> (recommended) or use username/password auth</li>
+                <li>Copy the token - it starts with a long random string</li>
+              </ol>
+            </div>
+
+            <label for="smsapiOauthToken">
+              <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">
+                1️⃣ OAuth Token <span style="color: var(--danger);">*</span>
+              </strong>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 8px 0;">
+                Found in your SMSAPI dashboard under Settings → API Password. A long secure token for authentication.
+              </p>
+              <div class="autopilot-api-row">
+                <input
+                  id="smsapiOauthToken"
+                  name="oauth_token"
+                  type="password"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="Enter your SMSAPI OAuth Token"
+                  required
+                />
+              </div>
+            </label>
+
+            <label for="smsapiSenderName">
+              <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">
+                2️⃣ Sender Name (optional)
+              </strong>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 8px 0;">
+                This appears as the sender when customers receive the SMS. Can be your business name (e.g., "PayAsYouMow") or leave blank for default.
+              </p>
+              <div class="autopilot-api-row">
+                <input
+                  id="smsapiSenderName"
+                  name="sender_name"
+                  type="text"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="e.g., PayAsYouMow (11 chars max for alphanumeric)"
+                />
+              </div>
+            </label>
+
+            <div style="background: rgba(255, 215, 102, 0.08); border: 1px solid rgba(255, 215, 102, 0.25); border-radius: 12px; padding: 14px; margin-top: 16px;">
+              <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted);">
+                <strong style="color: var(--warning);">💡 Note:</strong> Your OAuth token is stored securely and only used for sending verification codes. SMSAPI.com charges ~2-3p per UK SMS.
+              </p>
+            </div>
+
+            <p class="input-note" id="smsapiStatus" style="font-weight: 600; font-size: 1rem; margin-top: 16px;"></p>
+          </div>
+          <div class="form-feedback" id="smsapiFeedback"></div>
+          <div class="panel-actions">
+            <button type="submit" class="primary">Save SMS settings</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="email-heading" data-panel data-expanded="false">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="email-heading">Email Verification (Magic Link)</h2>
+          <p>Send a confirmation link by email (no SMS provider required).</p>
+        </div>
+        <div class="panel-actions">
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="emailPanelBody">Expand</button>
+        </div>
+      </div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight" id="emailSummaryHighlight">Verify customers via a one-click email link.</p>
+        <p class="panel-summary-note">Expand to set SMTP settings (Gmail works well with an app password).</p>
+      </div>
+      <div class="panel-body" id="emailPanelBody" hidden>
+        <form id="emailConfigForm" class="grid" autocomplete="off" novalidate>
+          <div class="section">
+            <div class="autopilot-api-header">
+              <div>
+                <p class="eyebrow">SMTP Configuration</p>
+                <h3 class="autopilot-api-title">Email setup (recommended: Gmail)</h3>
+                <p class="autopilot-api-description">
+                  The website sends customers a confirmation link when they request a quote.
+                  For Gmail you must use an <strong>App Password</strong> (not your normal password).
+                </p>
+              </div>
+            </div>
+
+            <div style="background: rgba(48, 195, 166, 0.08); border: 1px solid rgba(48, 195, 166, 0.25); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+              <p style="margin: 0 0 12px 0; font-weight: 600; color: var(--accent);">✉️ Gmail settings (copy these):</p>
+              <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
+                <li><strong>Host:</strong> smtp.gmail.com</li>
+                <li><strong>Port:</strong> 587</li>
+                <li><strong>Security:</strong> STARTTLS (enabled)</li>
+                <li><strong>Username:</strong> your full Gmail address</li>
+                <li><strong>Password:</strong> Google App Password (16 characters)</li>
+              </ul>
+            </div>
+
+            <label for="smtpHost">
+              <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">SMTP Host</strong>
+              <div class="autopilot-api-row">
+                <input id="smtpHost" name="host" type="text" autocomplete="off" spellcheck="false" placeholder="smtp.gmail.com" />
+              </div>
+            </label>
+
+            <div class="autopilot-provider-row">
+              <label style="flex:1; min-width: 180px;" for="smtpPort">
+                <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">SMTP Port</strong>
+                <div class="autopilot-api-row">
+                  <input id="smtpPort" name="port" type="number" min="1" max="65535" step="1" placeholder="587" />
+                </div>
+              </label>
+
+              <label style="flex:1; min-width: 220px;" for="smtpUseStarttls">
+                <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">Security</strong>
+                <div class="autopilot-api-row" style="align-items:center;">
+                  <input id="smtpUseStarttls" name="use_starttls" type="checkbox" checked style="width: 18px; height: 18px;" />
+                  <span style="opacity: 0.9;">Use STARTTLS</span>
+                </div>
+              </label>
+            </div>
+
+            <label for="smtpUsername">
+              <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">SMTP Username</strong>
+              <div class="autopilot-api-row">
+                <input id="smtpUsername" name="username" type="text" autocomplete="off" spellcheck="false" placeholder="andyfast20@gmail.com" />
+              </div>
+            </label>
+
+            <label for="smtpPassword">
+              <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">SMTP Password (App Password)</strong>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 8px 0;">
+                For Gmail: Google Account → Security → 2‑Step Verification → App passwords → create one for “Mail”.
+              </p>
+              <div class="autopilot-api-row">
+                <input id="smtpPassword" name="password" type="password" autocomplete="off" spellcheck="false" placeholder="Enter your app password" />
+              </div>
+            </label>
+
+            <div class="autopilot-provider-row">
+              <label style="flex:1; min-width: 260px;" for="smtpFromEmail">
+                <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">From Email</strong>
+                <div class="autopilot-api-row">
+                  <input id="smtpFromEmail" name="from_email" type="email" autocomplete="off" spellcheck="false" placeholder="andyfast20@gmail.com" />
+                </div>
+              </label>
+              <label style="flex:1; min-width: 220px;" for="smtpFromName">
+                <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">From Name</strong>
+                <div class="autopilot-api-row">
+                  <input id="smtpFromName" name="from_name" type="text" autocomplete="off" spellcheck="false" placeholder="Pay As You Mow" />
+                </div>
+              </label>
+            </div>
+
+            <p class="input-note" id="emailStatus" style="font-weight: 600; font-size: 1rem; margin-top: 16px;"></p>
+          </div>
+          <div class="form-feedback" id="emailFeedback"></div>
+          <div class="panel-actions">
+            <button type="submit" class="primary">Save email settings</button>
           </div>
         </form>
       </div>
@@ -1793,18 +2346,39 @@
     const autopilotPromptInput = document.getElementById('autopilotPrompt');
     const autopilotFeedback = document.getElementById('autopilotFeedback');
     const autopilotSaveButton = autopilotForm ? autopilotForm.querySelector('button[type="submit"]') : null;
+    const autopilotProviderSelect = document.getElementById('autopilotProvider');
     const autopilotApiKeyInput = document.getElementById('autopilotApiKey');
     const clearAutopilotApiKeyBtn = document.getElementById('clearAutopilotApiKey');
     const autopilotApiKeyNote = document.getElementById('autopilotApiKeyNote');
     const autopilotApiKeyStatus = document.getElementById('autopilotApiKeyStatus');
     const autopilotApiKeyList = document.getElementById('autopilotApiKeyList');
     const autopilotApiKeyListEmpty = document.getElementById('autopilotApiKeyListEmpty');
+    const openrouterApiKeyInput = document.getElementById('openrouterApiKey');
+    const clearOpenrouterApiKeyBtn = document.getElementById('clearOpenrouterApiKey');
+    const openrouterApiKeyNote = document.getElementById('openrouterApiKeyNote');
+    const openrouterApiKeyStatus = document.getElementById('openrouterApiKeyStatus');
+    const openrouterApiKeyList = document.getElementById('openrouterApiKeyList');
+    const openrouterApiKeyListEmpty = document.getElementById('openrouterApiKeyListEmpty');
+    const autopilotWebsiteUrlInput = document.getElementById('autopilotWebsiteUrl');
+    const autopilotWebsiteScrapeBtn = document.getElementById('autopilotWebsiteScrape');
+    const autopilotWebsiteClearBtn = document.getElementById('autopilotWebsiteClear');
+    const autopilotWebsiteStatus = document.getElementById('autopilotWebsiteStatus');
+    const autopilotWebsiteNote = document.getElementById('autopilotWebsiteNote');
+    const autopilotWebsiteMeta = document.getElementById('autopilotWebsiteMeta');
+    const autopilotWebsitePreview = document.getElementById('autopilotWebsitePreview');
     const weatherStatus = document.getElementById('weatherStatus');
     const weatherForm = document.getElementById('weatherForm');
     const weatherApiKeyInput = document.getElementById('weatherApiKey');
     const weatherFeedback = document.getElementById('weatherFeedback');
     const weatherApiKeyList = document.getElementById('weatherApiKeyList');
     const weatherApiKeyListEmpty = document.getElementById('weatherApiKeyListEmpty');
+
+    const refreshImagesBtn = document.getElementById('refreshImages');
+    const imagesSummaryHighlight = document.getElementById('imagesSummaryHighlight');
+    const imagesFeedback = document.getElementById('imagesFeedback');
+    const imageLibraryGrid = document.getElementById('imageLibraryGrid');
+    const uploadNewImageInput = document.getElementById('uploadNewImage');
+    const uploadNewImageBtn = document.getElementById('uploadNewImageBtn');
 
     const CHAT_POLL_INTERVAL = 4000;
     const DEFAULT_CHAT_INVITE_MESSAGE = 'Hi there! We\'re online if you need a hand with anything.';
@@ -1825,10 +2399,18 @@
     const AUTOPILOT_DEFAULTS = {
       enabled: false,
       business_profile: '',
+      business_website_url: '',
+      business_website_last_scraped: '',
+      has_business_website_knowledge: false,
+      business_website_knowledge_chars: 0,
+      business_website_knowledge_preview: '',
+      provider: 'deepseek',
       model: 'deepseek-chat',
       temperature: 0.3,
       has_api_key: false,
       api_keys: [],
+      has_openrouter_api_key: false,
+      openrouter_api_keys: [],
     };
     const WEATHER_DEFAULTS = { has_api_key: false, api_keys: [] };
     let autopilotConfig = { ...AUTOPILOT_DEFAULTS };
@@ -2418,6 +3000,286 @@
       setSummaryText(reviewsSummaryHighlight, highlight);
     }
 
+    function formatBytes(bytes) {
+      const value = Number(bytes);
+      if (!Number.isFinite(value) || value <= 0) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      let idx = 0;
+      let num = value;
+      while (num >= 1024 && idx < units.length - 1) {
+        num /= 1024;
+        idx += 1;
+      }
+      return `${num.toFixed(idx === 0 ? 0 : 1)} ${units[idx]}`;
+    }
+
+    function showImagesFeedback(message, isSuccess = false) {
+      if (!imagesFeedback) return;
+      imagesFeedback.textContent = message || '';
+      imagesFeedback.classList.toggle('visible', Boolean(message));
+      imagesFeedback.classList.toggle('success', Boolean(message) && Boolean(isSuccess));
+    }
+
+    function setImagesSummary(text) {
+      if (!imagesSummaryHighlight) return;
+      setSummaryText(imagesSummaryHighlight, text);
+    }
+
+    const IMAGE_USAGE_LABELS = {
+      'images/hero-mowing.svg': 'Homepage → Hero background (slide 1)\nTip: great place for a wide “before/after” or mowing photo.',
+      'images/hero-weeding.svg': 'Homepage → Hero background (slide 2)\nTip: great place for a wide garden/flowerbed photo.',
+      'images/offer-gardener.svg': 'Homepage → Quote popup / offer image',
+      'images/service-lawn-mowing.svg': 'Homepage → Services card: Lawn mowing',
+      'images/service-hedge-trimming.svg': 'Homepage → Services card: Hedge trimming',
+      'images/service-weed-control.svg': 'Homepage → Services card: Weed control',
+    };
+
+    function getImageUsageLabel(imagePath) {
+      const key = (imagePath || '').trim();
+      return IMAGE_USAGE_LABELS[key] || '';
+    }
+
+    async function fetchSiteImages() {
+      const res = await fetch('/admin/assets/images');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || 'Unable to load images.');
+      }
+      return Array.isArray(data.images) ? data.images : [];
+    }
+
+    function getDroppedImageFile(event) {
+      const dt = event && event.dataTransfer;
+      if (!dt || !dt.files || !dt.files.length) return null;
+      const file = dt.files[0];
+      if (!file) return null;
+      if (file.type && !file.type.startsWith('image/')) {
+        return null;
+      }
+      return file;
+    }
+
+    async function uploadImageFile(file, targetPath) {
+      if (!file) {
+        throw new Error('No file provided.');
+      }
+      const form = new FormData();
+      form.append('file', file);
+      if (targetPath) {
+        form.append('target_path', targetPath);
+      }
+      const res = await fetch('/admin/assets/images/upload', { method: 'POST', body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || (targetPath ? 'Unable to replace image.' : 'Unable to upload image.'));
+      }
+      return data;
+    }
+
+    function renderSiteImages(images) {
+      if (!imageLibraryGrid) return;
+      const items = Array.isArray(images) ? images : [];
+      imageLibraryGrid.innerHTML = '';
+
+      if (!items.length) {
+        setImagesSummary('No images found in /static/images.');
+        return;
+      }
+
+      setImagesSummary(`${items.length} image${items.length === 1 ? '' : 's'} available.`);
+
+      items.forEach((img) => {
+        const card = document.createElement('div');
+        card.className = 'image-library-card';
+
+        const thumb = document.createElement('div');
+        thumb.className = 'image-library-thumb';
+
+        const imageEl = document.createElement('img');
+        imageEl.alt = img.path || 'Site image';
+        imageEl.src = `${img.url || ''}?v=${encodeURIComponent(img.modified || '')}`;
+        thumb.appendChild(imageEl);
+
+        const meta = document.createElement('div');
+        meta.className = 'image-library-meta';
+        const title = document.createElement('strong');
+        title.textContent = img.path || 'images/';
+        const subtitle = document.createElement('small');
+        const parts = [];
+        if (img.size != null) parts.push(formatBytes(img.size));
+        if (img.modified) parts.push(`Updated ${formatDate(img.modified)}`);
+        subtitle.textContent = parts.join(' · ') || ' '; 
+
+        const usage = document.createElement('small');
+        usage.className = 'image-library-usage';
+        const usageLabel = getImageUsageLabel(img.path);
+        if (usageLabel) {
+          usage.textContent = `Used for: ${usageLabel}`;
+        } else {
+          card.classList.add('is-unmapped');
+          usage.textContent = 'Used for: (not mapped yet) — uploaded but not referenced by the homepage right now.';
+        }
+        meta.appendChild(title);
+        meta.appendChild(subtitle);
+        meta.appendChild(usage);
+
+        const actions = document.createElement('div');
+        actions.className = 'image-library-actions';
+
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+
+        const replaceBtn = document.createElement('button');
+        replaceBtn.type = 'button';
+        replaceBtn.className = 'secondary';
+        replaceBtn.textContent = 'Replace image';
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'secondary';
+        deleteBtn.textContent = 'Delete';
+
+        const doReplace = async (file) => {
+          if (!file) {
+            showImagesFeedback('Drop an image here or choose a file first.');
+            return;
+          }
+          replaceBtn.disabled = true;
+          deleteBtn.disabled = true;
+          try {
+            await uploadImageFile(file, img.path || '');
+            showImagesFeedback('Image replaced.', true);
+            await loadSiteImages();
+          } catch (error) {
+            showImagesFeedback(error.message || 'Unable to replace image.');
+          } finally {
+            replaceBtn.disabled = false;
+            deleteBtn.disabled = false;
+          }
+        };
+
+        replaceBtn.addEventListener('click', async () => {
+          const file = fileInput.files && fileInput.files[0];
+          await doReplace(file);
+        });
+
+        // Drag & drop replacement onto the whole card.
+        let dragDepth = 0;
+        const setDropActive = (active) => {
+          card.classList.toggle('is-drop-target', Boolean(active));
+        };
+
+        card.addEventListener('dragenter', (event) => {
+          event.preventDefault();
+          dragDepth += 1;
+          setDropActive(true);
+        });
+        card.addEventListener('dragover', (event) => {
+          event.preventDefault();
+          if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = 'copy';
+          }
+          setDropActive(true);
+        });
+        card.addEventListener('dragleave', () => {
+          dragDepth = Math.max(0, dragDepth - 1);
+          if (dragDepth === 0) {
+            setDropActive(false);
+          }
+        });
+        card.addEventListener('drop', async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          dragDepth = 0;
+          setDropActive(false);
+          const file = getDroppedImageFile(event);
+          if (!file) {
+            showImagesFeedback('Please drop an image file (png/jpg/webp/svg).');
+            return;
+          }
+          await doReplace(file);
+        });
+
+        deleteBtn.addEventListener('click', async () => {
+          if (!confirm(`Delete ${img.path}?`)) return;
+          replaceBtn.disabled = true;
+          deleteBtn.disabled = true;
+          try {
+            const res = await fetch('/admin/assets/images/delete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ path: img.path }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || 'Unable to delete image.');
+            showImagesFeedback('Image deleted.', true);
+            await loadSiteImages();
+          } catch (error) {
+            showImagesFeedback(error.message || 'Unable to delete image.');
+          } finally {
+            replaceBtn.disabled = false;
+            deleteBtn.disabled = false;
+          }
+        });
+
+        actions.appendChild(fileInput);
+        actions.appendChild(replaceBtn);
+        actions.appendChild(deleteBtn);
+
+        card.appendChild(thumb);
+        card.appendChild(meta);
+        card.appendChild(actions);
+        imageLibraryGrid.appendChild(card);
+      });
+    }
+
+    async function loadSiteImages() {
+      try {
+        const images = await fetchSiteImages();
+        renderSiteImages(images);
+      } catch (error) {
+        setImagesSummary('Unable to load images.');
+        showImagesFeedback(error.message || 'Unable to load images.');
+      }
+    }
+
+    async function uploadNewImage() {
+      const file = uploadNewImageInput && uploadNewImageInput.files ? uploadNewImageInput.files[0] : null;
+      if (!file) {
+        showImagesFeedback('Choose an image to upload first.');
+        return;
+      }
+      if (uploadNewImageBtn) uploadNewImageBtn.disabled = true;
+      try {
+        await uploadImageFile(file);
+        showImagesFeedback('Image uploaded.', true);
+        if (uploadNewImageInput) uploadNewImageInput.value = '';
+        await loadSiteImages();
+      } catch (error) {
+        showImagesFeedback(error.message || 'Unable to upload image.');
+      } finally {
+        if (uploadNewImageBtn) uploadNewImageBtn.disabled = false;
+      }
+    }
+
+    async function uploadNewImageFile(file) {
+      if (!file) {
+        showImagesFeedback('Please drop an image file.');
+        return;
+      }
+      if (uploadNewImageBtn) uploadNewImageBtn.disabled = true;
+      try {
+        await uploadImageFile(file);
+        showImagesFeedback('Image uploaded.', true);
+        await loadSiteImages();
+      } catch (error) {
+        showImagesFeedback(error.message || 'Unable to upload image.');
+      } finally {
+        if (uploadNewImageBtn) uploadNewImageBtn.disabled = false;
+      }
+    }
+
     function updateChatSummary() {
       if (!chatSummaryHighlight) return;
       if (!chatSessionsCache.length) {
@@ -2448,26 +3310,46 @@
     function updateAutopilotSummary() {
       if (!autopilotSummaryHighlight) return;
       const enabled = Boolean(autopilotConfig.enabled);
+      const provider = typeof autopilotConfig.provider === 'string' ? autopilotConfig.provider : 'deepseek';
       const hasProfile =
         typeof autopilotConfig.business_profile === 'string' && autopilotConfig.business_profile.trim().length > 0;
-      const apiKeyTyped =
+      const hasWebsiteKnowledge = Boolean(autopilotConfig.has_business_website_knowledge);
+      const hasKnowledge = hasProfile || hasWebsiteKnowledge;
+
+      const deepseekKeyTyped =
         autopilotApiKeyInput && autopilotApiKeyInput.value && autopilotApiKeyInput.value.trim().length > 0;
-      const apiKeyPendingRemoval =
+      const deepseekKeyPendingRemoval =
         autopilotApiKeyInput &&
         autopilotApiKeyInput.dataset.dirty === 'true' &&
         autopilotApiKeyInput.dataset.hasExisting === 'false' &&
-        !apiKeyTyped;
-      const hasKey = (!apiKeyPendingRemoval && Boolean(autopilotConfig.has_api_key)) || Boolean(apiKeyTyped);
+        !deepseekKeyTyped;
+      const hasDeepseekKey = (!deepseekKeyPendingRemoval && Boolean(autopilotConfig.has_api_key)) || Boolean(deepseekKeyTyped);
 
-      if (enabled && hasProfile && hasKey) {
+      const openrouterKeyTyped =
+        openrouterApiKeyInput && openrouterApiKeyInput.value && openrouterApiKeyInput.value.trim().length > 0;
+      const openrouterKeyPendingRemoval =
+        openrouterApiKeyInput &&
+        openrouterApiKeyInput.dataset.dirty === 'true' &&
+        openrouterApiKeyInput.dataset.hasExisting === 'false' &&
+        !openrouterKeyTyped;
+      const hasOpenrouterKey =
+        (!openrouterKeyPendingRemoval && Boolean(autopilotConfig.has_openrouter_api_key)) || Boolean(openrouterKeyTyped);
+
+      const hasKey = provider === 'openrouter' ? hasOpenrouterKey : hasDeepseekKey;
+
+      if (enabled && hasKnowledge && hasKey) {
         setSummaryText(
           autopilotSummaryHighlight,
-          'Autopilot is answering chats using your saved business guide.'
+          hasWebsiteKnowledge
+            ? 'Autopilot is answering chats using your business notes and website knowledge.'
+            : 'Autopilot is answering chats using your saved business guide.'
         );
       } else if (enabled && !hasKey) {
         setSummaryText(
           autopilotSummaryHighlight,
-          'Autopilot is on, but add a DeepSeek API key so replies can be generated.'
+          provider === 'openrouter'
+            ? 'Autopilot is on, but add an OpenRouter API key so replies can be generated.'
+            : 'Autopilot is on, but add a DeepSeek API key so replies can be generated.'
         );
       } else if (enabled) {
         setSummaryText(
@@ -2539,6 +3421,13 @@
     function applyApiKeyToPayload(payload) {
       if (!payload || typeof payload !== 'object') return payload;
 
+      if (autopilotProviderSelect) {
+        const value = String(autopilotProviderSelect.value || '').trim();
+        if (value === 'openrouter' || value === 'deepseek') {
+          payload.provider = value;
+        }
+      }
+
       const apiKeyValue = autopilotApiKeyInput ? autopilotApiKeyInput.value.trim() : '';
       const apiKeyDirty = autopilotApiKeyInput && autopilotApiKeyInput.dataset.dirty === 'true';
       const hasExistingKey = autopilotApiKeyInput && autopilotApiKeyInput.dataset.hasExisting === 'true';
@@ -2547,6 +3436,14 @@
       // the input never fired an `input` event to set the dirty flag.
       if (apiKeyDirty || (apiKeyValue.length > 0 && !hasExistingKey)) {
         payload.api_key = apiKeyValue;
+      }
+
+      const openrouterApiKeyValue = openrouterApiKeyInput ? openrouterApiKeyInput.value.trim() : '';
+      const openrouterApiKeyDirty = openrouterApiKeyInput && openrouterApiKeyInput.dataset.dirty === 'true';
+      const openrouterHasExistingKey = openrouterApiKeyInput && openrouterApiKeyInput.dataset.hasExisting === 'true';
+
+      if (openrouterApiKeyDirty || (openrouterApiKeyValue.length > 0 && !openrouterHasExistingKey)) {
+        payload.openrouter_api_key = openrouterApiKeyValue;
       }
 
       return payload;
@@ -2598,11 +3495,49 @@
       });
     }
 
+    function renderOpenrouterSavedKeys() {
+      if (!openrouterApiKeyList || !openrouterApiKeyListEmpty) return;
+
+      const keys = Array.isArray(autopilotConfig.openrouter_api_keys) ? autopilotConfig.openrouter_api_keys : [];
+      openrouterApiKeyList.innerHTML = '';
+
+      if (!keys.length) {
+        openrouterApiKeyList.hidden = true;
+        openrouterApiKeyListEmpty.hidden = false;
+        return;
+      }
+
+      openrouterApiKeyList.hidden = false;
+      openrouterApiKeyListEmpty.hidden = true;
+
+      keys.forEach((entry) => {
+        const item = document.createElement('li');
+        item.className = 'api-key-pill';
+
+        const name = document.createElement('strong');
+        name.textContent = entry && entry.label ? entry.label : 'Saved API key';
+
+        const meta = document.createElement('small');
+        const createdAt = entry && entry.created_at ? formatDate(entry.created_at) : '';
+        const last4 = entry && entry.last4 ? `ending ${entry.last4}` : '';
+        const details = [last4, createdAt].filter(Boolean).join(' · ');
+        meta.textContent = details || 'Ready to use for autopilot replies';
+
+        item.appendChild(name);
+        item.appendChild(meta);
+        openrouterApiKeyList.appendChild(item);
+      });
+    }
+
     function renderAutopilotState() {
       const enabled = Boolean(autopilotConfig.enabled);
       const hasApiKey = Boolean(autopilotConfig.has_api_key);
       const apiKeys = Array.isArray(autopilotConfig.api_keys) ? autopilotConfig.api_keys : [];
       const savedKeyCount = apiKeys.length;
+      const provider = typeof autopilotConfig.provider === 'string' ? autopilotConfig.provider : 'deepseek';
+      const hasOpenrouterApiKey = Boolean(autopilotConfig.has_openrouter_api_key);
+      const openrouterKeys = Array.isArray(autopilotConfig.openrouter_api_keys) ? autopilotConfig.openrouter_api_keys : [];
+      const openrouterSavedCount = openrouterKeys.length;
       if (autopilotStatusBadge) {
         autopilotStatusBadge.textContent = enabled ? 'Autopilot active' : 'Autopilot paused';
         autopilotStatusBadge.classList.toggle('active', enabled);
@@ -2616,6 +3551,43 @@
       });
       if (autopilotPromptInput && typeof autopilotConfig.business_profile === 'string') {
         autopilotPromptInput.value = autopilotConfig.business_profile;
+      }
+
+      if (autopilotWebsiteUrlInput) {
+        autopilotWebsiteUrlInput.value = typeof autopilotConfig.business_website_url === 'string'
+          ? autopilotConfig.business_website_url
+          : '';
+      }
+      const hasWebsiteKnowledge = Boolean(autopilotConfig.has_business_website_knowledge);
+      const websiteChars = Number(autopilotConfig.business_website_knowledge_chars) || 0;
+      const lastScraped = typeof autopilotConfig.business_website_last_scraped === 'string'
+        ? autopilotConfig.business_website_last_scraped
+        : '';
+      if (autopilotWebsiteStatus) {
+        autopilotWebsiteStatus.textContent = hasWebsiteKnowledge
+          ? 'Website knowledge saved'
+          : 'Not scraped yet';
+        autopilotWebsiteStatus.classList.toggle('active', hasWebsiteKnowledge);
+        autopilotWebsiteStatus.classList.toggle('offline', !hasWebsiteKnowledge);
+      }
+      if (autopilotWebsiteMeta) {
+        if (hasWebsiteKnowledge) {
+          const parts = [];
+          if (websiteChars) parts.push(`${websiteChars.toLocaleString()} characters`);
+          if (lastScraped) parts.push(`Last scraped: ${formatDate(lastScraped)}`);
+          autopilotWebsiteMeta.textContent = parts.join(' · ') || 'Website knowledge saved for autopilot.';
+        } else {
+          autopilotWebsiteMeta.textContent = 'No website knowledge saved yet.';
+        }
+      }
+      if (autopilotWebsitePreview) {
+        autopilotWebsitePreview.value = typeof autopilotConfig.business_website_knowledge_preview === 'string'
+          ? autopilotConfig.business_website_knowledge_preview
+          : '';
+      }
+
+      if (autopilotProviderSelect) {
+        autopilotProviderSelect.value = provider === 'openrouter' ? 'openrouter' : 'deepseek';
       }
       if (autopilotApiKeyStatus) {
         if (hasApiKey && savedKeyCount > 0) {
@@ -2649,7 +3621,80 @@
         autopilotApiKeyNote.classList.toggle('warning', !hasApiKey);
       }
 
+      if (openrouterApiKeyStatus) {
+        if (hasOpenrouterApiKey && openrouterSavedCount > 0) {
+          openrouterApiKeyStatus.textContent =
+            openrouterSavedCount === 1 ? '1 saved API key' : `${openrouterSavedCount} saved API keys`;
+        } else if (hasOpenrouterApiKey) {
+          openrouterApiKeyStatus.textContent = 'Key available for autopilot replies';
+        } else {
+          openrouterApiKeyStatus.textContent = 'No key saved';
+        }
+        openrouterApiKeyStatus.classList.toggle('active', hasOpenrouterApiKey);
+        openrouterApiKeyStatus.classList.toggle('offline', !hasOpenrouterApiKey);
+      }
+
+      if (openrouterApiKeyInput) {
+        const keepTypedValue =
+          openrouterApiKeyInput.dataset.dirty === 'true' &&
+          openrouterApiKeyInput.value &&
+          openrouterApiKeyInput.value.trim().length > 0;
+
+        if (!keepTypedValue) {
+          openrouterApiKeyInput.value = '';
+        }
+
+        openrouterApiKeyInput.dataset.dirty = keepTypedValue ? 'true' : 'false';
+        openrouterApiKeyInput.dataset.hasExisting = hasOpenrouterApiKey ? 'true' : 'false';
+      }
+
+      if (openrouterApiKeyNote) {
+        openrouterApiKeyNote.textContent = hasOpenrouterApiKey
+          ? 'API key saved securely for future autopilot replies. Leave the box untouched to keep it. The OPENROUTER_API_KEY environment variable will also be used if set.'
+          : 'Add your OpenRouter API key so autopilot can reply to visitors.';
+        openrouterApiKeyNote.classList.toggle('warning', !hasOpenrouterApiKey);
+      }
+
       renderAutopilotSavedKeys();
+      renderOpenrouterSavedKeys();
+    }
+
+    async function scrapeAutopilotWebsite(url) {
+      const value = typeof url === 'string' ? url.trim() : '';
+      if (!value) {
+        throw new Error('Please enter a website address first.');
+      }
+      const res = await fetch('/admin/autopilot/scrape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: value }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || 'Unable to scrape that website.');
+      }
+      const incoming = data && typeof data.config === 'object' ? data.config : {};
+      autopilotConfig = { ...AUTOPILOT_DEFAULTS, ...incoming };
+      renderAutopilotState();
+      updateAutopilotSummary();
+      return true;
+    }
+
+    async function clearAutopilotWebsiteKnowledge() {
+      const res = await fetch('/admin/autopilot/scrape/clear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || 'Unable to clear website knowledge.');
+      }
+      const incoming = data && typeof data.config === 'object' ? data.config : {};
+      autopilotConfig = { ...AUTOPILOT_DEFAULTS, ...incoming };
+      renderAutopilotState();
+      updateAutopilotSummary();
+      return true;
     }
 
     async function loadWeatherConfig() {
@@ -2720,6 +3765,331 @@
       return false;
     }
 
+    // SMSAPI.com Configuration
+    let smsapiConfig = { oauth_token: '', sender_name: '', has_config: false };
+
+    // Telnyx Configuration
+    let telnyxConfig = { api_key: '', from_number: '', has_config: false };
+
+    async function loadTelnyxConfig() {
+      try {
+        const res = await fetch('/admin/telnyx/config');
+        if (!res.ok) {
+          throw new Error('Unable to load Telnyx settings.');
+        }
+        const data = await res.json().catch(() => ({}));
+        const incoming = data && typeof data.config === 'object' ? data.config : {};
+        telnyxConfig = { ...telnyxConfig, ...incoming };
+        renderTelnyxState();
+      } catch (error) {
+        console.error('Unable to load Telnyx settings.', error);
+        const telnyxFeedback = document.getElementById('telnyxFeedback');
+        if (telnyxFeedback) {
+          telnyxFeedback.textContent = 'Unable to load Telnyx settings.';
+          telnyxFeedback.classList.add('visible');
+        }
+      }
+    }
+
+    function renderTelnyxState() {
+      const telnyxApiKeyInput = document.getElementById('telnyxApiKey');
+      const telnyxFromNumberInput = document.getElementById('telnyxFromNumber');
+      const telnyxProfileInput = document.getElementById('telnyxMessagingProfileId');
+      const telnyxStatus = document.getElementById('telnyxStatus');
+
+      if (telnyxApiKeyInput && telnyxConfig.api_key) {
+        telnyxApiKeyInput.placeholder = telnyxConfig.api_key;
+      }
+      if (telnyxFromNumberInput) {
+        telnyxFromNumberInput.value = telnyxConfig.from_number || '';
+      }
+      if (telnyxProfileInput) {
+        telnyxProfileInput.value = telnyxConfig.messaging_profile_id || '';
+      }
+
+      if (telnyxStatus) {
+        if (telnyxConfig.has_config) {
+          telnyxStatus.textContent = '✓ Telnyx SMS verification is configured and ready to use.';
+          telnyxStatus.style.color = '#30c3a6';
+        } else {
+          telnyxStatus.textContent = '⚠ Telnyx not configured. The site will use SMSAPI.com if configured, otherwise phone verification will be skipped.';
+          telnyxStatus.style.color = '#ffd166';
+        }
+      }
+    }
+
+    async function persistTelnyxConfig(event) {
+      if (event) {
+        event.preventDefault();
+      }
+
+      const telnyxFeedback = document.getElementById('telnyxFeedback');
+      if (telnyxFeedback) {
+        telnyxFeedback.classList.remove('visible', 'success');
+        telnyxFeedback.textContent = '';
+      }
+
+      const apiKey = document.getElementById('telnyxApiKey')?.value.trim() || '';
+      const fromNumber = document.getElementById('telnyxFromNumber')?.value.trim() || '';
+      const profileId = document.getElementById('telnyxMessagingProfileId')?.value.trim() || '';
+
+      const payload = {};
+      // Only send fields when the admin provided a value, so we don't clear saved secrets.
+      if (apiKey) {
+        payload.api_key = apiKey;
+      }
+      if (fromNumber) {
+        payload.from_number = fromNumber;
+      }
+      payload.messaging_profile_id = profileId;
+
+      try {
+        const res = await fetch('/admin/telnyx/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || 'Unable to save Telnyx settings.');
+        }
+
+        const incoming = data && typeof data.config === 'object' ? data.config : {};
+        telnyxConfig = { ...telnyxConfig, ...incoming };
+        renderTelnyxState();
+
+        if (telnyxFeedback) {
+          telnyxFeedback.textContent = 'Telnyx settings saved successfully.';
+          telnyxFeedback.classList.add('visible', 'success');
+        }
+        // Clear API key field after save.
+        const keyEl = document.getElementById('telnyxApiKey');
+        if (keyEl) {
+          keyEl.value = '';
+        }
+        return true;
+      } catch (error) {
+        console.error('Unable to save Telnyx settings.', error);
+        if (telnyxFeedback) {
+          telnyxFeedback.textContent = error.message || 'Unable to save Telnyx settings.';
+          telnyxFeedback.classList.add('visible');
+        }
+      }
+      return false;
+    }
+
+    async function loadSmsapiConfig() {
+      try {
+        const res = await fetch('/admin/smsapi/config');
+        if (!res.ok) {
+          throw new Error('Unable to load SMSAPI settings.');
+        }
+        const data = await res.json().catch(() => ({}));
+        const incoming = data && typeof data.config === 'object' ? data.config : {};
+        smsapiConfig = { ...smsapiConfig, ...incoming };
+        renderSmsapiState();
+      } catch (error) {
+        console.error('Unable to load SMSAPI settings.', error);
+        const smsapiFeedback = document.getElementById('smsapiFeedback');
+        if (smsapiFeedback) {
+          smsapiFeedback.textContent = 'Unable to load SMSAPI settings.';
+          smsapiFeedback.classList.add('visible');
+        }
+      }
+    }
+
+    function renderSmsapiState() {
+      const smsapiOauthTokenInput = document.getElementById('smsapiOauthToken');
+      const smsapiSenderNameInput = document.getElementById('smsapiSenderName');
+      const smsapiStatus = document.getElementById('smsapiStatus');
+
+      if (smsapiOauthTokenInput && smsapiConfig.oauth_token) {
+        smsapiOauthTokenInput.placeholder = smsapiConfig.oauth_token;
+      }
+      if (smsapiSenderNameInput && smsapiConfig.sender_name) {
+        smsapiSenderNameInput.value = smsapiConfig.sender_name;
+      }
+
+      if (smsapiStatus) {
+        if (smsapiConfig.has_config) {
+          smsapiStatus.textContent = '✓ SMS verification is configured and ready to use (~2-3p per SMS).';
+          smsapiStatus.style.color = '#30c3a6';
+        } else {
+          smsapiStatus.textContent = '⚠ SMS verification not configured. Quotes will be submitted without phone verification.';
+          smsapiStatus.style.color = '#ffd166';
+        }
+      }
+    }
+
+    async function persistSmsapiConfig(event) {
+      if (event) {
+        event.preventDefault();
+      }
+
+      const smsapiFeedback = document.getElementById('smsapiFeedback');
+      if (smsapiFeedback) {
+        smsapiFeedback.classList.remove('visible', 'success');
+        smsapiFeedback.textContent = '';
+      }
+
+      const oauthToken = document.getElementById('smsapiOauthToken')?.value.trim() || '';
+      const senderName = document.getElementById('smsapiSenderName')?.value.trim() || '';
+
+      const payload = {
+        oauth_token: oauthToken,
+        sender_name: senderName
+      };
+
+      try {
+        const res = await fetch('/admin/smsapi/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || 'Unable to save SMSAPI settings.');
+        }
+
+        const incoming = data && typeof data.config === 'object' ? data.config : {};
+        smsapiConfig = { ...smsapiConfig, ...incoming };
+        renderSmsapiState();
+
+        if (smsapiFeedback) {
+          smsapiFeedback.textContent = 'SMSAPI settings saved successfully.';
+          smsapiFeedback.classList.add('visible', 'success');
+        }
+        return true;
+      } catch (error) {
+        console.error('Unable to save SMSAPI settings.', error);
+        if (smsapiFeedback) {
+          smsapiFeedback.textContent = error.message || 'Unable to save SMSAPI settings.';
+          smsapiFeedback.classList.add('visible');
+        }
+      }
+      return false;
+    }
+
+    // Email (SMTP) Configuration
+    let emailConfig = {
+      host: '',
+      port: 587,
+      username: '',
+      from_email: '',
+      from_name: 'Pay As You Mow',
+      use_starttls: true,
+      has_password: false,
+      has_config: false,
+    };
+
+    async function loadEmailConfig() {
+      try {
+        const res = await fetch('/admin/email/config');
+        if (!res.ok) {
+          throw new Error('Unable to load email settings.');
+        }
+        const data = await res.json().catch(() => ({}));
+        const incoming = data && typeof data.config === 'object' ? data.config : {};
+        emailConfig = { ...emailConfig, ...incoming };
+        renderEmailState();
+      } catch (error) {
+        console.error('Unable to load email settings.', error);
+        const emailFeedback = document.getElementById('emailFeedback');
+        if (emailFeedback) {
+          emailFeedback.textContent = 'Unable to load email settings.';
+          emailFeedback.classList.add('visible');
+        }
+      }
+    }
+
+    function renderEmailState() {
+      const hostEl = document.getElementById('smtpHost');
+      const portEl = document.getElementById('smtpPort');
+      const userEl = document.getElementById('smtpUsername');
+      const passEl = document.getElementById('smtpPassword');
+      const fromEmailEl = document.getElementById('smtpFromEmail');
+      const fromNameEl = document.getElementById('smtpFromName');
+      const starttlsEl = document.getElementById('smtpUseStarttls');
+      const statusEl = document.getElementById('emailStatus');
+
+      if (hostEl) hostEl.value = emailConfig.host || '';
+      if (portEl) portEl.value = String(emailConfig.port || 587);
+      if (userEl) userEl.value = emailConfig.username || '';
+      if (fromEmailEl) fromEmailEl.value = emailConfig.from_email || '';
+      if (fromNameEl) fromNameEl.value = emailConfig.from_name || 'Pay As You Mow';
+      if (starttlsEl) starttlsEl.checked = Boolean(emailConfig.use_starttls);
+      if (passEl) {
+        passEl.value = '';
+        passEl.placeholder = emailConfig.has_password ? '•••••••• (saved)' : 'Enter your app password';
+      }
+
+      if (statusEl) {
+        if (emailConfig.has_config) {
+          statusEl.textContent = '✓ Email verification is configured and ready to use.';
+          statusEl.style.color = '#30c3a6';
+        } else {
+          statusEl.textContent = '⚠ Email verification not configured. Quotes can still be submitted, but won\'t be verified by email.';
+          statusEl.style.color = '#ffd166';
+        }
+      }
+    }
+
+    async function persistEmailConfig(event) {
+      if (event) {
+        event.preventDefault();
+      }
+
+      const emailFeedback = document.getElementById('emailFeedback');
+      if (emailFeedback) {
+        emailFeedback.classList.remove('visible', 'success');
+        emailFeedback.textContent = '';
+      }
+
+      const passwordValue = document.getElementById('smtpPassword')?.value.trim() || '';
+      const payload = {
+        host: document.getElementById('smtpHost')?.value.trim() || '',
+        port: Number(document.getElementById('smtpPort')?.value || 587),
+        username: document.getElementById('smtpUsername')?.value.trim() || '',
+        from_email: document.getElementById('smtpFromEmail')?.value.trim() || '',
+        from_name: document.getElementById('smtpFromName')?.value.trim() || '',
+        use_starttls: Boolean(document.getElementById('smtpUseStarttls')?.checked),
+      };
+
+      // Only update password if user entered one (avoids wiping the saved app password).
+      if (passwordValue) {
+        payload.password = passwordValue;
+      }
+
+      try {
+        const res = await fetch('/admin/email/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || 'Unable to save email settings.');
+        }
+
+        const incoming = data && typeof data.config === 'object' ? data.config : {};
+        emailConfig = { ...emailConfig, ...incoming };
+        renderEmailState();
+
+        if (emailFeedback) {
+          emailFeedback.textContent = 'Email settings saved.';
+          emailFeedback.classList.add('visible', 'success');
+        }
+        return true;
+      } catch (error) {
+        console.error('Unable to save email settings.', error);
+        if (emailFeedback) {
+          emailFeedback.textContent = error.message || 'Unable to save email settings.';
+          emailFeedback.classList.add('visible');
+        }
+      }
+      return false;
+    }
+
     async function loadAutopilotConfig() {
       try {
         const res = await fetch('/admin/autopilot/config');
@@ -2749,6 +4119,10 @@
         autopilotApiKeyInput && autopilotApiKeyInput.dataset.dirty === 'true'
           ? autopilotApiKeyInput.value.trim()
           : '';
+      const submittedOpenrouterApiKey =
+        openrouterApiKeyInput && openrouterApiKeyInput.dataset.dirty === 'true'
+          ? openrouterApiKeyInput.value.trim()
+          : '';
 
       if (autopilotFeedback) {
         autopilotFeedback.classList.remove('visible', 'success');
@@ -2774,11 +4148,23 @@
           autopilotApiKeyInput.dataset.dirty = 'false';
           autopilotApiKeyInput.dataset.hasExisting = 'true';
         }
+        if (submittedOpenrouterApiKey && openrouterApiKeyInput) {
+          openrouterApiKeyInput.value = submittedOpenrouterApiKey;
+          openrouterApiKeyInput.dataset.dirty = 'false';
+          openrouterApiKeyInput.dataset.hasExisting = 'true';
+        }
         updateAutopilotSummary();
-        const missingKey = autopilotConfig.enabled && !autopilotConfig.has_api_key;
+        const selectedProvider = typeof autopilotConfig.provider === 'string' ? autopilotConfig.provider : 'deepseek';
+        const missingKey = autopilotConfig.enabled && (
+          selectedProvider === 'openrouter'
+            ? !autopilotConfig.has_openrouter_api_key
+            : !autopilotConfig.has_api_key
+        );
         if (autopilotFeedback) {
           if (missingKey) {
-            autopilotFeedback.textContent = 'Add your DeepSeek API key so autopilot can respond to visitors.';
+            autopilotFeedback.textContent = selectedProvider === 'openrouter'
+              ? 'Add your OpenRouter API key so autopilot can respond to visitors.'
+              : 'Add your DeepSeek API key so autopilot can respond to visitors.';
             autopilotFeedback.classList.remove('success');
             autopilotFeedback.classList.add('visible');
           } else if (showSuccess) {
@@ -3331,7 +4717,9 @@
             <tr>
               <th>Customer</th>
               <th>Contact</th>
+              <th>Service Info</th>
               <th>Appointment</th>
+              <th>Photos</th>
               <th style="width: 180px;">Actions</th>
             </tr>
           </thead>
@@ -3343,8 +4731,19 @@
                 const phone = escapeHtml(booking.phone || '—');
                 const email = escapeHtml(booking.email || '—');
                 const time = escapeHtml(booking.time || '—');
+                const serviceType = escapeHtml(booking.service_type || '');
                 const created = formatDate(booking.created_at);
                 const id = escapeHtml(booking.id || '');
+                const photos = booking.photos || [];
+                
+                const serviceLabel = serviceType === 'one-off' ? 'One-off Cut' : 
+                                   serviceType === 'regular' ? 'Regular Cuts' : 
+                                   'Not specified';
+                
+                const photosHtml = photos.length > 0 
+                  ? `<button type="button" class="primary" data-action="view-photos" data-id="${id}" style="font-size: 0.85rem; padding: 6px 12px;">${photos.length} photo${photos.length > 1 ? 's' : ''}</button>`
+                  : '<span class="cell-muted">None</span>';
+                
                 return `
                   <tr>
                     <td>
@@ -3361,9 +4760,18 @@
                     </td>
                     <td>
                       <div class="cell-main">
+                        <span class="chip" style="background: ${serviceType === 'regular' ? '#30c3a6' : '#ffd166'}; color: #000;">${serviceLabel}</span>
+                        <span class="cell-muted">${location ? 'Area: ' + location : ''}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="cell-main">
                         <span class="chip">${time}</span>
                         <span class="cell-muted">Added ${created}</span>
                       </div>
+                    </td>
+                    <td>
+                      ${photosHtml}
                     </td>
                     <td>
                       <div class="panel-actions">
@@ -3378,11 +4786,49 @@
         </table>
       `;
 
+      bookingsTable.querySelectorAll('[data-action="view-photos"]').forEach((button) => {
+        button.addEventListener('click', () => viewBookingPhotos(button.dataset.id));
+      });
       bookingsTable.querySelectorAll('[data-action="edit"]').forEach((button) => {
         button.addEventListener('click', () => openBookingDialog(button.dataset.id));
       });
       bookingsTable.querySelectorAll('[data-action="delete"]').forEach((button) => {
         button.addEventListener('click', () => deleteBooking(button.dataset.id));
+      });
+    }
+
+    function viewBookingPhotos(id) {
+      if (!id) return;
+      const booking = bookingsCache.find(b => b.id === id);
+      if (!booking || !booking.photos || booking.photos.length === 0) {
+        alert('No photos available for this booking.');
+        return;
+      }
+
+      const photosHtml = booking.photos.map((photo, index) => `
+        <div style="margin-bottom: 20px;">
+          <p style="margin-bottom: 8px; font-weight: 600; color: var(--text-muted);">Photo ${index + 1}: ${escapeHtml(photo.name || 'Image')}</p>
+          <img src="${photo.data}" alt="Garden photo ${index + 1}" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+        </div>
+      `).join('');
+
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px; overflow-y: auto;';
+      modal.innerHTML = `
+        <div style="background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 18px; padding: 24px; max-width: 800px; width: 100%; max-height: 90vh; overflow-y: auto; backdrop-filter: blur(16px);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: var(--text-primary);">Garden Photos - ${escapeHtml(booking.name || 'Customer')}</h3>
+            <button type="button" style="background: var(--danger); color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 600;" onclick="this.closest('div').parentElement.parentElement.remove()">Close</button>
+          </div>
+          <div>${photosHtml}</div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.remove();
+        }
       });
     }
 
@@ -4529,6 +5975,39 @@
       });
     }
 
+    if (openrouterApiKeyInput) {
+      openrouterApiKeyInput.addEventListener('input', () => {
+        openrouterApiKeyInput.dataset.dirty = 'true';
+        const hasValue = openrouterApiKeyInput.value.trim().length > 0;
+        const hasExisting = openrouterApiKeyInput.dataset.hasExisting === 'true';
+        if (openrouterApiKeyNote) {
+          if (hasValue) {
+            openrouterApiKeyNote.textContent = 'This key will be saved securely and used for autopilot replies.';
+            openrouterApiKeyNote.classList.remove('warning');
+          } else if (hasExisting) {
+            openrouterApiKeyNote.textContent = 'Leave blank to keep your existing key.';
+            openrouterApiKeyNote.classList.remove('warning');
+          } else {
+            openrouterApiKeyNote.textContent = 'Add your OpenRouter API key so autopilot can reply to visitors.';
+            openrouterApiKeyNote.classList.add('warning');
+          }
+        }
+        if (openrouterApiKeyStatus) {
+          if (hasValue) {
+            openrouterApiKeyStatus.textContent = 'Key ready to save';
+            openrouterApiKeyStatus.classList.add('active');
+            openrouterApiKeyStatus.classList.remove('offline');
+          } else {
+            openrouterApiKeyStatus.textContent = hasExisting
+              ? 'Key saved for autopilot replies'
+              : 'No key saved';
+            openrouterApiKeyStatus.classList.toggle('active', hasExisting);
+            openrouterApiKeyStatus.classList.toggle('offline', !hasExisting);
+          }
+        }
+      });
+    }
+
     if (weatherApiKeyInput) {
       weatherApiKeyInput.addEventListener('input', () => {
         weatherApiKeyInput.dataset.dirty = 'true';
@@ -4553,15 +6032,42 @@
       });
     }
 
+    if (clearOpenrouterApiKeyBtn && openrouterApiKeyInput) {
+      clearOpenrouterApiKeyBtn.addEventListener('click', () => {
+        openrouterApiKeyInput.value = '';
+        openrouterApiKeyInput.dataset.dirty = 'true';
+        openrouterApiKeyInput.dataset.hasExisting = 'false';
+        if (openrouterApiKeyNote) {
+          openrouterApiKeyNote.textContent = 'Existing API key will be removed after saving.';
+          openrouterApiKeyNote.classList.add('warning');
+        }
+        if (openrouterApiKeyStatus) {
+          openrouterApiKeyStatus.textContent = 'Key will be removed on save';
+          openrouterApiKeyStatus.classList.remove('active');
+          openrouterApiKeyStatus.classList.add('offline');
+        }
+        openrouterApiKeyInput.focus();
+      });
+    }
+
+    if (autopilotProviderSelect) {
+      autopilotProviderSelect.addEventListener('change', () => {
+        autopilotConfig.provider = autopilotProviderSelect.value === 'openrouter' ? 'openrouter' : 'deepseek';
+        updateAutopilotSummary();
+      });
+    }
+
     autopilotToggleButtons.forEach((button) => {
       button.addEventListener('click', () => {
         const nextEnabled = !autopilotConfig.enabled;
         const businessProfile = autopilotPromptInput
           ? autopilotPromptInput.value.trim()
           : autopilotConfig.business_profile || '';
+        const websiteUrl = autopilotWebsiteUrlInput ? autopilotWebsiteUrlInput.value.trim() : '';
         persistAutopilotConfig(applyApiKeyToPayload({
           enabled: nextEnabled,
           business_profile: businessProfile,
+          business_website_url: websiteUrl,
           model: autopilotConfig.model,
           temperature: autopilotConfig.temperature,
         }));
@@ -4572,10 +6078,12 @@
       autopilotForm.addEventListener('submit', (event) => {
         event.preventDefault();
         const businessProfile = autopilotPromptInput ? autopilotPromptInput.value.trim() : '';
+        const websiteUrl = autopilotWebsiteUrlInput ? autopilotWebsiteUrlInput.value.trim() : '';
         persistAutopilotConfig(
           applyApiKeyToPayload({
             enabled: autopilotConfig.enabled,
             business_profile: businessProfile,
+            business_website_url: websiteUrl,
             model: autopilotConfig.model,
             temperature: autopilotConfig.temperature,
           }),
@@ -4584,8 +6092,96 @@
       });
     }
 
+    if (autopilotWebsiteScrapeBtn) {
+      autopilotWebsiteScrapeBtn.addEventListener('click', async () => {
+        if (autopilotFeedback) {
+          autopilotFeedback.classList.remove('visible', 'success');
+          autopilotFeedback.textContent = '';
+        }
+        const url = autopilotWebsiteUrlInput ? autopilotWebsiteUrlInput.value : '';
+        setAutopilotBusy(true);
+        if (autopilotWebsiteStatus) {
+          autopilotWebsiteStatus.textContent = 'Scraping…';
+          autopilotWebsiteStatus.classList.add('active');
+          autopilotWebsiteStatus.classList.remove('offline');
+        }
+        if (autopilotWebsiteNote) {
+          autopilotWebsiteNote.textContent = 'Scraping your site… this can take a moment.';
+          autopilotWebsiteNote.classList.remove('warning');
+        }
+        try {
+          await scrapeAutopilotWebsite(url);
+          if (autopilotFeedback) {
+            autopilotFeedback.textContent = 'Website scraped and saved.';
+            autopilotFeedback.classList.add('visible', 'success');
+          }
+          if (autopilotWebsiteNote) {
+            autopilotWebsiteNote.textContent =
+              'Tip: use your homepage URL. We\'ll crawl internal pages on the same domain and skip any /admin areas. (Localhost/private URLs are blocked unless enabled on the server.)';
+            autopilotWebsiteNote.classList.remove('warning');
+          }
+        } catch (error) {
+          const message = (error && error.message) ? String(error.message) : 'Unable to scrape website.';
+          if (autopilotWebsiteStatus) {
+            autopilotWebsiteStatus.textContent = message.length <= 26 ? message : 'Scrape failed';
+            autopilotWebsiteStatus.classList.remove('active');
+            autopilotWebsiteStatus.classList.add('offline');
+          }
+          if (autopilotWebsiteNote) {
+            autopilotWebsiteNote.textContent = message;
+            autopilotWebsiteNote.classList.add('warning');
+          }
+          if (autopilotFeedback) {
+            autopilotFeedback.textContent = message;
+            autopilotFeedback.classList.add('visible');
+          }
+        } finally {
+          setAutopilotBusy(false);
+        }
+      });
+    }
+
+    if (autopilotWebsiteClearBtn) {
+      autopilotWebsiteClearBtn.addEventListener('click', async () => {
+        if (autopilotFeedback) {
+          autopilotFeedback.classList.remove('visible', 'success');
+          autopilotFeedback.textContent = '';
+        }
+        setAutopilotBusy(true);
+        try {
+          await clearAutopilotWebsiteKnowledge();
+          if (autopilotFeedback) {
+            autopilotFeedback.textContent = 'Website knowledge cleared.';
+            autopilotFeedback.classList.add('visible', 'success');
+          }
+        } catch (error) {
+          if (autopilotFeedback) {
+            autopilotFeedback.textContent = error.message || 'Unable to clear website knowledge.';
+            autopilotFeedback.classList.add('visible');
+          }
+        } finally {
+          setAutopilotBusy(false);
+        }
+      });
+    }
+
     if (weatherForm) {
       weatherForm.addEventListener('submit', persistWeatherConfig);
+    }
+
+    const smsapiForm = document.getElementById('smsapiForm');
+    if (smsapiForm) {
+      smsapiForm.addEventListener('submit', persistSmsapiConfig);
+    }
+
+    const telnyxForm = document.getElementById('telnyxForm');
+    if (telnyxForm) {
+      telnyxForm.addEventListener('submit', persistTelnyxConfig);
+    }
+
+    const emailConfigForm = document.getElementById('emailConfigForm');
+    if (emailConfigForm) {
+      emailConfigForm.addEventListener('submit', persistEmailConfig);
     }
 
     renderAutopilotState();
@@ -4597,15 +6193,88 @@
 
     loadAutopilotConfig();
     loadWeatherConfig();
+    loadTelnyxConfig();
+    loadSmsapiConfig();
+    loadEmailConfig();
+    loadSiteImages();
 
     if (refreshPresenceBtn) {
       refreshPresenceBtn.addEventListener('click', refreshPresenceData);
     }
+
+    if (refreshImagesBtn) {
+      refreshImagesBtn.addEventListener('click', () => loadSiteImages());
+    }
+
+    if (uploadNewImageBtn) {
+      uploadNewImageBtn.addEventListener('click', () => uploadNewImage());
+    }
+
+    if (imageLibraryGrid) {
+      let gridDragDepth = 0;
+      const setGridDropActive = (active) => {
+        imageLibraryGrid.classList.toggle('is-drop-target', Boolean(active));
+      };
+
+      imageLibraryGrid.addEventListener('dragenter', (event) => {
+        event.preventDefault();
+        gridDragDepth += 1;
+        setGridDropActive(true);
+      });
+      imageLibraryGrid.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        if (event.dataTransfer) {
+          event.dataTransfer.dropEffect = 'copy';
+        }
+        setGridDropActive(true);
+      });
+      imageLibraryGrid.addEventListener('dragleave', () => {
+        gridDragDepth = Math.max(0, gridDragDepth - 1);
+        if (gridDragDepth === 0) {
+          setGridDropActive(false);
+        }
+      });
+      imageLibraryGrid.addEventListener('drop', async (event) => {
+        event.preventDefault();
+        gridDragDepth = 0;
+        setGridDropActive(false);
+        const file = getDroppedImageFile(event);
+        if (!file) {
+          showImagesFeedback('Please drop an image file (png/jpg/webp/svg).');
+          return;
+        }
+        await uploadNewImageFile(file);
+      });
+    }
+
+    // Prevent the browser from navigating away if a file is dropped outside a drop zone.
+    document.addEventListener('dragover', (event) => {
+      event.preventDefault();
+    });
+    document.addEventListener('drop', (event) => {
+      event.preventDefault();
+    });
     refreshBookingsBtn.addEventListener('click', loadBookings);
     refreshAvailabilityBtn.addEventListener('click', loadAvailability);
     refreshContactsBtn.addEventListener('click', loadContacts);
     if (refreshReviewsBtn) {
       refreshReviewsBtn.addEventListener('click', loadReviews);
+    }
+
+    // Logout functionality
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async () => {
+        if (confirm('Are you sure you want to logout?')) {
+          try {
+            await fetch('/admin/logout', { method: 'POST' });
+            window.location.href = '/admin';
+          } catch (err) {
+            console.error('Logout error:', err);
+            window.location.href = '/admin';
+          }
+        }
+      });
     }
 
     refreshPresenceData();

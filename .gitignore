@@ -1,2 +1,16 @@
 __pycache__/
 chat_state.json
+
+# Local/runtime state (do not commit)
+smtp_config.json
+email_magic.json
+smsapi_config.json
+telnyx_config.json
+vonage_config.json
+weather_config.json
+customer_settings.json
+customer_slots.json
+admin_auth.json
+
+# Virtualenvs
+.venv/

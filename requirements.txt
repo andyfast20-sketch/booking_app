@@ -1,3 +1,6 @@
 Flask
 Flask-cors
+Flask-Compress
 gunicorn
+requests
+beautifulsoup4

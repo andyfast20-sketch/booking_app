@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -18,6 +18,124 @@
             --white: #ffffff;
             --shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             --transition: all 0.3s ease;
+            --header-height: 92px;
+            --nav-backdrop: rgba(10, 18, 12, 0.58);
+        }
+
+        html {
+            scroll-padding-top: calc(var(--header-height, 92px) + 16px);
+        }
+
+        .nav-backdrop {
+            position: fixed;
+            inset: 0;
+            background: var(--nav-backdrop);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 200ms ease;
+            z-index: 1040;
+            backdrop-filter: blur(2px);
+        }
+
+        .nav-backdrop.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        body.nav-open {
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        /* Preloader Styles */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        #preloader.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .preloader-content {
+            text-align: center;
+            color: white;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .preloader-logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+
+        .preloader-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .preloader-subtitle {
+            font-size: 1.2rem;
+            font-weight: 400;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .progress-container {
+            width: 300px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ffb347, #ff7e5f);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(255, 179, 71, 0.5);
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
         }
 
         * {
@@ -303,6 +421,601 @@
         @media (max-width: 991px) {
             .chat-gardener {
                 display: none !important;
+            }
+        }
+
+        /* Auto Quote Popup */
+        .auto-quote-popup {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+        }
+
+        .auto-quote-popup.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .auto-quote-card {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 560px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100dvh - 32px);
+            transform: scale(0.9) translateY(30px);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .auto-quote-popup.visible .auto-quote-card {
+            transform: scale(1) translateY(0);
+        }
+
+        /* Appointments section */
+        .appointments {
+            padding: 70px 0;
+            background: radial-gradient(circle at 20% 10%, rgba(76, 175, 80, 0.18), transparent 45%),
+                radial-gradient(circle at 80% 0%, rgba(255, 152, 0, 0.12), transparent 40%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(244, 248, 244, 0.9));
+        }
+
+        .appointments-shell {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 22px;
+        }
+
+        @media (min-width: 992px) {
+            .appointments-shell {
+                grid-template-columns: 1.05fr 1.35fr;
+                gap: 30px;
+                align-items: start;
+            }
+        }
+
+        .appointments-intro {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 24px;
+            padding: 26px 26px;
+            box-shadow: 0 20px 44px rgba(9, 35, 15, 0.12);
+            border: 1px solid rgba(46, 125, 50, 0.12);
+        }
+
+        .appointments-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: var(--primary-dark);
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .appointments-intro h2 {
+            margin: 0 0 10px;
+            font-size: clamp(1.6rem, 3vw, 2.2rem);
+            line-height: 1.1;
+            color: var(--primary-dark);
+        }
+
+        .appointments-intro p {
+            margin: 0 0 14px;
+            color: var(--text);
+        }
+
+        .appointments-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .appointments-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(76, 175, 80, 0.10);
+            border: 1px solid rgba(46, 125, 50, 0.14);
+            color: var(--primary-dark);
+            font-weight: 700;
+            font-size: 0.92rem;
+        }
+
+        .appointments-grid {
+            background: rgba(255, 255, 255, 0.72);
+            border-radius: 24px;
+            padding: 22px;
+            border: 1px solid rgba(46, 125, 50, 0.12);
+            box-shadow: 0 18px 40px rgba(9, 35, 15, 0.10);
+        }
+
+        .appointments-grid-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .appointments-grid-header h3 {
+            margin: 0;
+            font-size: 1.15rem;
+            color: var(--primary-dark);
+        }
+
+        .appointments-grid-header p {
+            margin: 0;
+            color: var(--text-light);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .appointments-help {
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px dashed rgba(46, 125, 50, 0.18);
+            color: var(--text-light);
+        }
+
+        .appointments-help p {
+            margin: 0 0 10px;
+            font-weight: 700;
+        }
+
+        .appointments-help-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .auto-quote-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--text);
+            transition: all 0.3s ease;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .auto-quote-close:hover {
+            background: var(--secondary);
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        .auto-quote-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 18px 22px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            flex: 0 0 auto;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .auto-quote-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(20px, 20px); }
+        }
+
+        .auto-quote-icon {
+            font-size: 34px;
+            color: white;
+            margin-bottom: 8px;
+            display: inline-block;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .auto-quote-header h3 {
+            color: white;
+            font-size: 1.45rem;
+            margin: 0;
+            font-weight: 700;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .auto-quote-body {
+            padding: 18px 18px;
+            min-height: 160px;
+            flex: 1 1 auto;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .auto-quote-content {
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Landscape layout on desktop: header left, questions right */
+        @media (min-width: 720px) {
+            .auto-quote-card {
+                max-width: 860px;
+                display: flex;
+                align-items: stretch;
+            }
+
+            .auto-quote-header {
+                width: 38%;
+                text-align: left;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                padding: 22px 22px;
+            }
+
+            .auto-quote-header::before {
+                opacity: 0.85;
+            }
+
+            .auto-quote-icon {
+                margin-bottom: 10px;
+                font-size: 36px;
+            }
+
+            .auto-quote-header h3 {
+                font-size: 1.4rem;
+                line-height: 1.15;
+            }
+
+            .auto-quote-body {
+                width: 62%;
+                padding: 20px 20px;
+                min-height: 0;
+            }
+
+            .auto-quote-text {
+                margin-bottom: 16px;
+                text-align: left;
+            }
+
+            .auto-quote-text p {
+                font-size: 1.02rem;
+            }
+        }
+
+        .auto-quote-content {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                        transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .auto-quote-content.fading {
+            opacity: 0;
+            transform: translateX(-30px) scale(0.95);
+        }
+
+        .auto-quote-content.entering {
+            opacity: 0;
+            transform: translateX(30px) scale(0.95);
+        }
+
+        .auto-quote-content.entered {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+        }
+
+        .auto-quote-text {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .auto-quote-text p {
+            font-size: 1.1rem;
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .auto-quote-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .auto-quote-btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .auto-quote-btn-yes {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            min-width: 140px;
+        }
+
+        .auto-quote-btn-yes:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+        }
+
+        .auto-quote-btn-no {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            color: white;
+            min-width: 140px;
+        }
+
+        .auto-quote-btn-no:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        }
+
+        .auto-quote-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .auto-quote-form.compact {
+            gap: 12px;
+        }
+
+        .auto-quote-form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        @media (min-width: 720px) {
+            .auto-quote-form-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+        }
+
+        .auto-quote-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .auto-quote-form.compact .auto-quote-form-group {
+            gap: 6px;
+        }
+
+        .auto-quote-form-group label {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .auto-quote-form.compact .auto-quote-form-group label {
+            font-size: 0.85rem;
+        }
+
+        .auto-quote-form-group input,
+        .auto-quote-form-group select {
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Montserrat', sans-serif;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .auto-quote-form.compact .auto-quote-form-group input,
+        .auto-quote-form.compact .auto-quote-form-group select {
+            padding: 9px 12px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+        }
+
+        .auto-quote-form-group input:focus,
+        .auto-quote-form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        .auto-quote-submit {
+            background: linear-gradient(135deg, var(--secondary), #f57c00);
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .auto-quote-form.compact .auto-quote-submit {
+            padding: 12px;
+            font-size: 1rem;
+            margin-top: 4px;
+        }
+
+        .auto-quote-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+        }
+
+        .auto-quote-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auto-quote-feedback {
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .auto-quote-feedback.visible {
+            display: block;
+        }
+
+        .auto-quote-feedback.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .auto-quote-feedback.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 576px) {
+            .auto-quote-card {
+                max-width: 100%;
+                border-radius: 22px;
+                max-height: calc(100dvh - 24px);
+                border: 1px solid rgba(46, 125, 50, 0.12);
+                box-shadow: 0 26px 70px rgba(0, 0, 0, 0.38);
+            }
+
+            .auto-quote-close {
+                top: 12px;
+                right: 12px;
+                width: 42px;
+                height: 42px;
+                font-size: 20px;
+            }
+
+            .auto-quote-body {
+                padding: 16px 16px;
+            }
+
+            .auto-quote-body::before {
+                content: '';
+                position: sticky;
+                top: 0;
+                display: block;
+                height: 10px;
+                margin: -16px -16px 10px;
+                background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0));
+                pointer-events: none;
+                z-index: 1;
+            }
+
+            .auto-quote-body::after {
+                content: '';
+                position: sticky;
+                bottom: 0;
+                display: block;
+                height: 18px;
+                margin: 12px -16px -16px;
+                background: linear-gradient(0deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0));
+                pointer-events: none;
+                z-index: 1;
+            }
+
+            .auto-quote-text {
+                margin-bottom: 18px;
+                text-align: left;
+            }
+
+            .auto-quote-text p {
+                font-size: 1.02rem;
+            }
+
+            .auto-quote-actions {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                position: sticky;
+                bottom: 0;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                background: rgba(255, 255, 255, 0.86);
+                backdrop-filter: blur(10px);
+                z-index: 2;
+            }
+
+            .auto-quote-btn {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .auto-quote-btn:active {
+                transform: translateY(0) scale(0.99);
+            }
+
+            .auto-quote-submit {
+                position: sticky;
+                bottom: 0;
+                z-index: 2;
+                border-radius: 16px;
+            }
+
+            .auto-quote-header h3 {
+                font-size: 1.5rem;
+            }
+
+            .auto-quote-btn {
+                padding: 12px 24px;
+                font-size: 0.95rem;
             }
         }
 
@@ -1171,7 +1884,7 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 0 20px;
+            padding: 60px 20px 0;
             background-image: var(--hero-image);
             background-size: cover;
             background-position: center;
@@ -1377,6 +2090,216 @@
         .service-content p {
             color: var(--text-light);
             margin: 0;
+        }
+
+        /* Why Choose Section */
+        .why-choose {
+            position: relative;
+            background: radial-gradient(circle at top left, rgba(255, 152, 0, 0.16), transparent 52%),
+                        radial-gradient(circle at bottom right, rgba(46, 125, 50, 0.14), transparent 55%),
+                        linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(249, 249, 249, 0.95));
+            overflow: hidden;
+        }
+
+        .why-choose::before {
+            content: "";
+            position: absolute;
+            top: -220px;
+            left: -180px;
+            width: 520px;
+            height: 520px;
+            background: radial-gradient(circle at center, rgba(46, 125, 50, 0.22), rgba(46, 125, 50, 0) 70%);
+            opacity: 0.65;
+            pointer-events: none;
+        }
+
+        .why-choose .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .why-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-top: 28px;
+        }
+
+        .why-note {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 18px;
+            padding: 18px 18px 16px;
+            box-shadow: 0 18px 45px rgba(37, 68, 35, 0.12);
+            border: 1px solid rgba(37, 68, 35, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .why-note::before {
+            content: "";
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.95), rgba(255, 152, 0, 0.85));
+            box-shadow: 0 10px 18px rgba(255, 152, 0, 0.25);
+        }
+
+        .why-note::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(145deg, rgba(46, 125, 50, 0.08), rgba(255, 255, 255, 0));
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .why-note h3 {
+            margin: 0 0 8px;
+            font-size: 1.05rem;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .why-note h3 i {
+            color: var(--secondary);
+        }
+
+        .why-note p {
+            margin: 0;
+            color: var(--text);
+            font-weight: 500;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+
+        .why-comparison {
+            margin-top: 34px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            box-shadow: 0 26px 65px rgba(37, 68, 35, 0.16);
+            border: 1px solid rgba(37, 68, 35, 0.1);
+            overflow: hidden;
+        }
+
+        .why-row {
+            display: grid;
+            grid-template-columns: minmax(200px, 1.15fr) minmax(200px, 1fr) minmax(200px, 1fr);
+            gap: 0;
+            align-items: stretch;
+        }
+
+        .why-row + .why-row {
+            border-top: 1px solid rgba(37, 68, 35, 0.1);
+        }
+
+        .why-row.why-head {
+            background: linear-gradient(135deg, rgba(46, 125, 50, 0.92), rgba(27, 94, 32, 0.92));
+            color: var(--white);
+        }
+
+        .why-cell {
+            padding: 16px 18px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            line-height: 1.5;
+        }
+
+        .why-head .why-cell {
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .why-cell.feature {
+            font-weight: 700;
+            color: var(--primary-dark);
+            background: rgba(46, 125, 50, 0.06);
+        }
+
+        .why-head .why-cell.feature {
+            background: transparent;
+            color: var(--white);
+        }
+
+        .why-cell.you {
+            background: rgba(76, 175, 80, 0.07);
+        }
+
+        .why-head .why-cell.you {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .why-cell.other {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .why-cell i {
+            margin-top: 2px;
+        }
+
+        .why-cell.you i {
+            color: var(--primary);
+        }
+
+        .why-cell.other i {
+            color: rgba(0, 0, 0, 0.45);
+        }
+
+        .why-cta {
+            margin-top: 26px;
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .why-cta .btn {
+            box-shadow: 0 16px 32px rgba(27, 94, 32, 0.18);
+        }
+
+        @media (max-width: 880px) {
+            .why-row {
+                grid-template-columns: 1fr;
+            }
+
+            .why-row.why-head {
+                display: none;
+            }
+
+            .why-cell {
+                padding: 14px 16px;
+            }
+
+            .why-cell.feature {
+                border-bottom: 1px solid rgba(37, 68, 35, 0.08);
+            }
+
+            .why-cell.you,
+            .why-cell.other {
+                position: relative;
+                padding-top: 34px;
+            }
+
+            .why-cell.you::before,
+            .why-cell.other::before {
+                content: attr(data-col);
+                position: absolute;
+                top: 12px;
+                left: 16px;
+                font-size: 0.78rem;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                font-weight: 700;
+                opacity: 0.75;
+            }
         }
 
         /* About Section */
@@ -1919,9 +2842,10 @@
 
         .booking-content {
             display: grid;
-            grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-            gap: 48px;
-            align-items: stretch;
+            grid-template-columns: 1fr;
+            gap: 32px;
+            justify-items: center;
+            align-items: start;
         }
 
         .booking-info {
@@ -2003,8 +2927,9 @@
         }
 
         .booking-form-wrapper {
-            max-width: 440px;
-            margin: 0;
+            max-width: 820px;
+            width: 100%;
+            margin: 0 auto;
             background: rgba(255, 255, 255, 0.14);
             border-radius: 26px;
             padding: 40px;
@@ -2029,6 +2954,114 @@
         .booking-form {
             position: relative;
             z-index: 1;
+        }
+
+        .availability-grid-header {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .availability-grid-header h3 {
+            margin: 0;
+            font-size: 1.15rem;
+            color: var(--white);
+        }
+
+        .availability-grid-header p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.82);
+            font-size: 0.95rem;
+        }
+
+        .availability-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .availability-slot {
+            width: 100%;
+            text-align: left;
+            border: 1px solid rgba(46, 125, 50, 0.18);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.88));
+            border-radius: 16px;
+            padding: 16px;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+            box-shadow: 0 14px 30px rgba(27, 94, 32, 0.12);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .availability-slot::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top left, rgba(76, 175, 80, 0.18), transparent 55%);
+            opacity: 0;
+            transition: opacity 0.18s ease;
+            pointer-events: none;
+        }
+
+        .availability-slot:hover {
+            transform: translateY(-4px);
+            border-color: rgba(46, 125, 50, 0.35);
+            box-shadow: 0 18px 36px rgba(27, 94, 32, 0.16);
+        }
+
+        .availability-slot:hover::before {
+            opacity: 1;
+        }
+
+        .availability-slot:focus-visible {
+            outline: 3px solid rgba(255, 152, 0, 0.6);
+            outline-offset: 3px;
+        }
+
+        .availability-slot .slot-label {
+            display: block;
+            font-weight: 700;
+            font-size: 1.02rem;
+            color: var(--primary-dark);
+            margin-bottom: 6px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .availability-slot .slot-sub {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            position: relative;
+            z-index: 1;
+        }
+
+        .availability-slot .slot-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            background: rgba(255, 152, 0, 0.14);
+            color: #c96a00;
+            border: 1px solid rgba(255, 152, 0, 0.22);
+        }
+
+        .availability-empty {
+            grid-column: 1 / -1;
+            padding: 16px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px dashed rgba(46, 125, 50, 0.2);
+            color: var(--text-light);
         }
 
         .form-group {
@@ -3052,6 +4085,7 @@
 
             header {
                 overflow: visible;
+                padding-top: env(safe-area-inset-top);
             }
 
             nav {
@@ -3088,8 +4122,8 @@
                 backdrop-filter: blur(8px);
                 display: flex;
                 flex-direction: column;
-                align-items: flex-start;
-                text-align: left;
+                align-items: center;
+                text-align: center;
                 transition: opacity 1.4s ease, transform 1.4s ease;
             }
 
@@ -3283,38 +4317,96 @@
 
             nav {
                 position: fixed;
-                top: 76px;
-                left: -100%;
-                width: 100%;
-                background: linear-gradient(135deg, rgba(46, 125, 50, 0.95), rgba(26, 94, 32, 0.92));
-                transition: var(--transition);
-                box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1);
+                left: 50%;
+                right: auto;
+                top: calc(var(--header-height, 92px) + 10px);
+                width: min(420px, calc(100vw - 24px));
+                background: linear-gradient(135deg, rgba(46, 125, 50, 0.99), rgba(26, 94, 32, 0.98));
+                border-radius: 24px;
+                border: 1px solid rgba(255, 255, 255, 0.14);
+                box-shadow: 0 22px 50px rgba(0, 0, 0, 0.35);
+                /* NOTE: backdrop-filter can make text look blurry on some mobile devices */
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+                max-height: min(520px, calc(100vh - var(--header-height, 92px) - 24px));
+                overflow: auto;
+                opacity: 0;
+                transform: translate(-50%, -14px) scale(0.985);
+                pointer-events: none;
+                transition: transform 220ms ease, opacity 220ms ease;
+                z-index: 1090;
             }
 
             nav.active {
-                left: 0;
+                opacity: 1;
+                transform: translate(-50%, 0) scale(1);
+                pointer-events: auto;
             }
 
             nav ul {
                 flex-direction: column;
-                padding: 20px;
+                padding: 14px;
+                gap: 10px;
             }
 
             nav ul li {
-                margin: 0 0 15px 0;
+                margin: 0;
+                width: 100%;
             }
 
             nav ul li a {
                 color: rgba(255, 255, 255, 0.92);
                 font-size: 1.1rem;
+                width: 100%;
+                justify-content: space-between;
+                padding: 14px 14px;
+                border-radius: 18px;
+                background: rgba(255, 255, 255, 0.12);
+                text-shadow: 0 1px 0 rgba(0, 0, 0, 0.14);
+            }
+
+            .nav-backdrop {
+                /* Keep dim, but remove blur to avoid any compositor weirdness on some phones */
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+            }
+
+            nav ul li a:hover,
+            nav ul li a:focus-visible {
+                background: rgba(255, 255, 255, 0.14);
+                outline: none;
             }
 
             nav ul li a::after {
-                bottom: -4px;
+                content: none;
             }
 
             header.scrolled nav ul li a {
                 color: rgba(255, 255, 255, 0.92);
+            }
+
+            .mobile-menu-btn {
+                width: 40px;
+                height: 40px;
+                display: grid;
+                place-items: center;
+                border-radius: 16px;
+                background: rgba(255, 255, 255, 0.12);
+                border: 1px solid rgba(255, 255, 255, 0.14);
+                box-shadow: 0 16px 28px rgba(12, 53, 25, 0.22);
+                position: relative;
+                z-index: 1100;
+                pointer-events: auto;
+            }
+
+            .mobile-menu-btn {
+                font-size: 22px;
+            }
+
+            header.scrolled .mobile-menu-btn {
+                background: rgba(46, 125, 50, 0.12);
+                border-color: rgba(46, 125, 50, 0.22);
+                box-shadow: 0 14px 24px rgba(23, 61, 32, 0.18);
             }
 
             .section-title h2 {
@@ -3532,6 +4624,19 @@
     </style>
 </head>
 <body>
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="preloader-content">
+            <div class="preloader-logo">🌱</div>
+            <h1 class="preloader-title">Pay As You Mow</h1>
+            <p class="preloader-subtitle">Professional Garden Maintenance</p>
+            <div class="progress-container">
+                <div class="progress-bar"></div>
+            </div>
+            <p class="progress-text">Loading 0%</p>
+        </div>
+    </div>
+
     <!-- Header -->
     <header id="header">
         <div class="container header-container">
@@ -3602,17 +4707,18 @@
                     <span class="logo-tagline">Audenshaw &bull; Denton &bull; Dukinfield</span>
                 </span>
             </a>
-            <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Open menu" aria-controls="nav" aria-expanded="false">
                 <i class="fas fa-bars"></i>
             </button>
             <nav id="nav">
                 <ul>
                     <li><a href="#home">Home</a></li>
                     <li><a href="#services">My Services</a></li>
+                    <li><a href="#why">Why Choose Me</a></li>
                     <li><a href="#about">About</a></li>
                     <li><a href="#faq">FAQ</a></li>
                     <li><a href="#testimonials">Testimonials</a></li>
-                    <li><a href="#booking">Book</a></li>
+                    <li><a href="#appointments">Book</a></li>
                 </ul>
             </nav>
         </div>
@@ -3620,7 +4726,7 @@
 
     <!-- Hero Section -->
     <section class="hero" id="home">
-        <div class="hero-slide active" style="--hero-image: url('https://image.pollinations.ai/prompt/Ultra%20realistic%20photo%20of%20a%20professional%20male%20gardener%20with%20olive%20skin%20pushing%20a%20lawn%20mower%20across%20a%20lush%20small%20urban%20garden%2C%20wearing%20khaki%20shorts%20and%20a%20green%20t-shirt%2C%20bright%20summer%20day%2C%20hyper-detailed%2C%208k');">
+        <div class="hero-slide active" style="--hero-image: url('/static/images/hero-mowing.svg');">
             <div class="container">
                 <div class="hero-content">
                     <h1>
@@ -3629,14 +4735,14 @@
                     </h1>
                     <p>Probably the best rates in Tameside.</p>
                     <div class="hero-actions">
-                        <a href="#booking" class="btn">Get a Free Quote</a>
+                        <a href="#appointments" class="btn">Get a Free Quote</a>
                         <a href="#services" class="btn btn-secondary">My Services</a>
                         <a href="/customer-login" class="btn btn-secondary" aria-label="Existing customer login">Customer Login</a>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="hero-slide" style="--hero-image: url('https://image.pollinations.ai/prompt/Ultra%20realistic%20photo%20of%20the%20same%20professional%20male%20gardener%20with%20olive%20skin%20on%20his%20hands%20and%20knees%20weeding%20a%20flower%20border%20in%20a%20well-kept%20urban%20garden%2C%20wearing%20khaki%20shorts%20and%20a%20green%20t-shirt%2C%20bright%20summer%20day%2C%20hyper-detailed%2C%208k');">
+        <div class="hero-slide" style="--hero-image: url('/static/images/hero-weeding.svg');">
             <div class="container">
                 <div class="hero-content">
                     <h1>
@@ -3645,7 +4751,7 @@
                     </h1>
                     <p>Detailed border care, weeding, and mowing tailored to your garden.</p>
                     <div class="hero-actions">
-                        <a href="#booking" class="btn">Get a Free Quote</a>
+                        <a href="#appointments" class="btn">Get a Free Quote</a>
                         <a href="#services" class="btn btn-secondary">My Services</a>
                         <a href="/customer-login" class="btn btn-secondary" aria-label="Existing customer login">Customer Login</a>
                     </div>
@@ -3660,7 +4766,7 @@
                 <i class="fas fa-times" aria-hidden="true"></i>
             </button>
             <div class="mobile-offer-visual" aria-hidden="true">
-                <img src="https://image.pollinations.ai/prompt/Ultra%20realistic%20photo%20of%20a%20smiling%20gardener%20standing%20with%20arms%20folded%20in%20front%20of%20a%20neatly%20trimmed%20hedge%2C%20golden%20hour%20lighting%2C%20professional%20portrait%2C%208k" alt="Smiling gardener standing with folded arms in front of a neatly trimmed hedge">
+                <img src="/static/images/offer-gardener.svg" alt="Smiling gardener standing with folded arms in front of a neatly trimmed hedge">
             </div>
             <div class="mobile-offer-content">
                 <h3 id="mobileOfferTitle">Gardens from only £10</h3>
@@ -3675,7 +4781,6 @@
         </div>
     </div>
 
-    <!-- Services Section -->
     <section class="services" id="services">
         <div class="container">
             <div class="section-title">
@@ -3685,7 +4790,7 @@
             <div class="services-grid">
                 <div class="service-card">
                     <div class="service-image">
-                        <img src="https://image.pollinations.ai/prompt/Realistic%20photo%20of%20freshly%20mowed%20lawn%20with%20striped%20patterns%2C%20modern%20electric%20lawn%20mower%20parked%2C%20no%20people%2C%20bright%20day" alt="Close-up of a freshly mowed lawn with a modern electric mower and no people">
+                        <img src="/static/images/service-lawn-mowing.svg" alt="Close-up of a freshly mowed lawn with a modern electric mower and no people">
                     </div>
                     <div class="service-content">
                         <h3>Lawn Mowing</h3>
@@ -3694,7 +4799,7 @@
                 </div>
                 <div class="service-card">
                     <div class="service-image">
-                        <img src="https://image.pollinations.ai/prompt/Realistic%20photo%20of%20neatly%20trimmed%20garden%20hedges%20with%20electric%20shears%20resting%20nearby%2C%20detailed%20texture%2C%20no%20people%2C%20soft%20morning%20light" alt="Neatly trimmed hedges with electric shears resting nearby and no people present">
+                        <img src="/static/images/service-hedge-trimming.svg" alt="Neatly trimmed hedges with electric shears resting nearby and no people present">
                     </div>
                     <div class="service-content">
                         <h3>Hedge Trimming</h3>
@@ -3703,13 +4808,71 @@
                 </div>
                 <div class="service-card">
                     <div class="service-image">
-                        <img src="https://image.pollinations.ai/prompt/Realistic%20photo%20of%20eco-friendly%20weed%20control%20tools%20arranged%20next%20to%20flowerbeds%2C%20lush%20greenery%2C%20no%20people%2C%20sunny%20garden" alt="Eco-friendly weed control tools arranged beside colorful flowerbeds with no people in view">
+                        <img src="/static/images/service-weed-control.svg" alt="Eco-friendly weed control tools arranged beside colorful flowerbeds with no people in view">
                     </div>
                     <div class="service-content">
                         <h3>Weed Control</h3>
                         <p>We keep your garden neat by removing weeds from flower beds, borders, and pathways. Edges are trimmed, debris is cleared, and plants are arranged to maintain a tidy and well-kept appearance.</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose Section -->
+    <section class="why-choose" id="why">
+        <div class="container">
+            <div class="section-title">
+                <h2>Why Choose Us</h2>
+            </div>
+
+            <div class="why-comparison" role="table" aria-label="Comparison table: Pay As You Mow vs typical gardener">
+                <div class="why-row why-head" role="row">
+                    <div class="why-cell feature" role="columnheader">What matters</div>
+                    <div class="why-cell you" role="columnheader">Pay As You Mow</div>
+                    <div class="why-cell other" role="columnheader">Typical gardener</div>
+                </div>
+
+                <div class="why-row" role="row">
+                    <div class="why-cell feature" role="rowheader">Local &amp; dependable</div>
+                    <div class="why-cell you" data-col="Pay As You Mow"><i class="fas fa-check" aria-hidden="true"></i> Focused on your area, so you're not "one of many" across a huge patch.</div>
+                    <div class="why-cell other" data-col="Typical gardener"><i class="fas fa-minus" aria-hidden="true"></i> Covers a wider area, which can mean less flexibility.</div>
+                </div>
+
+                <div class="why-row" role="row">
+                    <div class="why-cell feature" role="rowheader">Experience</div>
+                    <div class="why-cell you" data-col="Pay As You Mow"><i class="fas fa-check" aria-hidden="true"></i> 15 years experience — you get a clean, consistent finish.</div>
+                    <div class="why-cell other" data-col="Typical gardener"><i class="fas fa-minus" aria-hidden="true"></i> Experience varies from person to person.</div>
+                </div>
+
+                <div class="why-row" role="row">
+                    <div class="why-cell feature" role="rowheader">Equipment</div>
+                    <div class="why-cell you" data-col="Pay As You Mow"><i class="fas fa-check" aria-hidden="true"></i> Good equipment for neat edges and tidy borders.</div>
+                    <div class="why-cell other" data-col="Typical gardener"><i class="fas fa-minus" aria-hidden="true"></i> Sometimes basic kit or rushed results.</div>
+                </div>
+
+                <div class="why-row" role="row">
+                    <div class="why-cell feature" role="rowheader">Price</div>
+                    <div class="why-cell you" data-col="Pay As You Mow"><i class="fas fa-check" aria-hidden="true"></i> Competitive pricing — lower than most for the time spent.</div>
+                    <div class="why-cell other" data-col="Typical gardener"><i class="fas fa-minus" aria-hidden="true"></i> Often higher, with less time on the job.</div>
+                </div>
+
+                <div class="why-row" role="row">
+                    <div class="why-cell feature" role="rowheader">Time &amp; care</div>
+                    <div class="why-cell you" data-col="Pay As You Mow"><i class="fas fa-check" aria-hidden="true"></i> More time spent so it's done properly and looks right.</div>
+                    <div class="why-cell other" data-col="Typical gardener"><i class="fas fa-minus" aria-hidden="true"></i> Quicker "in and out" visits to fit more jobs in.</div>
+                </div>
+
+                <div class="why-row" role="row">
+                    <div class="why-cell feature" role="rowheader">Booking</div>
+                    <div class="why-cell you" data-col="Pay As You Mow"><i class="fas fa-check" aria-hidden="true"></i> Book online any time — pick a slot that suits you.</div>
+                    <div class="why-cell other" data-col="Typical gardener"><i class="fas fa-minus" aria-hidden="true"></i> Usually call/text and wait for availability.</div>
+                </div>
+            </div>
+
+            <div class="why-cta">
+                <a href="#appointments" class="btn btn-quote">Book your free quote visit</a>
+                <a href="#services" class="btn btn-secondary">See services</a>
             </div>
         </div>
     </section>
@@ -3724,9 +4887,9 @@
             <div class="about-content">
                 <div class="about-text">
                     <h3>Meet Your Gardener</h3>
-                    <p>Hi, I'm Andy, a dedicated garden maintenance professional with 14 years of experience serving Audenshaw and Denton. I take pride in delivering high-quality service at competitive rates while helping customers maintain beautiful outdoor spaces.</p>
+                    <p>Hi, I'm Andy, a dedicated garden maintenance professional with 15 years of experience serving Audenshaw and Denton. I take pride in delivering high-quality service at competitive rates while helping customers maintain beautiful outdoor spaces.</p>
                     <p>Gardening is more than a job—it's my passion. I enjoy working in nature, meeting people, and staying active. As I operate part-time, availability is limited, but I always strive to accommodate my customers. If you're looking for a reliable gardener, feel free to get in touch!</p>
-                    <a href="#booking" class="btn btn-quote">Arrange a Free Quote</a>
+                    <a href="#appointments" class="btn btn-quote">Arrange a Free Quote</a>
                 </div>
                 <div class="about-video">
                     <div class="video-frame" data-video-id="oJrPPeow__s">
@@ -3778,137 +4941,28 @@
                 <p>What our clients say about our services</p>
             </div>
             <div class="testimonials-slider" id="testimonialSlider">
-                <div class="testimonial-status" id="testimonialStatus">Loading testimonials…</div>
+                {% if reviews is defined and reviews %}
+                    {% for review in reviews %}
+                        <div class="testimonial{% if loop.first %} active{% endif %}">
+                            <p class="testimonial-text">“{{ (review.quote or '') | e }}”</p>
+                            <p class="testimonial-author">- {{ (review.author or 'Anonymous') | e }}{% if review.location %}, {{ review.location | e }}{% endif %}</p>
+                        </div>
+                    {% endfor %}
+                    {% if reviews|length > 1 %}
+                        <div class="testimonial-nav">
+                            {% for review in reviews %}
+                                <span class="testimonial-dot{% if loop.first %} active{% endif %}" data-index="{{ loop.index0 }}"></span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="testimonial-status" id="testimonialStatus">Loading testimonials…</div>
+                {% endif %}
             </div>
         </div>
     </section>
 
-    <!-- Booking Section -->
-    <section class="booking" id="booking">
-        <div class="container">
-            <div class="booking-header">
-                <span class="booking-eyebrow"><i class="fas fa-calendar-check" aria-hidden="true"></i> Book Your Free Quote</span>
-                <h2>Schedule Your Free Garden Quote Visit</h2>
-                <p>Pick a slot for Andy to assess your garden in person — every visit is purely for preparing your no-obligation quote.</p>
-            </div>
-
-            <div class="booking-content">
-                <div class="booking-info">
-                    <div class="booking-intro">
-                        <h3>Effortless free-quote scheduling</h3>
-                        <p>Choose a convenient time for us to stop by, walk the garden with you, and leave you with a tailored quote before any work is booked.</p>
-                    </div>
-                    <ul class="booking-highlights">
-                        <li>Live availability direct from our gardener rota.</li>
-                        <li>Your visit is dedicated to scoping the work and pricing it transparently.</li>
-                        <li>Receive SMS and email confirmation with your quote visit details.</li>
-                    </ul>
-                    <div class="booking-assurance">
-                        <div class="assurance-item">
-                            <strong>Average response</strong>
-                            <span>Under 10 minutes</span>
-                        </div>
-                        <div class="assurance-item">
-                            <strong>Service area</strong>
-                            <span>Tameside</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="booking-form-wrapper">
-                    <form class="booking-form" id="bookingForm">
-                        <div class="form-group">
-                            <label for="customerTime">Available Time Slots</label>
-                            <select id="customerTime" name="time" required>
-                                <option value="">Loading available times...</option>
-                            </select>
-                        </div>
-                        <p class="form-hint"><i class="fas fa-clipboard-check" aria-hidden="true"></i>Choose a time and we'll open a quick contact form to lock in your free quote visit.</p>
-                        <button type="submit" class="booking-submit">Book Free Quote Visit</button>
-                    </form>
-                    <div class="booking-response" id="bookingResponse" role="alert" aria-live="assertive"></div>
-                </div>
-            </div>
-
-            <div class="booking-support">
-                <div class="support-card">
-                    <h3>Prefer to speak first?</h3>
-                    <p>Call Andy and he will arrange a free quote for you.</p>
-                    <a class="btn" href="tel:+447595289669"><i class="fas fa-phone" aria-hidden="true"></i>&nbsp; Call 07595 289 669</a>
-                </div>
-                <div class="support-card">
-                    <h3>Need a different time?</h3>
-                    <p>Tell us what works for you and we'll release bespoke slots outside standard hours.</p>
-                    <form id="contactForm" autocomplete="off">
-                        <div class="field-row">
-                            <input type="text" id="contactName" name="name" placeholder="Your name" required>
-                            <input type="tel" id="contactPhone" name="phone" placeholder="Phone number" required>
-                        </div>
-                        <input type="email" id="contactEmail" name="email" placeholder="Email address" required>
-                        <textarea id="contactEnquiry" name="enquiry" placeholder="How can we help?" required></textarea>
-                        <button type="submit">
-                            <i class="fas fa-paper-plane" aria-hidden="true"></i>
-                            Send enquiry
-                        </button>
-                    </form>
-                    <div class="booking-response" id="contactResponse" role="status" aria-live="polite"></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Character spotlight popup removed to prevent it from appearing to visitors -->
-
-    <div class="modal-overlay" id="bookingModal" aria-hidden="true">
-        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
-            <button type="button" class="modal-close" id="closeBookingModal" aria-label="Close booking details form">
-                <i class="fas fa-times" aria-hidden="true"></i>
-            </button>
-            <div class="modal-header">
-                <span class="modal-eyebrow"><i class="fas fa-user-check" aria-hidden="true"></i> Booking contact</span>
-                <h3 id="bookingModalTitle">Tell us how to reach you</h3>
-                <p>We'll confirm your appointment for <strong id="selectedSlotDisplay" aria-live="polite">your chosen slot</strong>.</p>
-            </div>
-            <form class="modal-form" id="bookingDetailsForm">
-                <input type="hidden" id="modalTimeInput" name="time" />
-                <div class="modal-group">
-                    <label for="modalCustomerName">Name</label>
-                    <input type="text" id="modalCustomerName" name="name" placeholder="Full name" autocomplete="name" required />
-                </div>
-                <div class="modal-group">
-                    <label for="modalLocation">Service location</label>
-                    <select id="modalLocation" name="location" required>
-                        <option value="">Select a location</option>
-                        <option value="Audenshaw">Audenshaw</option>
-                        <option value="Denton">Denton</option>
-                        <option value="Dukinfield">Dukinfield</option>
-                    </select>
-                </div>
-                <div class="modal-group">
-                    <label for="modalEmail">Email address</label>
-                    <input type="email" id="modalEmail" name="email" placeholder="name@example.com" autocomplete="email" required />
-                </div>
-                <div class="modal-group">
-                    <label for="modalPhone">Telephone number</label>
-                    <input type="tel" id="modalPhone" name="phone" placeholder="07xxx xxxxxx" autocomplete="tel" required />
-                </div>
-                <div class="modal-feedback" id="modalFeedback" role="alert"></div>
-                <button type="submit" class="modal-submit" id="modalSubmitButton">
-                    <span class="modal-submit-text">Confirm booking</span>
-                    <i class="fas fa-arrow-right" aria-hidden="true"></i>
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <div class="booking-thanks-overlay" id="bookingThankYou" aria-hidden="true">
-        <div class="booking-thanks-card" role="dialog" aria-modal="true" aria-labelledby="bookingThanksTitle">
-            <div class="booking-thanks-emoji" aria-hidden="true">🌼</div>
-            <h3 class="booking-thanks-title" id="bookingThanksTitle">Thanks for booking!</h3>
-            <p class="booking-thanks-text">Thanks, I'll be in touch soon to confirm this.</p>
-            <button type="button" class="booking-thanks-close" id="closeBookingThanks">Lovely!</button>
-        </div>
-    </div>
+    <!-- Booking section removed -->
 
     <div class="chat-invite-overlay" id="liveChatInviteOverlay" aria-hidden="true">
         <div class="chat-invite-card" role="dialog" aria-modal="true" aria-labelledby="liveChatInviteTitle" aria-describedby="liveChatInviteMessage">
@@ -3963,6 +5017,42 @@
         </div>
     </div>
 
+    <!-- Appointments Section (near the bottom of the page) -->
+    <section class="appointments" id="appointments">
+        <div class="container">
+            <div class="appointments-shell">
+                <div class="appointments-intro">
+                    <span class="appointments-eyebrow"><i class="fas fa-calendar-alt" aria-hidden="true"></i> Available appointments</span>
+                    <h2>Pick a date for your free quote</h2>
+                    <p>Tap a slot and the quote form will pop up so you can answer a few quick questions.</p>
+                    <div class="appointments-meta">
+                        <span><i class="fas fa-check-circle" aria-hidden="true"></i> No obligation</span>
+                        <span><i class="fas fa-bolt" aria-hidden="true"></i> Takes 1–2 minutes</span>
+                        <span><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Audenshaw • Denton • Dukinfield</span>
+                    </div>
+                </div>
+                <div class="appointments-grid">
+                    <div class="appointments-grid-header">
+                        <h3>Available dates</h3>
+                        <p>Choose one to continue</p>
+                    </div>
+                    <div class="availability-grid" id="availabilityGrid" aria-live="polite">
+                        {% if availability and availability|length > 0 %}
+                            {% for slot in availability %}
+                                <button type="button" class="availability-slot" data-slot="{{ slot }}">
+                                    <span class="slot-label">{{ slot }}</span>
+                                    <span class="slot-sub"><span class="slot-badge">Free</span> Tap to continue</span>
+                                </button>
+                            {% endfor %}
+                        {% else %}
+                            <div class="availability-empty">Loading available appointments…</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <a href="https://wa.me/447595289669" class="whatsapp-button" target="_blank" rel="noopener" aria-label="Chat with Pay As You Mow on WhatsApp">
         <span class="icon"><i class="fa-brands fa-whatsapp"></i></span>
         <div class="whatsapp-text">
@@ -3972,7 +5062,7 @@
     </a>
 
     <!-- Footer -->
-    <footer>
+    <footer id="contact">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-column">
@@ -3993,7 +5083,7 @@
                         <li><a href="#services">My Services</a></li>
                         <li><a href="#about">About Us</a></li>
                         <li><a href="#faq">FAQ</a></li>
-                        <li><a href="#booking">Book</a></li>
+                        <li><a href="#contact">Contact</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
@@ -4018,11 +5108,105 @@
         </div>
     </footer>
 
+    <!-- Auto Quote Popup -->
+    <div class="auto-quote-popup" id="autoQuotePopup" aria-hidden="true">
+        <div class="auto-quote-card" role="dialog" aria-modal="true" aria-labelledby="autoQuoteTitle">
+            <button class="auto-quote-close" id="autoQuoteClose" aria-label="Close popup">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="auto-quote-header" id="autoQuoteHeader">
+                <div class="auto-quote-icon">🌿</div>
+                <h3 id="autoQuoteTitle">Would You Like a Free Quote?</h3>
+            </div>
+            <div class="auto-quote-body">
+                <div class="auto-quote-content" id="autoQuoteContent">
+                    <div class="auto-quote-text">
+                        <p>Get a free, no-obligation quote for professional garden maintenance services in Tameside.</p>
+                    </div>
+                    <div class="auto-quote-actions">
+                        <button type="button" class="auto-quote-btn auto-quote-btn-yes" id="autoQuoteBtnYes">Yes, Please!</button>
+                        <button type="button" class="auto-quote-btn auto-quote-btn-no" id="autoQuoteBtnNo">No, Thanks</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Safe initial availability embed (won't break JS if this HTML is served statically) -->
+    <script type="application/json" id="initialAvailabilityJson">{{ availability|default([])|tojson }}</script>
+
     <script>
-        const API_BASE =
-            window.APP_API_BASE || // Optional override for custom deployments
-            window.location.origin ||
-            "https://booking-app-p8q8.onrender.com";
+        // Surface JS errors on-page (helps diagnose why flows stop working)
+        (function initJsErrorBanner() {
+            const ensureBanner = () => {
+                let banner = document.getElementById('jsErrorBanner');
+                if (banner) return banner;
+                banner = document.createElement('div');
+                banner.id = 'jsErrorBanner';
+                banner.style.cssText = [
+                    'position:fixed',
+                    'left:12px',
+                    'right:12px',
+                    'bottom:12px',
+                    'z-index:2147483647',
+                    'background:#b71c1c',
+                    'color:#fff',
+                    'padding:10px 12px',
+                    'border-radius:10px',
+                    'box-shadow:0 10px 30px rgba(0,0,0,.35)',
+                    'font:600 12px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial',
+                    'display:none',
+                    'white-space:pre-wrap'
+                ].join(';');
+                document.body.appendChild(banner);
+                return banner;
+            };
+
+            const show = (label, message) => {
+                const banner = ensureBanner();
+                banner.textContent = `${label}: ${message}`;
+                banner.style.display = 'block';
+            };
+
+            window.addEventListener('error', (event) => {
+                const msg = event?.error?.stack || event?.message || 'Unknown error';
+                show('JS error', msg);
+            });
+
+            window.addEventListener('unhandledrejection', (event) => {
+                const reason = event?.reason?.stack || event?.reason || 'Unhandled promise rejection';
+                show('Promise rejection', String(reason));
+            });
+        })();
+
+        // If this page is served by the Flask app, embed availability so the UI can render instantly.
+        // If it's served statically (no template rendering), this will safely fall back to [].
+        (function initInitialAvailability() {
+            let initial = [];
+            const el = document.getElementById('initialAvailabilityJson');
+            if (el) {
+                try {
+                    initial = JSON.parse(el.textContent || '[]');
+                } catch {
+                    initial = [];
+                }
+            }
+            window.INITIAL_AVAILABILITY = Array.isArray(initial) ? initial : [];
+        })();
+
+        // API base resolution
+        // - If you host this page on a static site (GitHub Pages/Neocities/etc.),
+        //   window.location.origin is NOT your Flask server. In that case, fall back
+        //   to the Render backend unless window.APP_API_BASE is explicitly set.
+        const DEFAULT_API_BASE = "https://booking-app-p8q8.onrender.com";
+        const APP_API_BASE = typeof window.APP_API_BASE === 'string' ? window.APP_API_BASE.trim() : '';
+        const PAGE_ORIGIN = window.location?.origin || '';
+        // Only treat local dev and known backend hosts as same-origin API.
+        // Note: payasyoumow.org / callansweringandy.uk may be front-end hosts, so don't assume they serve API routes.
+        const ORIGIN_LOOKS_LIKE_BACKEND = /(localhost|127\.0\.0\.1|onrender\.com)/i.test(PAGE_ORIGIN);
+        const API_BASE = APP_API_BASE || (ORIGIN_LOOKS_LIKE_BACKEND ? PAGE_ORIGIN : DEFAULT_API_BASE);
+
+        // SMS verification is used instead of Firebase/Google sign-in.
 
         const PRESENCE_ENDPOINT = `${API_BASE}/presence`;
         const LIVE_CHAT_ENDPOINTS = {
@@ -4464,20 +5648,36 @@
                 liveChatMessages.scrollTop = liveChatMessages.scrollHeight;
             }
 
+            function getRandomBetween(minValue, maxValue) {
+                const minNum = Number(minValue);
+                const maxNum = Number(maxValue);
+                if (!Number.isFinite(minNum) || !Number.isFinite(maxNum) || maxNum <= minNum) {
+                    return 0;
+                }
+                return minNum + Math.random() * (maxNum - minNum);
+            }
+
             function getAutopilotTypingDelay(text) {
                 const content = typeof text === 'string' ? text.trim() : '';
-                if (content.length < 5) {
-                    return 500 + Math.random() * 1000;
+                const length = content.length;
+
+                // Short replies: 2–4s
+                if (length <= 90) {
+                    return getRandomBetween(2000, 4000);
                 }
-                const minDelay = 10000;
-                const maxDelay = 20000;
-                return minDelay + Math.random() * (maxDelay - minDelay);
+
+                // Medium replies: keep within 2–8s overall but bias longer
+                if (length <= 240) {
+                    return getRandomBetween(3500, 6500);
+                }
+
+                // Longer replies: 5–8s
+                return getRandomBetween(5000, 8000);
             }
 
             function getAutopilotTypingIndicatorDelay() {
-                const minDelay = 3000;
-                const maxDelay = 7000;
-                return minDelay + Math.random() * (maxDelay - minDelay);
+                // Human-like "reading" pause before typing: 2–7s
+                return getRandomBetween(2000, 7000);
             }
 
             function createAutopilotTypingIndicator() {
@@ -4839,6 +6039,8 @@
             }
             if (liveChatForm) {
                 liveChatForm.addEventListener('submit', sendLiveChatMessage);
+                liveChatForm.dataset.liveChatBound = '1';
+                window.__payAsYouMowLiveChatBound = true;
             }
             if (liveChatInviteAccept) {
                 liveChatInviteAccept.addEventListener('click', () => {
@@ -4883,20 +6085,90 @@
             });
 
             initialiseLiveChat();
+            window.__payAsYouMowLiveChatInitOk = true;
         }
 
         // Mobile Menu Toggle
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const nav = document.getElementById('nav');
-        
-        mobileMenuBtn.addEventListener('click', () => {
-            nav.classList.toggle('active');
-            mobileMenuBtn.innerHTML = nav.classList.contains('active') ? 
-                '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+
+        const header = document.getElementById('header');
+
+        const navBackdrop = document.createElement('div');
+        navBackdrop.className = 'nav-backdrop';
+        document.body.appendChild(navBackdrop);
+
+        function syncHeaderHeightVar() {
+            if (!header) return;
+            const height = Math.max(0, Math.round(header.getBoundingClientRect().height));
+            if (height) {
+                document.documentElement.style.setProperty('--header-height', `${height}px`);
+            }
+        }
+
+        function setNavOpen(open) {
+            if (!nav || !mobileMenuBtn) return;
+            const nextOpen = typeof open === 'boolean' ? open : !nav.classList.contains('active');
+            nav.classList.toggle('active', nextOpen);
+            document.body.classList.toggle('nav-open', nextOpen);
+            navBackdrop.classList.toggle('visible', nextOpen);
+            mobileMenuBtn.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
+            mobileMenuBtn.setAttribute('aria-label', nextOpen ? 'Close menu' : 'Open menu');
+            mobileMenuBtn.innerHTML = nextOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+        }
+
+        if (mobileMenuBtn && nav) {
+            mobileMenuBtn.addEventListener('click', () => setNavOpen());
+            mobileMenuBtn.dataset.navToggleBound = '1';
+        }
+
+        // Mobile nav links: close menu then scroll to section.
+        if (nav) {
+            nav.addEventListener('click', (event) => {
+                const closest = event.target && event.target.closest ? event.target.closest('a[href^="#"]') : null;
+                const link = closest || null;
+                if (!link) return;
+
+                const href = link.getAttribute('href');
+                if (!href || href === '#') return;
+
+                const target = document.querySelector(href);
+                // Always close the menu (even if target is missing)
+                event.preventDefault();
+                syncHeaderHeightVar();
+                setNavOpen(false);
+
+                try {
+                    history.pushState(null, '', href);
+                } catch {
+                    // Ignore
+                }
+
+                if (!target) return;
+
+                const headerOffset = header ? Math.round(header.getBoundingClientRect().height) : 80;
+                // Allow the body scroll lock to lift before scrolling.
+                window.setTimeout(() => {
+                    const top = target.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0);
+                    window.scrollTo({
+                        top: Math.max(0, top - headerOffset - 12),
+                        behavior: 'smooth',
+                    });
+                }, 30);
+            });
+        }
+
+        navBackdrop.addEventListener('click', () => setNavOpen(false));
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && nav && nav.classList.contains('active')) {
+                setNavOpen(false);
+            }
         });
 
+        syncHeaderHeightVar();
+        window.addEventListener('resize', syncHeaderHeightVar);
+
         // Header Scroll Effect
-        const header = document.getElementById('header');
         
         window.addEventListener('scroll', () => {
             if (window.scrollY > 100) {
@@ -4904,6 +6176,7 @@
             } else {
                 header.classList.remove('scrolled');
             }
+            syncHeaderHeightVar();
         });
 
         // Hero Slider
@@ -5161,16 +6434,23 @@
 
                 const targetElement = document.querySelector(targetId);
                 if (targetElement) {
-                    nav.classList.remove('active');
-                    mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                    if (nav && nav.classList.contains('active')) {
+                        setNavOpen(false);
+                    }
+
+                    syncHeaderHeightVar();
+                    const headerOffset = header ? Math.round(header.getBoundingClientRect().height) : 80;
+                    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                    const targetTop = targetElement.getBoundingClientRect().top + window.pageYOffset;
 
                     window.scrollTo({
-                        top: targetElement.offsetTop - 80,
-                        behavior: 'smooth'
+                        top: Math.max(0, targetTop - headerOffset - 12),
+                        behavior: prefersReducedMotion ? 'auto' : 'smooth'
                     });
                 }
             });
         });
+        window.__payAsYouMowAnchorScrollBound = true;
 
         // YouTube video thumbnails
         const youtubeVideoFrames = Array.from(document.querySelectorAll('.video-frame[data-video-id]'));
@@ -5261,8 +6541,9 @@
 
         // Booking System
         const timeSelect = document.getElementById('customerTime');
+        const availabilityGrid = document.getElementById('availabilityGrid');
         const bookingForm = document.getElementById('bookingForm');
-        const bookingSubmitButton = bookingForm.querySelector('.booking-submit');
+        const bookingSubmitButton = bookingForm ? bookingForm.querySelector('.booking-submit') : null;
         const bookingResponse = document.getElementById('bookingResponse');
         const bookingModal = document.getElementById('bookingModal');
         const bookingDetailsForm = document.getElementById('bookingDetailsForm');
@@ -5271,7 +6552,7 @@
         const selectedSlotDisplay = document.getElementById('selectedSlotDisplay');
         const modalFeedback = document.getElementById('modalFeedback');
         const modalSubmitButton = document.getElementById('modalSubmitButton');
-        const modalSubmitText = modalSubmitButton.querySelector('.modal-submit-text');
+        const modalSubmitText = modalSubmitButton ? modalSubmitButton.querySelector('.modal-submit-text') : null;
         const modalCustomerName = document.getElementById('modalCustomerName');
         const modalLocation = document.getElementById('modalLocation');
         const modalEmail = document.getElementById('modalEmail');
@@ -5299,26 +6580,36 @@
         function formatSlotLabel(slot) {
             if (!slot || typeof slot !== 'string') return slot;
 
-            const [datePart, timePart] = slot.split(' ');
-            if (!datePart || !timePart) return slot;
+            const normalized = slot.trim();
+            const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::\d{2})?$/);
+            if (!match) return slot;
 
-            const date = new Date(`${datePart}T${timePart}`);
-            if (Number.isNaN(date.getTime())) return slot;
+            const year = Number(match[1]);
+            const monthIndex = Number(match[2]) - 1;
+            const day = Number(match[3]);
+            const hours24 = Number(match[4]);
+            const minutes = Number(match[5]);
+            if (
+                !Number.isFinite(year) ||
+                !Number.isFinite(monthIndex) ||
+                !Number.isFinite(day) ||
+                !Number.isFinite(hours24) ||
+                !Number.isFinite(minutes)
+            ) {
+                return slot;
+            }
 
-            const weekday = date.toLocaleDateString('en-GB', { weekday: 'short' });
-            const day = date.getDate();
-            const daySuffix =
-                day % 10 === 1 && day % 100 !== 11
-                    ? 'st'
-                    : day % 10 === 2 && day % 100 !== 12
-                    ? 'nd'
-                    : day % 10 === 3 && day % 100 !== 13
-                    ? 'rd'
-                    : 'th';
-            const month = date.toLocaleDateString('en-GB', { month: 'short' });
-            const year = String(date.getFullYear()).slice(-2);
+            const dateForMonth = new Date(year, monthIndex, day);
+            if (Number.isNaN(dateForMonth.getTime())) return slot;
 
-            return `${weekday} ${day}${daySuffix} ${month} ${year} ${timePart}`;
+            const month = dateForMonth.toLocaleDateString('en-GB', { month: 'short' });
+            const isPm = hours24 >= 12;
+            const hours12 = ((hours24 + 11) % 12) + 1;
+            const minutesPart = minutes === 0 ? '' : `:${String(minutes).padStart(2, '0')}`;
+            const ampm = isPm ? 'pm' : 'am';
+            const time = `${hours12}${minutesPart}${ampm}`;
+
+            return `${day} ${month} ${year} ${time}`;
         }
 
         function updateSelectedSlotDetails(slot) {
@@ -5328,37 +6619,151 @@
             }
         }
 
+        function renderAvailabilityGrid(slots = []) {
+            if (!availabilityGrid) return;
+
+            availabilityGrid.innerHTML = '';
+
+            if (!Array.isArray(slots) || slots.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'availability-empty';
+                empty.textContent = 'Sorry — no slots are available right now. Please try again later or call Andy to arrange one.';
+                availabilityGrid.appendChild(empty);
+                return;
+            }
+
+            slots.forEach((slot) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'availability-slot';
+                button.dataset.slot = slot;
+                button.innerHTML = `
+                    <span class="slot-label">${formatSlotLabel(slot)}</span>
+                    <span class="slot-sub"><span class="slot-badge">Free</span> Tap to book</span>
+                `;
+
+                availabilityGrid.appendChild(button);
+            });
+        }
+
+        function hydrateServerRenderedAvailabilityLabels() {
+            const buttons = Array.from(document.querySelectorAll('#availabilityGrid .availability-slot[data-slot]'));
+            buttons.forEach((button) => {
+                const slot = button.getAttribute('data-slot') || '';
+                const label = button.querySelector('.slot-label');
+                if (label) {
+                    label.textContent = formatSlotLabel(slot) || slot;
+                }
+            });
+        }
+
+        // Handle slot clicks (works for both server-rendered and JS-rendered buttons)
+        if (availabilityGrid) {
+            availabilityGrid.addEventListener('click', (event) => {
+                const button = event.target?.closest?.('.availability-slot');
+                if (!button) return;
+                const slot = button.dataset?.slot;
+                if (!slot) return;
+                bookingResponse?.classList.remove('visible', 'success', 'error');
+                if (typeof openAutoQuoteWithSlot === 'function') {
+                    openAutoQuoteWithSlot(slot);
+                }
+            });
+        }
+
         // Load available times
         async function loadAvailability() {
+            if (!timeSelect && !availabilityGrid) return;
+
+            if (availabilityGrid) {
+                availabilityGrid.innerHTML = '<div class="availability-empty">Loading available appointments…</div>';
+            }
             try {
-                const res = await fetch(`${API_BASE}/availability`);
-                const slots = await res.json();
+                const candidates = [];
+                const overrideBase = typeof window.APP_API_BASE === 'string' ? window.APP_API_BASE.trim() : '';
+                if (overrideBase) candidates.push(overrideBase);
+                if (window.location?.origin) candidates.push(window.location.origin);
+                if (typeof DEFAULT_API_BASE === 'string' && DEFAULT_API_BASE) candidates.push(DEFAULT_API_BASE);
 
-                timeSelect.innerHTML = "";
+                const seen = new Set();
+                const uniqueCandidates = candidates.filter((base) => {
+                    if (!base || seen.has(base)) return false;
+                    seen.add(base);
+                    return true;
+                });
 
-                if (slots.length === 0) {
-                    const opt = document.createElement("option");
-                    opt.text = "Sorry no slots available at the moment";
-                    opt.disabled = true;
-                    opt.selected = true;
-                    opt.value = "";
-                    timeSelect.add(opt);
-                } else {
-                    const defaultOpt = document.createElement("option");
-                    defaultOpt.text = "Select a time";
-                    defaultOpt.value = "";
-                    timeSelect.add(defaultOpt);
+                let slots = [];
+                let lastError = null;
 
-                    slots.forEach((slot) => {
-                        const opt = document.createElement("option");
-                        opt.value = slot;
-                        opt.text = formatSlotLabel(slot);
-                        timeSelect.add(opt);
-                    });
+                for (const base of uniqueCandidates) {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+                    try {
+                        const res = await fetch(`${base}/availability`, {
+                            signal: controller.signal,
+                            cache: 'no-store'
+                        });
+
+                        if (!res.ok) {
+                            throw new Error(`${base}/availability returned ${res.status}`);
+                        }
+
+                        const data = await res.json();
+                        if (!Array.isArray(data)) {
+                            throw new Error(`${base}/availability returned an unexpected response`);
+                        }
+
+                        slots = data;
+                        lastError = null;
+                        break;
+                    } catch (error) {
+                        lastError = error;
+                    } finally {
+                        clearTimeout(timeoutId);
+                    }
                 }
+
+                if (lastError) {
+                    throw lastError;
+                }
+
+                if (timeSelect) {
+                    timeSelect.innerHTML = "";
+
+                    if (slots.length === 0) {
+                        const opt = document.createElement("option");
+                        opt.text = "Sorry no slots available at the moment";
+                        opt.disabled = true;
+                        opt.selected = true;
+                        opt.value = "";
+                        timeSelect.add(opt);
+                    } else {
+                        const defaultOpt = document.createElement("option");
+                        defaultOpt.text = "Select a time";
+                        defaultOpt.value = "";
+                        timeSelect.add(defaultOpt);
+
+                        slots.forEach((slot) => {
+                            const opt = document.createElement("option");
+                            opt.value = slot;
+                            opt.text = formatSlotLabel(slot);
+                            timeSelect.add(opt);
+                        });
+                    }
+                }
+
+                renderAvailabilityGrid(slots);
             } catch (err) {
                 console.error("Error loading availability:", err);
-                timeSelect.innerHTML = "<option>Error loading times</option>";
+                if (timeSelect) {
+                    timeSelect.innerHTML = "<option>Error loading times</option>";
+                }
+                if (availabilityGrid) {
+                    const msg = (err && err.name === 'AbortError')
+                        ? 'The booking server is taking too long to respond. Please try again in a moment.'
+                        : 'Error loading available times. Please refresh or try again shortly.';
+                    availabilityGrid.innerHTML = `<div class="availability-empty">${msg}</div>`;
+                }
             }
         }
 
@@ -5420,25 +6825,38 @@
 
         function openBookingDetailsModal() {
             lastFocusedElement = document.activeElement;
+            if (!bookingModal) return;
+
             bookingModal.classList.add('visible');
             bookingModal.setAttribute('aria-hidden', 'false');
             document.body.classList.add('modal-open');
-            modalFeedback.classList.remove('visible', 'error');
-            modalFeedback.textContent = '';
-            setTimeout(() => modalCustomerName.focus(), 50);
+            if (modalFeedback) {
+                modalFeedback.classList.remove('visible', 'error');
+                modalFeedback.textContent = '';
+            }
+            if (modalCustomerName) {
+                setTimeout(() => modalCustomerName.focus(), 50);
+            }
         }
 
         function closeBookingDetailsModal({ returnFocus = false, resetForm = false } = {}) {
+            if (!bookingModal) return;
+
             bookingModal.classList.remove('visible');
             bookingModal.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('modal-open');
-            modalFeedback.classList.remove('visible', 'error');
-            modalFeedback.textContent = '';
-            if (resetForm) {
+            if (modalFeedback) {
+                modalFeedback.classList.remove('visible', 'error');
+                modalFeedback.textContent = '';
+            }
+            if (resetForm && bookingDetailsForm) {
                 bookingDetailsForm.reset();
             }
             if (returnFocus) {
-                (lastFocusedElement || bookingSubmitButton).focus();
+                const focusTarget = lastFocusedElement || bookingSubmitButton;
+                if (focusTarget && typeof focusTarget.focus === 'function') {
+                    focusTarget.focus();
+                }
             }
         }
 
@@ -5456,8 +6874,9 @@
             if (!bookingThankYou) return;
             bookingThankYou.classList.remove('visible');
             bookingThankYou.setAttribute('aria-hidden', 'true');
-            if (bookingSubmitButton) {
-                bookingSubmitButton.focus();
+            const fallbackTarget = lastFocusedElement || bookingSubmitButton || availabilityGrid?.querySelector('button');
+            if (fallbackTarget && typeof fallbackTarget.focus === 'function') {
+                fallbackTarget.focus();
             }
         }
 
@@ -5553,37 +6972,43 @@
         }
 
         // Handle booking submission (step 1: choose slot)
-        bookingForm.addEventListener('submit', (e) => {
-            e.preventDefault();
+        if (bookingForm && timeSelect && bookingResponse && modalTimeInput) {
+            bookingForm.addEventListener('submit', (e) => {
+                e.preventDefault();
 
-            const chosenTime = timeSelect.value;
+                const chosenTime = timeSelect.value;
 
-            bookingResponse.classList.remove('visible', 'success', 'error');
+                bookingResponse.classList.remove('visible', 'success', 'error');
 
-            if (!chosenTime) {
-                bookingResponse.innerText = '❗ Please choose a booking date and time first.';
-                bookingResponse.classList.add('visible', 'error');
-                return;
-            }
+                if (!chosenTime) {
+                    bookingResponse.innerText = '❗ Please choose a booking date and time first.';
+                    bookingResponse.classList.add('visible', 'error');
+                    return;
+                }
 
-            modalTimeInput.value = chosenTime;
-            updateSelectedSlotDetails(chosenTime);
-            openBookingDetailsModal();
-        });
+                modalTimeInput.value = chosenTime;
+                updateSelectedSlotDetails(chosenTime);
+                openBookingDetailsModal();
+            });
+        }
 
-        closeBookingModalBtn.addEventListener('click', () => {
-            closeBookingDetailsModal({ returnFocus: true });
-        });
-
-        bookingModal.addEventListener('click', (event) => {
-            if (event.target === bookingModal) {
+        if (closeBookingModalBtn) {
+            closeBookingModalBtn.addEventListener('click', () => {
                 closeBookingDetailsModal({ returnFocus: true });
-            }
-        });
+            });
+        }
+
+        if (bookingModal) {
+            bookingModal.addEventListener('click', (event) => {
+                if (event.target === bookingModal) {
+                    closeBookingDetailsModal({ returnFocus: true });
+                }
+            });
+        }
 
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
-                if (bookingModal.classList.contains('visible')) {
+                if (bookingModal && bookingModal.classList.contains('visible')) {
                     closeBookingDetailsModal({ returnFocus: true });
                     return;
                 }
@@ -5606,8 +7031,9 @@
         }
 
         // Handle contact details submission (step 2)
-        bookingDetailsForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        if (bookingDetailsForm) {
+            bookingDetailsForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
 
             const payload = {
                 name: modalCustomerName.value.trim(),
@@ -5648,7 +7074,9 @@
                 bookingResponse.innerText = data.message;
                 bookingResponse.classList.add('visible', 'success');
 
-                bookingForm.reset();
+                if (bookingForm && typeof bookingForm.reset === 'function') {
+                    bookingForm.reset();
+                }
                 showBookingThankYou();
                 await loadAvailability();
 
@@ -5659,7 +7087,8 @@
                 modalSubmitButton.disabled = false;
                 modalSubmitText.textContent = 'Confirm booking';
             }
-        });
+            });
+        }
 
         if (contactForm) {
             contactForm.addEventListener('submit', async (event) => {
@@ -5706,7 +7135,2019 @@
         }
 
         // Load availability on page load
+        if (Array.isArray(window.INITIAL_AVAILABILITY)) {
+            renderAvailabilityGrid(window.INITIAL_AVAILABILITY);
+        }
+        hydrateServerRenderedAvailabilityLabels();
         loadAvailability();
+
+        // ===== AUTO QUOTE POPUP FUNCTIONALITY =====
+        const autoQuotePopup = document.getElementById('autoQuotePopup');
+        const autoQuoteClose = document.getElementById('autoQuoteClose');
+        const autoQuoteContent = document.getElementById('autoQuoteContent');
+        const autoQuoteHeader = document.getElementById('autoQuoteHeader');
+        const autoQuoteBtnYes = document.getElementById('autoQuoteBtnYes');
+        const autoQuoteBtnNo = document.getElementById('autoQuoteBtnNo');
+        const autoQuoteFeedback = document.getElementById('autoQuoteFeedback');
+
+        let popupDismissed = false;
+        let uploadedPhotos = [];
+
+        function focusFirstAutoQuoteField() {
+            if (!autoQuotePopup) return;
+            const selector = [
+                'button:not([disabled])',
+                'input:not([disabled])',
+                'select:not([disabled])',
+                'textarea:not([disabled])',
+                'a[href]'
+            ].join(',');
+            const el = autoQuotePopup.querySelector(selector);
+            if (el && typeof el.focus === 'function') {
+                el.focus({ preventScroll: true });
+            }
+        }
+
+        function showAutoQuotePopup() {
+            if (!autoQuotePopup) return;
+            autoQuotePopup.classList.add('visible');
+            autoQuotePopup.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            popupDismissed = false;
+            setTimeout(focusFirstAutoQuoteField, 80);
+        }
+
+        // Auto popup disabled: only show when the user chooses to (buttons/slots).
+
+        // Close popup
+        function closeAutoQuotePopup() {
+            if (autoQuotePopup) {
+                autoQuotePopup.classList.remove('visible');
+                autoQuotePopup.setAttribute('aria-hidden', 'true');
+                popupDismissed = true;
+            }
+            document.body.classList.remove('modal-open');
+            window.__preselectedQuoteSlot = '';
+        }
+
+        if (autoQuoteClose) {
+            autoQuoteClose.addEventListener('click', closeAutoQuotePopup);
+        }
+
+        // Close on outside click
+        if (autoQuotePopup) {
+            autoQuotePopup.addEventListener('click', (e) => {
+                if (e.target === autoQuotePopup) {
+                    closeAutoQuotePopup();
+                }
+            });
+        }
+
+        // Close on Escape
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && autoQuotePopup && autoQuotePopup.classList.contains('visible')) {
+                closeAutoQuotePopup();
+            }
+        });
+
+        // Handle "No" button
+        if (autoQuoteBtnNo) {
+            autoQuoteBtnNo.addEventListener('click', closeAutoQuotePopup);
+        }
+
+        // Open auto-quote popup with a pre-selected slot.
+        // We store it globally so the date/time step can be auto-filled.
+        function openAutoQuoteWithSlot(selectedSlot) {
+            if (!autoQuotePopup) return;
+
+            const slot = (typeof selectedSlot === 'string') ? selectedSlot.trim() : '';
+            window.__preselectedQuoteSlot = slot;
+
+            // Show the popup and immediately start the quote flow.
+            showAutoQuotePopup();
+
+            // Prefer the existing "Yes" handler(s) to drive the flow.
+            // Some parts of this page define multiple quote flows; triggering the button
+            // lets the active one run without duplicating logic.
+            if (autoQuoteBtnYes) {
+                autoQuoteBtnYes.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            }
+        }
+
+        // Smooth content transition with enhanced animations
+        function transitionContent(newHTML, headerText = null) {
+            if (!autoQuoteContent) return;
+
+            autoQuoteContent.classList.add('fading');
+
+            setTimeout(() => {
+                autoQuoteContent.innerHTML = newHTML;
+                if (headerText && autoQuoteHeader) {
+                    autoQuoteHeader.querySelector('h3').textContent = headerText;
+                }
+                autoQuoteContent.classList.remove('fading');
+                autoQuoteContent.classList.add('entering');
+                
+                // Trigger reflow
+                autoQuoteContent.offsetHeight;
+                
+                autoQuoteContent.classList.remove('entering');
+                autoQuoteContent.classList.add('entered');
+                
+                setTimeout(() => {
+                    autoQuoteContent.classList.remove('entered');
+                }, 400);
+
+                setTimeout(() => {
+                    // Move focus into the newly rendered step (mobile keyboard + accessibility)
+                    if (!autoQuotePopup || !autoQuotePopup.classList.contains('visible')) return;
+                    const field = autoQuoteContent.querySelector('input, select, textarea, button');
+                    if (field && typeof field.focus === 'function') {
+                        field.focus({ preventScroll: true });
+                    }
+                }, 30);
+            }, 400);
+        }
+
+        // Handle "Yes" button - show area selection
+        if (autoQuoteBtnYes) {
+            autoQuoteBtnYes.addEventListener('click', () => {
+                const areaHTML = `
+                    <div class="auto-quote-text">
+                        <p>What area are you in?</p>
+                        <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 8px;">These are the areas we cover</p>
+                    </div>
+                    <div class="auto-quote-form">
+                        <div class="auto-quote-form-group">
+                            <label for="autoQuoteArea">Select Your Area</label>
+                            <select id="autoQuoteArea" required>
+                                <option value="">Please select your area</option>
+                                <option value="Audenshaw">Audenshaw</option>
+                                <option value="Denton">Denton</option>
+                                <option value="Dukinfield">Dukinfield</option>
+                            </select>
+                        </div>
+                        <button type="button" id="autoQuoteAreaNext" class="auto-quote-submit">Next</button>
+                    </div>
+                `;
+
+                transitionContent(areaHTML, 'Select Your Area');
+
+                // Add event listener to the next button
+                setTimeout(() => {
+                    const areaNextBtn = document.getElementById('autoQuoteAreaNext');
+                    const areaSelect = document.getElementById('autoQuoteArea');
+
+                    if (areaNextBtn && areaSelect) {
+                        areaNextBtn.addEventListener('click', () => {
+                            const selectedArea = areaSelect.value;
+                            if (!selectedArea) {
+                                alert('Please select your area');
+                                return;
+                            }
+                            showDateSelection(selectedArea);
+                        });
+                    }
+                }, 450);
+            });
+        }
+
+        // Show date selection
+        async function showDateSelection(selectedArea) {
+            try {
+                const preselected = typeof window.__preselectedQuoteSlot === 'string' ? window.__preselectedQuoteSlot.trim() : '';
+                // Fetch available dates
+                const candidates = [];
+                const overrideBase = typeof window.APP_API_BASE === 'string' ? window.APP_API_BASE.trim() : '';
+                if (overrideBase) candidates.push(overrideBase);
+                if (window.location?.origin) candidates.push(window.location.origin);
+                if (typeof DEFAULT_API_BASE === 'string' && DEFAULT_API_BASE) candidates.push(DEFAULT_API_BASE);
+
+                const seen = new Set();
+                const uniqueCandidates = candidates.filter((base) => {
+                    if (!base || seen.has(base)) return false;
+                    seen.add(base);
+                    return true;
+                });
+
+                let slots = [];
+                let lastError = null;
+
+                for (const base of uniqueCandidates) {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+                    try {
+                        const res = await fetch(`${base}/availability`, {
+                            signal: controller.signal,
+                            cache: 'no-store'
+                        });
+                        if (!res.ok) {
+                            throw new Error(`${base}/availability returned ${res.status}`);
+                        }
+                        const data = await res.json();
+                        if (!Array.isArray(data)) {
+                            throw new Error(`${base}/availability returned an unexpected response`);
+                        }
+                        slots = data;
+                        lastError = null;
+                        break;
+                    } catch (error) {
+                        lastError = error;
+                    } finally {
+                        clearTimeout(timeoutId);
+                    }
+                }
+
+                if (lastError) {
+                    throw lastError;
+                }
+
+                let dateOptionsHTML = '';
+                if (slots.length === 0) {
+                    dateOptionsHTML = '<option value="">No slots available at the moment</option>';
+                } else {
+                    dateOptionsHTML = '<option value="">Please select a date and time</option>';
+
+                    if (preselected && !slots.includes(preselected)) {
+                        dateOptionsHTML += `<option value="${preselected}" selected>${formatSlotLabel(preselected)}</option>`;
+                    }
+
+                    slots.forEach((slot) => {
+                        const formattedSlot = formatSlotLabel(slot);
+                        const selectedAttr = preselected && slot === preselected ? ' selected' : '';
+                        dateOptionsHTML += `<option value="${slot}"${selectedAttr}>${formattedSlot}</option>`;
+                    });
+                }
+
+                const newHTML = `
+                    <div class="auto-quote-text">
+                        <p>We have the following dates and times available. Please choose which is best for you:</p>
+                    </div>
+                    <div class="auto-quote-form">
+                        <input type="hidden" id="autoQuoteSelectedArea" value="${selectedArea}">
+                        <div class="auto-quote-form-group">
+                            <label for="autoQuoteDate">Available Dates & Times</label>
+                            <select id="autoQuoteDate" required>
+                                ${dateOptionsHTML}
+                            </select>
+                        </div>
+                        <button type="button" id="autoQuoteDateNext" class="auto-quote-submit" ${slots.length === 0 ? 'disabled' : ''}>Next</button>
+                    </div>
+                `;
+
+                transitionContent(newHTML, 'Choose Your Appointment');
+
+                // Add event listener to the next button
+                setTimeout(() => {
+                    const dateNextBtn = document.getElementById('autoQuoteDateNext');
+                    const dateSelect = document.getElementById('autoQuoteDate');
+
+                    if (dateNextBtn && dateSelect) {
+                        if (preselected) {
+                            dateSelect.value = preselected;
+                        }
+                        dateNextBtn.addEventListener('click', () => {
+                            const selectedDate = dateSelect.value;
+                            if (!selectedDate) {
+                                alert('Please select a date and time');
+                                return;
+                            }
+                            showPhotoUpload(selectedDate, selectedArea);
+                        });
+                    }
+                }, 450);
+
+            } catch (error) {
+                console.error('Error loading dates:', error);
+                const message = error && error.name === 'AbortError'
+                    ? '⚠️ The booking server is taking too long to respond. Please try again in a moment.'
+                    : '⚠️ Unable to load available dates. Please try again or contact us directly.';
+                const errorHTML = `
+                    <div class="auto-quote-text">
+                        <p style="color: var(--secondary);">${message}</p>
+                    </div>
+                    <div class="auto-quote-actions">
+                        <button type="button" class="auto-quote-btn auto-quote-btn-no" onclick="closeAutoQuotePopup()">Close</button>
+                    </div>
+                `;
+                transitionContent(errorHTML);
+            }
+        }
+
+        // Show photo upload screen
+        function showPhotoUpload(selectedSlot, selectedArea) {
+            const photoHTML = `
+                <div class="auto-quote-text">
+                    <p>Would you like to upload some photos of your garden?</p>
+                    <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 8px;">This helps us provide a more accurate quote</p>
+                </div>
+                <div class="auto-quote-form">
+                    <input type="hidden" id="autoQuoteSelectedSlot" value="${selectedSlot}">
+                    <input type="hidden" id="autoQuoteSelectedArea" value="${selectedArea}">
+                    <div class="auto-quote-form-group">
+                        <label for="autoQuotePhotos">Garden Photos (optional)</label>
+                        <input type="file" id="autoQuotePhotos" accept="image/*" multiple style="padding: 8px; cursor: pointer;">
+                        <p style="font-size: 0.85rem; color: var(--text-light); margin-top: 4px;">You can select multiple photos</p>
+                    </div>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button type="button" id="autoQuotePhotosNext" class="auto-quote-submit" style="flex: 1;">Continue</button>
+                        <button type="button" id="autoQuotePhotosSkip" class="auto-quote-btn auto-quote-btn-no" style="flex: 1;">Skip</button>
+                    </div>
+                </div>
+            `;
+
+            transitionContent(photoHTML, 'Upload Photos');
+
+            // Add event listeners
+            setTimeout(() => {
+                const photosNextBtn = document.getElementById('autoQuotePhotosNext');
+                const photosSkipBtn = document.getElementById('autoQuotePhotosSkip');
+                const photosInput = document.getElementById('autoQuotePhotos');
+
+                if (photosNextBtn) {
+                    photosNextBtn.addEventListener('click', async () => {
+                        const files = photosInput ? photosInput.files : null;
+                        
+                        if (files && files.length > 0) {
+                            photosNextBtn.disabled = true;
+                            photosNextBtn.textContent = 'Processing photos...';
+                            
+                            uploadedPhotos = [];
+                            for (let i = 0; i < files.length; i++) {
+                                try {
+                                    const base64 = await fileToBase64(files[i]);
+                                    uploadedPhotos.push({
+                                        name: files[i].name,
+                                        data: base64
+                                    });
+                                } catch (err) {
+                                    console.error('Error converting image:', err);
+                                }
+                            }
+                        }
+                        
+                        showServiceType(selectedSlot, selectedArea);
+                    });
+                }
+
+                if (photosSkipBtn) {
+                    photosSkipBtn.addEventListener('click', () => {
+                        uploadedPhotos = [];
+                        showServiceType(selectedSlot, selectedArea);
+                    });
+                }
+            }, 450);
+        }
+
+        // Helper function to convert file to base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // Show service type selection (one-off or regular)
+        function showServiceType(selectedSlot, selectedArea) {
+            const serviceHTML = `
+                <div class="auto-quote-text">
+                    <p>What type of service would you like?</p>
+                </div>
+                <div class="auto-quote-form">
+                    <input type="hidden" id="autoQuoteSelectedSlot" value="${selectedSlot}">
+                    <input type="hidden" id="autoQuoteSelectedArea" value="${selectedArea}">
+                    <div class="auto-quote-form-group">
+                        <label for="autoQuoteServiceType">Service Type</label>
+                        <select id="autoQuoteServiceType" required>
+                            <option value="">Please select</option>
+                            <option value="one-off">One-off Cut</option>
+                            <option value="regular">Regular Cuts</option>
+                        </select>
+                    </div>
+                    <button type="button" id="autoQuoteServiceNext" class="auto-quote-submit">Next</button>
+                </div>
+            `;
+
+            transitionContent(serviceHTML, 'Service Type');
+
+            // Add event listener
+            setTimeout(() => {
+                const serviceNextBtn = document.getElementById('autoQuoteServiceNext');
+                const serviceSelect = document.getElementById('autoQuoteServiceType');
+
+                if (serviceNextBtn && serviceSelect) {
+                    serviceNextBtn.addEventListener('click', () => {
+                        const serviceType = serviceSelect.value;
+                        if (!serviceType) {
+                            alert('Please select a service type');
+                            return;
+                        }
+                        showDetailsForm(selectedSlot, selectedArea, serviceType);
+                    });
+                }
+            }, 450);
+        }
+
+        // Show details form
+        function showDetailsForm(selectedSlot, selectedArea, serviceType) {
+            const formHTML = `
+                <div class="auto-quote-text">
+                    <p>Great! Please provide your details to complete your free quote request:</p>
+                </div>
+                <form class="auto-quote-form compact" id="autoQuoteDetailsForm">
+                    <input type="hidden" id="autoQuoteSelectedSlot" value="${selectedSlot}">
+                    <input type="hidden" id="autoQuoteSelectedArea" value="${selectedArea}">
+                    <input type="hidden" id="autoQuoteServiceType" value="${serviceType}">
+                    <div class="auto-quote-form-group">
+                        <label for="autoQuoteName">Your Name *</label>
+                        <input type="text" id="autoQuoteName" required placeholder="Enter your full name">
+                    </div>
+                    <div class="auto-quote-form-group">
+                        <label for="autoQuoteAddress">Address (optional)</label>
+                        <input type="text" id="autoQuoteAddress" placeholder="House number + postcode">
+                    </div>
+                    <div class="auto-quote-form-row">
+                        <div class="auto-quote-form-group">
+                            <label for="autoQuoteEmail">Email Address *</label>
+                            <input type="email" id="autoQuoteEmail" required placeholder="your.email@example.com">
+                        </div>
+                        <div class="auto-quote-form-group">
+                            <label for="autoQuotePhone">Mobile Number *</label>
+                            <input type="tel" id="autoQuotePhone" required placeholder="07123 456789">
+                        </div>
+                    </div>
+                    <button type="submit" class="auto-quote-submit">Get My Free Quote</button>
+                    <div class="auto-quote-feedback" id="autoQuoteFeedback"></div>
+                </form>
+            `;
+
+            transitionContent(formHTML, 'Your Details');
+
+            // Add form submit handler
+            setTimeout(() => {
+                const detailsForm = document.getElementById('autoQuoteDetailsForm');
+                if (detailsForm) {
+                    detailsForm.addEventListener('submit', async function(e) {
+                        e.preventDefault();
+                        
+                        const name = document.getElementById('autoQuoteName').value.trim();
+                        const email = document.getElementById('autoQuoteEmail').value.trim();
+                        const phone = document.getElementById('autoQuotePhone').value.trim();
+                        
+                        if (!name || !email || !phone) {
+                            alert('Please fill in all required fields');
+                            return;
+                        }
+                        
+                        // Send SMS verification code
+                        await sendSmsVerification(selectedSlot, selectedArea, serviceType, name, email, phone);
+                    });
+                }
+            }, 450);
+        }
+
+        // Send SMS verification code to the customer's mobile number
+        // Helper: fetch with timeout
+        function fetchWithTimeout(url, options, timeoutMs = 30000) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+            return fetch(url, { ...options, signal: controller.signal })
+                .catch(err => {
+                    if (err.name === 'AbortError') throw new Error('Request timed out. Please check your connection and try again.');
+                    throw new Error('Unable to reach the server. Please check your internet connection.');
+                })
+                .finally(() => clearTimeout(timer));
+        }
+
+        async function sendSmsVerification(selectedSlot, selectedArea, serviceType, name, email, phone) {
+            const sendingHTML = `
+                <div class="auto-quote-text">
+                    <p>Sending a verification code to <strong>${phone}</strong>…</p>
+                </div>
+            `;
+            transitionContent(sendingHTML, 'Verify Mobile');
+
+            try {
+                const sendRes = await fetchWithTimeout(API_BASE + '/api/send-verification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                const sendData = await sendRes.json().catch(() => ({}));
+                if (!sendRes.ok) throw new Error(sendData.message || 'Unable to send SMS code.');
+            } catch (err) {
+                // SMS not configured – submit without verification
+                const friendlyMsg = (err.message || 'Unable to send verification code.').replace(/</g, '&lt;');
+                const errorHTML = `
+                    <div class="auto-quote-text">
+                        <p style="color: var(--secondary);">⚠️ ${friendlyMsg}</p>
+                        <p style="margin-top: 16px; font-size: 0.9rem;">We'll process your quote without phone verification.</p>
+                    </div>
+                    <div class="auto-quote-actions">
+                        <button type="button" class="auto-quote-btn auto-quote-btn-yes" id="continueWithoutVerification">Continue</button>
+                    </div>
+                `;
+                transitionContent(errorHTML, 'Verification Unavailable');
+                setTimeout(() => {
+                    document.getElementById('continueWithoutVerification')?.addEventListener('click', () => {
+                        submitQuote(selectedSlot, selectedArea, serviceType, name, email, phone, null);
+                    });
+                }, 450);
+                return;
+            }
+
+            const codeHTML = `
+                <div class="auto-quote-text">
+                    <p style="margin-bottom: 12px;">We've sent a <strong>4-digit code</strong> to <strong>${phone}</strong>.</p>
+                    <p style="font-size: 0.9rem; color: var(--text-light);">Enter the code below to verify it's you.</p>
+                </div>
+                <div class="auto-quote-form">
+                    <div class="auto-quote-form-group">
+                        <label for="smsVerifyCode">Verification Code</label>
+                        <input type="text" id="smsVerifyCode" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" autocomplete="one-time-code" required placeholder="Enter 4-digit code" style="text-align:center; font-size:1.6rem; letter-spacing:0.5em; font-weight:700;" />
+                    </div>
+                    <button type="button" id="smsVerifyBtn" class="auto-quote-submit">Verify</button>
+                    <button type="button" id="smsResendBtn" class="auto-quote-btn auto-quote-btn-no" style="width:100%; margin-top:10px;">Resend code</button>
+                    <div class="auto-quote-feedback" id="smsVerifyFeedback" style="margin-top: 14px;"></div>
+                </div>
+            `;
+
+            transitionContent(codeHTML, 'Verify Mobile');
+
+            setTimeout(() => {
+                const codeInput = document.getElementById('smsVerifyCode');
+                const verifyBtn = document.getElementById('smsVerifyBtn');
+                const resendBtn = document.getElementById('smsResendBtn');
+                const feedback = document.getElementById('smsVerifyFeedback');
+
+                codeInput?.focus();
+
+                verifyBtn?.addEventListener('click', async () => {
+                    const code = (codeInput?.value || '').trim();
+                    if (!code || code.length !== 4) {
+                        if (feedback) {
+                            feedback.textContent = 'Please enter the 4-digit code.';
+                            feedback.className = 'auto-quote-feedback visible error';
+                        }
+                        return;
+                    }
+                    verifyBtn.disabled = true;
+                    verifyBtn.textContent = 'Verifying…';
+                    try {
+                        const res = await fetchWithTimeout(API_BASE + '/api/verify-code', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ phone, code })
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) throw new Error(data.message || 'Invalid code.');
+                        submitQuote(selectedSlot, selectedArea, serviceType, name, email, phone, true);
+                    } catch (err) {
+                        verifyBtn.disabled = false;
+                        verifyBtn.textContent = 'Verify';
+                        if (feedback) {
+                            feedback.textContent = err.message || 'Verification failed.';
+                            feedback.className = 'auto-quote-feedback visible error';
+                        }
+                    }
+                });
+
+                resendBtn?.addEventListener('click', async () => {
+                    resendBtn.disabled = true;
+                    resendBtn.textContent = 'Sending…';
+                    try {
+                        const res = await fetchWithTimeout(API_BASE + '/api/send-verification', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ phone })
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) throw new Error(data.message || 'Unable to resend.');
+                        if (feedback) {
+                            feedback.textContent = 'New code sent!';
+                            feedback.className = 'auto-quote-feedback visible success';
+                        }
+                    } catch (err) {
+                        if (feedback) {
+                            feedback.textContent = err.message || 'Unable to resend code.';
+                            feedback.className = 'auto-quote-feedback visible error';
+                        }
+                    } finally {
+                        resendBtn.disabled = false;
+                        resendBtn.textContent = 'Resend code';
+                    }
+                });
+            }, 450);
+        }
+
+        // Submit the final quote
+        async function submitQuote(selectedSlot, selectedArea, serviceType, name, email, phone, verified) {
+            try {
+                const res = await fetch(`${API_BASE}/book`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        email: email,
+                        phone: phone,
+                        location: selectedArea,
+                        time: selectedSlot,
+                        service_type: serviceType,
+                        photos: uploadedPhotos,
+                        verified: verified
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.message || '❌ Unable to submit your quote request.');
+                }
+
+                // Show success message
+                const successHTML = `
+                    <div class="auto-quote-text" style="padding: 24px 0;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">✅</div>
+                        <p style="font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 12px;">Quote Request Received!</p>
+                        <p style="margin-bottom: 20px;">${data.message || 'Thank you! We\\'ll be in touch soon to discuss your free quote.'}</p>
+                        ${verified ? '<p style="font-size: 0.9rem; color: var(--primary);">✓ Email verified</p>' : ''}
+                        <button type="button" class="auto-quote-btn auto-quote-btn-yes" onclick="closeAutoQuotePopup()" style="margin-top: 16px;">Close</button>
+                    </div>
+                `;
+
+                transitionContent(successHTML, 'Success!');
+                await loadAvailability(); // Reload availability
+                uploadedPhotos = []; // Clear uploaded photos
+
+            } catch (error) {
+                const errorHTML = `
+                    <div class="auto-quote-text">
+                        <p style="color: var(--secondary);">${error.message || '❌ Unable to submit. Please try again.'}</p>
+                    </div>
+                    <div class="auto-quote-actions">
+                        <button type="button" class="auto-quote-btn auto-quote-btn-no" onclick="closeAutoQuotePopup()">Close</button>
+                    </div>
+                `;
+                transitionContent(errorHTML);
+            }
+        }
+
+        // Handle form submission (DEPRECATED - now using submitQuote)
+        async function handleQuoteSubmission(e) {
+            e.preventDefault();
+
+            const feedback = document.getElementById('autoQuoteFeedback');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const selectedSlot = document.getElementById('autoQuoteSelectedSlot').value;
+            const selectedArea = document.getElementById('autoQuoteSelectedArea').value;
+            const serviceType = document.getElementById('autoQuoteServiceType').value;
+            const name = document.getElementById('autoQuoteName').value.trim();
+            const email = document.getElementById('autoQuoteEmail').value.trim();
+            const phone = document.getElementById('autoQuotePhone').value.trim();
+
+            if (!name || !email || !phone) {
+                if (feedback) {
+                    feedback.textContent = '❌ Please fill in all required fields.';
+                    feedback.className = 'auto-quote-feedback visible error';
+                }
+                return;
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting...';
+            }
+
+            if (feedback) {
+                feedback.classList.remove('visible', 'error', 'success');
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/book`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        email: email,
+                        phone: phone,
+                        location: selectedArea,
+                        time: selectedSlot,
+                        service_type: serviceType,
+                        photos: uploadedPhotos
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.message || '❌ Unable to submit your quote request.');
+                }
+
+                // Show success message
+                const successHTML = `
+                    <div class="auto-quote-text" style="padding: 24px 0;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">✅</div>
+                        <p style="font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 12px;">Quote Request Received!</p>
+                        <p style="margin-bottom: 20px;">${data.message || 'Thank you! We\'ll be in touch soon to discuss your free quote.'}</p>
+                        <button type="button" class="auto-quote-btn auto-quote-btn-yes" onclick="closeAutoQuotePopup()">Close</button>
+                    </div>
+                `;
+
+                transitionContent(successHTML, 'Success!');
+                await loadAvailability(); // Reload availability
+
+            } catch (error) {
+                if (feedback) {
+                    feedback.textContent = error.message || '❌ Unable to submit. Please try again.';
+                    feedback.className = 'auto-quote-feedback visible error';
+                }
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Get My Free Quote';
+                }
+            }
+        }
+
+        // Make closeAutoQuotePopup available globally
+        window.closeAutoQuotePopup = closeAutoQuotePopup;
     </script>
+
+    <!-- Firebase/Google auth removed – SMS verification is used instead -->
+
+    <!-- Auto Quote Popup: resilient flow (runs even if earlier script errors) -->
+    <script>
+        (() => {
+            const DEFAULT_API_BASE = "https://booking-app-p8q8.onrender.com";
+            const APP_API_BASE = typeof window.APP_API_BASE === 'string' ? window.APP_API_BASE.trim() : '';
+            const PAGE_ORIGIN = window.location?.origin || '';
+            const ORIGIN_LOOKS_LIKE_BACKEND = /(localhost|127\.0\.0\.1|onrender\.com)/i.test(PAGE_ORIGIN);
+            const API_BASE = APP_API_BASE || (ORIGIN_LOOKS_LIKE_BACKEND ? PAGE_ORIGIN : DEFAULT_API_BASE);
+
+            const popup = document.getElementById('autoQuotePopup');
+            const content = document.getElementById('autoQuoteContent');
+            const header = document.getElementById('autoQuoteHeader');
+            const btnYes = document.getElementById('autoQuoteBtnYes');
+            const btnNo = document.getElementById('autoQuoteBtnNo');
+            const closeBtn = document.getElementById('autoQuoteClose');
+
+            if (!popup || !content) return;
+
+            let selectedArea = '';
+            let selectedSlot = '';
+            let uploadedPhotos = [];
+            let serviceType = '';
+            let customerName = '';
+            let customerAddress = '';
+            let customerEmail = '';
+            let customerPhone = '';
+            let verified = false;
+
+            const close = () => {
+                popup.classList.remove('visible');
+                window.__preselectedQuoteSlot = '';
+            };
+            const show = () => popup.classList.add('visible');
+
+            closeBtn?.addEventListener('click', close);
+            btnNo?.addEventListener('click', close);
+            popup.addEventListener('click', (e) => {
+                if (e.target === popup) close();
+            });
+
+            // Allow the appointments section to open the quote popup reliably.
+            // This lives inside the "resilient" popup script so it still works even if
+            // earlier scripts fail to load/bind.
+            const openWithSlot = (slotValue) => {
+                const slot = (typeof slotValue === 'string') ? slotValue.trim() : '';
+                if (!slot) return;
+                window.__preselectedQuoteSlot = slot;
+                show();
+                // Trigger the existing flow.
+                btnYes?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            };
+            window.openAutoQuoteWithSlot = openWithSlot;
+
+            // Click on an appointment card
+            document.addEventListener('click', (event) => {
+                const target = event.target;
+                const button = target?.closest ? target.closest('.availability-slot') : null;
+                if (!button) return;
+                const slot = button.getAttribute('data-slot') || '';
+                openWithSlot(slot);
+            });
+
+
+            const setHeader = (text) => {
+                if (!header) return;
+                const h3 = header.querySelector('h3');
+                if (h3) h3.textContent = text;
+            };
+
+            const transition = (newHTML, headerText) => {
+                if (headerText) setHeader(headerText);
+
+                content.classList.add('fading');
+                window.setTimeout(() => {
+                    try {
+                        content.innerHTML = newHTML;
+                    } finally {
+                        content.classList.remove('fading');
+                        content.classList.add('entering');
+                        void content.offsetHeight;
+                        content.classList.remove('entering');
+                        content.classList.add('entered');
+                        window.setTimeout(() => content.classList.remove('entered'), 400);
+                    }
+                }, 400);
+            };
+
+            const formatSlotLabel = (slot) => {
+                if (!slot || typeof slot !== 'string') return slot;
+                const parts = slot.split(' ');
+                if (parts.length < 2) return slot;
+                const [datePart, timePart] = parts;
+                const date = new Date(`${datePart}T${timePart}`);
+                if (Number.isNaN(date.getTime())) return slot;
+                const weekday = date.toLocaleDateString('en-GB', { weekday: 'short' });
+                const day = date.getDate();
+                const suffix = (day % 10 === 1 && day % 100 !== 11)
+                    ? 'st'
+                    : (day % 10 === 2 && day % 100 !== 12)
+                    ? 'nd'
+                    : (day % 10 === 3 && day % 100 !== 13)
+                    ? 'rd'
+                    : 'th';
+                const month = date.toLocaleDateString('en-GB', { month: 'short' });
+                const year = String(date.getFullYear()).slice(-2);
+                return `${weekday} ${day}${suffix} ${month} ${year} ${timePart}`;
+            };
+
+            const showAreaStep = () => {
+                const areaHTML = `
+                    <div class="auto-quote-text">
+                        <p>What area are you in?</p>
+                        <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 8px;">These are the areas we cover</p>
+                    </div>
+                    <div class="auto-quote-form">
+                        <div class="auto-quote-form-group">
+                            <label for="autoQuoteArea">Select Your Area</label>
+                            <select id="autoQuoteArea" required>
+                                <option value="">Please select your area</option>
+                                <option value="Audenshaw">Audenshaw</option>
+                                <option value="Denton">Denton</option>
+                                <option value="Dukinfield">Dukinfield</option>
+                            </select>
+                        </div>
+                        <button type="button" id="autoQuoteAreaNext" class="auto-quote-submit">Next</button>
+                        <div id="autoQuoteAreaFeedback" class="auto-quote-feedback" style="margin-top: 14px;"></div>
+                    </div>
+                `;
+
+                transition(areaHTML, 'Select Your Area');
+
+                window.setTimeout(() => {
+                    const nextBtn = document.getElementById('autoQuoteAreaNext');
+                    const areaSelect = document.getElementById('autoQuoteArea');
+                    const feedback = document.getElementById('autoQuoteAreaFeedback');
+
+                    nextBtn?.addEventListener('click', () => {
+                        const value = (areaSelect?.value || '').trim();
+                        if (!value) {
+                            if (feedback) {
+                                feedback.textContent = 'Please select your area.';
+                                feedback.className = 'auto-quote-feedback visible error';
+                            }
+                            return;
+                        }
+                        selectedArea = value;
+                        showDateStep();
+                    });
+                }, 450);
+            };
+
+            const showDateStep = async () => {
+                const loadingHTML = `
+                    <div class="auto-quote-text">
+                        <p>Loading available dates and times…</p>
+                    </div>
+                `;
+                transition(loadingHTML, 'Choose a Date');
+
+                const candidates = [];
+                const overrideBase = typeof window.APP_API_BASE === 'string' ? window.APP_API_BASE.trim() : '';
+                if (overrideBase) candidates.push(overrideBase);
+                if (window.location?.origin) candidates.push(window.location.origin);
+                if (typeof DEFAULT_API_BASE === 'string' && DEFAULT_API_BASE) candidates.push(DEFAULT_API_BASE);
+
+                const seen = new Set();
+                const uniqueCandidates = candidates.filter((base) => {
+                    if (!base || seen.has(base)) return false;
+                    seen.add(base);
+                    return true;
+                });
+
+                let slots = [];
+                for (const base of uniqueCandidates) {
+                    const controller = new AbortController();
+                    const timeoutId = window.setTimeout(() => controller.abort(), 8000);
+                    try {
+                        const res = await fetch(`${base}/availability`, {
+                            signal: controller.signal,
+                            cache: 'no-store'
+                        });
+                        if (!res.ok) throw new Error('bad-status');
+                        const data = await res.json();
+                        if (Array.isArray(data)) {
+                            slots = data;
+                            break;
+                        }
+                    } catch (e) {
+                        // try next base
+                    } finally {
+                        window.clearTimeout(timeoutId);
+                    }
+                }
+
+                const options = slots.length
+                    ? ['<option value="">Please select a date and time</option>', ...slots.map(s => `<option value="${s}">${formatSlotLabel(s)}</option>`)].join('')
+                    : '<option value="">No slots available at the moment</option>';
+
+                const html = `
+                    <div class="auto-quote-text">
+                        <p>We have the following dates and times available. Please choose which is best for you:</p>
+                    </div>
+                    <div class="auto-quote-form">
+                        <div class="auto-quote-form-group">
+                            <label for="autoQuoteSlot">Select a Date & Time</label>
+                            <select id="autoQuoteSlot" ${slots.length ? 'required' : 'disabled'}>
+                                ${options}
+                            </select>
+                        </div>
+                        <button type="button" id="autoQuoteSlotNext" class="auto-quote-submit" ${slots.length ? '' : 'disabled'}>Next</button>
+                        <div id="autoQuoteSlotFeedback" class="auto-quote-feedback" style="margin-top: 14px;"></div>
+                    </div>
+                `;
+
+                transition(html, 'Choose a Date');
+
+                window.setTimeout(() => {
+                    const nextBtn = document.getElementById('autoQuoteSlotNext');
+                    const select = document.getElementById('autoQuoteSlot');
+                    const feedback = document.getElementById('autoQuoteSlotFeedback');
+
+                    const preselected = typeof window.__preselectedQuoteSlot === 'string' ? window.__preselectedQuoteSlot.trim() : '';
+                    if (select && preselected) {
+                        // If the slot is missing for any reason, inject it.
+                        if (!Array.from(select.options).some((o) => o.value === preselected)) {
+                            const opt = document.createElement('option');
+                            opt.value = preselected;
+                            opt.textContent = formatSlotLabel(preselected);
+                            select.insertBefore(opt, select.options.length > 0 ? select.options[1] : null);
+                        }
+                        select.value = preselected;
+                    }
+
+                    nextBtn?.addEventListener('click', () => {
+                        const value = (select?.value || '').trim();
+                        if (!value) {
+                            if (feedback) {
+                                feedback.textContent = 'Please select a date and time.';
+                                feedback.className = 'auto-quote-feedback visible error';
+                            }
+                            return;
+                        }
+                        selectedSlot = value;
+                        showPhotosStep();
+                    });
+                }, 450);
+            };
+
+            const fileToBase64 = (file) => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result || ''));
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+
+            const showPhotosStep = () => {
+                const html = `
+                    <div class="auto-quote-text">
+                        <p>Upload a few photos of your garden (optional)</p>
+                        <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 8px;">Photos help us give a more accurate quote.</p>
+                    </div>
+                    <div class="auto-quote-form">
+                        <div class="auto-quote-form-group">
+                            <input type="file" id="autoQuotePhotos" accept="image/*" multiple />
+                            <div id="autoQuotePhotoPreview" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;"></div>
+                        </div>
+                        <button type="button" id="autoQuotePhotosNext" class="auto-quote-submit">Next</button>
+                        <button type="button" id="autoQuotePhotosSkip" class="auto-quote-btn auto-quote-btn-no" style="width:100%; margin-top:10px;">Skip</button>
+                        <div id="autoQuotePhotosFeedback" class="auto-quote-feedback" style="margin-top: 14px;"></div>
+                    </div>
+                `;
+
+                transition(html, 'Upload Photos');
+
+                window.setTimeout(() => {
+                    const input = document.getElementById('autoQuotePhotos');
+                    const preview = document.getElementById('autoQuotePhotoPreview');
+                    const nextBtn = document.getElementById('autoQuotePhotosNext');
+                    const skipBtn = document.getElementById('autoQuotePhotosSkip');
+                    const feedback = document.getElementById('autoQuotePhotosFeedback');
+
+                    const renderPreview = () => {
+                        if (!preview) return;
+                        preview.innerHTML = '';
+                        uploadedPhotos.slice(0, 6).forEach((src) => {
+                            const img = document.createElement('img');
+                            img.src = src;
+                            img.alt = 'Uploaded garden photo';
+                            img.style.cssText = 'width:68px;height:68px;object-fit:cover;border-radius:12px;border:1px solid rgba(0,0,0,.08)';
+                            preview.appendChild(img);
+                        });
+                    };
+
+                    input?.addEventListener('change', async () => {
+                        try {
+                            const files = Array.from(input.files || []);
+                            if (!files.length) return;
+                            const base64 = await Promise.all(files.slice(0, 6).map(fileToBase64));
+                            uploadedPhotos = base64;
+                            renderPreview();
+                            if (feedback) {
+                                feedback.textContent = `${uploadedPhotos.length} photo(s) added.`;
+                                feedback.className = 'auto-quote-feedback visible success';
+                            }
+                        } catch (e) {
+                            if (feedback) {
+                                feedback.textContent = 'Unable to read photos. Please try different images.';
+                                feedback.className = 'auto-quote-feedback visible error';
+                            }
+                        }
+                    });
+
+                    nextBtn?.addEventListener('click', () => showServiceTypeStep());
+                    skipBtn?.addEventListener('click', () => {
+                        uploadedPhotos = [];
+                        showServiceTypeStep();
+                    });
+                }, 450);
+            };
+
+            const showServiceTypeStep = () => {
+                const html = `
+                    <div class="auto-quote-text">
+                        <p>Is this a one-off cut or regular cuts?</p>
+                    </div>
+                    <div class="auto-quote-form">
+                        <div class="auto-quote-form-group" style="text-align:left;">
+                            <label style="display:flex; gap:10px; align-items:center; margin:10px 0;">
+                                <input type="radio" name="autoQuoteServiceType" value="One-off" ${serviceType === 'One-off' ? 'checked' : ''} />
+                                <span>One-off cut</span>
+                            </label>
+                            <label style="display:flex; gap:10px; align-items:center; margin:10px 0;">
+                                <input type="radio" name="autoQuoteServiceType" value="Regular" ${serviceType === 'Regular' ? 'checked' : ''} />
+                                <span>Regular cuts</span>
+                            </label>
+                        </div>
+                        <button type="button" id="autoQuoteServiceNext" class="auto-quote-submit">Next</button>
+                        <div id="autoQuoteServiceFeedback" class="auto-quote-feedback" style="margin-top: 14px;"></div>
+                    </div>
+                `;
+
+                transition(html, 'Service Type');
+
+                window.setTimeout(() => {
+                    const nextBtn = document.getElementById('autoQuoteServiceNext');
+                    const feedback = document.getElementById('autoQuoteServiceFeedback');
+
+                    nextBtn?.addEventListener('click', () => {
+                        const selected = document.querySelector('input[name="autoQuoteServiceType"]:checked');
+                        const value = (selected?.value || '').trim();
+                        if (!value) {
+                            if (feedback) {
+                                feedback.textContent = 'Please choose one option.';
+                                feedback.className = 'auto-quote-feedback visible error';
+                            }
+                            return;
+                        }
+                        serviceType = value;
+                        showDetailsStep();
+                    });
+                }, 450);
+            };
+
+            const showDetailsStep = () => {
+                const html = `
+                    <div class="auto-quote-text">
+                        <p>Great — where should we send your quote?</p>
+                        <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 8px;">We’ll send a verification code to your mobile to confirm it’s you.</p>
+                    </div>
+                    <form class="auto-quote-form compact" id="autoQuoteDetailsForm">
+                        <div class="auto-quote-form-group">
+                            <label for="autoQuoteName">Full Name</label>
+                            <input id="autoQuoteName" type="text" required value="${customerName.replace(/"/g, '&quot;')}" />
+                        </div>
+                        <div class="auto-quote-form-group">
+                            <label for="autoQuoteAddress">Address (optional)</label>
+                            <input id="autoQuoteAddress" type="text" value="${customerAddress.replace(/"/g, '&quot;')}" />
+                        </div>
+                        <div class="auto-quote-form-row">
+                            <div class="auto-quote-form-group">
+                                <label for="autoQuoteEmail">Email</label>
+                                <input id="autoQuoteEmail" type="email" required value="${customerEmail.replace(/"/g, '&quot;')}" />
+                            </div>
+                            <div class="auto-quote-form-group">
+                                <label for="autoQuotePhone">Mobile Number</label>
+                                <input id="autoQuotePhone" type="tel" required placeholder="e.g. 07123 456789" value="${customerPhone.replace(/"/g, '&quot;')}" />
+                            </div>
+                        </div>
+                        <button type="submit" class="auto-quote-submit">Send Verification Code</button>
+                        <div id="autoQuoteDetailsFeedback" class="auto-quote-feedback" style="margin-top: 14px;"></div>
+                    </form>
+                `;
+
+                transition(html, 'Your Details');
+
+                window.setTimeout(() => {
+                    const form = document.getElementById('autoQuoteDetailsForm');
+                    const feedback = document.getElementById('autoQuoteDetailsFeedback');
+
+                    form?.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+
+                        const nameEl = document.getElementById('autoQuoteName');
+                        const addressEl = document.getElementById('autoQuoteAddress');
+                        const emailEl = document.getElementById('autoQuoteEmail');
+                        const phoneEl = document.getElementById('autoQuotePhone');
+
+                        customerName = (nameEl?.value || '').trim();
+                        customerAddress = (addressEl?.value || '').trim();
+                        customerEmail = (emailEl?.value || '').trim();
+                        customerPhone = (phoneEl?.value || '').trim();
+                        verified = false;
+
+                        if (!customerName || !customerEmail || !customerPhone) {
+                            if (feedback) {
+                                feedback.textContent = 'Please enter name, email, and mobile.';
+                                feedback.className = 'auto-quote-feedback visible error';
+                            }
+                            return;
+                        }
+
+                        showSmsVerifyStep();
+                    });
+                }, 450);
+            };
+
+            const showSmsVerifyStep = async () => {
+                // Helper: fetch with timeout for resilient popup
+                const fetchT = (url, opts, ms = 30000) => {
+                    const c = new AbortController();
+                    const t = setTimeout(() => c.abort(), ms);
+                    return fetch(url, { ...opts, signal: c.signal })
+                        .catch(err => {
+                            if (err.name === 'AbortError') throw new Error('Request timed out. Please check your connection and try again.');
+                            throw new Error('Unable to reach the server. Please check your internet connection.');
+                        })
+                        .finally(() => clearTimeout(t));
+                };
+
+                const sendingHTML = `
+                    <div class="auto-quote-text">
+                        <p>Sending a verification code to <strong>${customerPhone.replace(/</g, '&lt;')}</strong>…</p>
+                    </div>
+                `;
+                transition(sendingHTML, 'Verify Mobile');
+
+                try {
+                    const sendRes = await fetchT(API_BASE + '/api/send-verification', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone: customerPhone })
+                    });
+                    const sendData = await sendRes.json().catch(() => ({}));
+                    if (!sendRes.ok) throw new Error(sendData.message || 'Unable to send SMS code.');
+                } catch (err) {
+                    // SMS not configured – submit without verification
+                    const friendlyMsg = String(err.message || 'Unable to send verification code.').replace(/</g, '&lt;');
+                    const errorHTML = `
+                        <div class="auto-quote-text">
+                            <p style="color: var(--secondary);">⚠️ ${friendlyMsg}</p>
+                            <p style="margin-top: 16px; font-size: 0.9rem;">We'll process your quote without phone verification.</p>
+                        </div>
+                        <div class="auto-quote-actions" style="margin-top:16px;">
+                            <button type="button" class="auto-quote-btn auto-quote-btn-yes" id="resilientContinueNoVerify">Continue</button>
+                        </div>
+                    `;
+                    transition(errorHTML, 'Verification Unavailable');
+                    window.setTimeout(() => {
+                        document.getElementById('resilientContinueNoVerify')?.addEventListener('click', () => {
+                            verified = false;
+                            submitQuote();
+                        });
+                    }, 450);
+                    return;
+                }
+
+                const codeHTML = `
+                    <div class="auto-quote-text">
+                        <p style="margin-bottom: 12px;">We've sent a <strong>4-digit code</strong> to <strong>${customerPhone.replace(/</g, '&lt;')}</strong>.</p>
+                        <p style="font-size: 0.9rem; color: var(--text-light);">Enter the code below to verify it's you.</p>
+                    </div>
+                    <div class="auto-quote-form">
+                        <div class="auto-quote-form-group">
+                            <label for="resilientSmsCode">Verification Code</label>
+                            <input type="text" id="resilientSmsCode" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" autocomplete="one-time-code" required placeholder="Enter 4-digit code" style="text-align:center; font-size:1.6rem; letter-spacing:0.5em; font-weight:700;" />
+                        </div>
+                        <button type="button" id="resilientSmsVerifyBtn" class="auto-quote-submit">Verify</button>
+                        <button type="button" id="resilientSmsResendBtn" class="auto-quote-btn auto-quote-btn-no" style="width:100%; margin-top:10px;">Resend code</button>
+                        <div class="auto-quote-feedback" id="resilientSmsFeedback" style="margin-top: 14px;"></div>
+                    </div>
+                `;
+
+                transition(codeHTML, 'Verify Mobile');
+
+                window.setTimeout(() => {
+                    const codeInput = document.getElementById('resilientSmsCode');
+                    const verifyBtn = document.getElementById('resilientSmsVerifyBtn');
+                    const resendBtn = document.getElementById('resilientSmsResendBtn');
+                    const feedback = document.getElementById('resilientSmsFeedback');
+
+                    codeInput?.focus();
+
+                    verifyBtn?.addEventListener('click', async () => {
+                        const code = (codeInput?.value || '').trim();
+                        if (!code || code.length !== 4) {
+                            if (feedback) {
+                                feedback.textContent = 'Please enter the 4-digit code.';
+                                feedback.className = 'auto-quote-feedback visible error';
+                            }
+                            return;
+                        }
+                        verifyBtn.disabled = true;
+                        verifyBtn.textContent = 'Verifying…';
+                        try {
+                            const res = await fetchT(API_BASE + '/api/verify-code', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ phone: customerPhone, code })
+                            });
+                            const data = await res.json().catch(() => ({}));
+                            if (!res.ok) throw new Error(data.message || 'Invalid code.');
+                            verified = true;
+                            submitQuote();
+                        } catch (err) {
+                            verifyBtn.disabled = false;
+                            verifyBtn.textContent = 'Verify';
+                            if (feedback) {
+                                feedback.textContent = err.message || 'Verification failed.';
+                                feedback.className = 'auto-quote-feedback visible error';
+                            }
+                        }
+                    });
+
+                    resendBtn?.addEventListener('click', async () => {
+                        resendBtn.disabled = true;
+                        resendBtn.textContent = 'Sending…';
+                        try {
+                            const res = await fetchT(API_BASE + '/api/send-verification', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ phone: customerPhone })
+                            });
+                            const data = await res.json().catch(() => ({}));
+                            if (!res.ok) throw new Error(data.message || 'Unable to resend.');
+                            if (feedback) {
+                                feedback.textContent = 'New code sent!';
+                                feedback.className = 'auto-quote-feedback visible success';
+                            }
+                        } catch (err) {
+                            if (feedback) {
+                                feedback.textContent = err.message || 'Unable to resend code.';
+                                feedback.className = 'auto-quote-feedback visible error';
+                            }
+                        } finally {
+                            resendBtn.disabled = false;
+                            resendBtn.textContent = 'Resend code';
+                        }
+                    });
+                }, 450);
+            };
+
+            const submitQuote = async () => {
+                const html = `
+                    <div class="auto-quote-text" style="padding: 18px 0;">
+                        <div style="font-size: 42px; margin-bottom: 12px;">⏳</div>
+                        <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">Submitting…</p>
+                        <p>Please wait a moment.</p>
+                    </div>
+                `;
+                transition(html, 'Submitting');
+
+                try {
+                    const res = await fetch(`${API_BASE}/book`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: customerName,
+                            time: selectedSlot,
+                            location: selectedArea,
+                            email: customerEmail,
+                            phone: customerPhone,
+                            service_type: serviceType,
+                            photos: uploadedPhotos,
+                            verified
+                        })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data?.message || 'Unable to submit your quote request.');
+
+                    const success = `
+                        <div class="auto-quote-text" style="padding: 24px 0;">
+                            <div style="font-size: 64px; margin-bottom: 16px;">✅</div>
+                            <p style="font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 12px;">Quote Request Received!</p>
+                            <p style="margin-bottom: 20px;">${(data?.message || "Thank you! We'll be in touch soon.").replace(/</g, '&lt;')}</p>
+                            <button type="button" class="auto-quote-btn auto-quote-btn-yes" id="autoQuoteDone">Close</button>
+                        </div>
+                    `;
+                    transition(success, 'Success!');
+
+                    window.setTimeout(() => {
+                        document.getElementById('autoQuoteDone')?.addEventListener('click', close);
+                    }, 450);
+                } catch (err) {
+                    const fail = `
+                        <div class="auto-quote-text" style="padding: 18px 0;">
+                            <div style="font-size: 48px; margin-bottom: 12px;">❌</div>
+                            <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">Something went wrong</p>
+                            <p style="margin-bottom: 16px;">${String(err.message || 'Unable to submit. Please try again.').replace(/</g, '&lt;')}</p>
+                            <button type="button" class="auto-quote-btn auto-quote-btn-yes" id="autoQuoteBackToDetails">Back</button>
+                        </div>
+                    `;
+                    transition(fail, 'Error');
+                    window.setTimeout(() => {
+                        document.getElementById('autoQuoteBackToDetails')?.addEventListener('click', showDetailsStep);
+                    }, 450);
+                }
+            };
+
+            // Ensure the "Yes" button always progresses (capture to avoid conflicts)
+            btnYes?.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                showAreaStep();
+            }, true);
+
+            // Debug helper: add `?forceQuotePopup=1` to show instantly.
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('forceQuotePopup')) {
+                show();
+                return;
+            }
+
+            // Timed popup disabled: only show via user action (or ?forceQuotePopup=1).
+        })();
+    </script>
+    <script>
+        (() => {
+            if (window.__payAsYouMowLiveChatInitOk) return;
+
+            const API_BASE = window.APP_API_BASE || window.location.origin || "https://booking-app-p8q8.onrender.com";
+            const ENDPOINTS = {
+                session: `${API_BASE}/chat/session`,
+                send: `${API_BASE}/chat/send`,
+                messages: `${API_BASE}/chat/messages`,
+            };
+
+            const widget = document.getElementById('liveChatWidget');
+            const toggle = document.getElementById('liveChatToggle');
+            const windowEl = document.getElementById('liveChatWindow');
+            const closeBtn = document.getElementById('liveChatClose');
+            const form = document.getElementById('liveChatForm');
+            const input = document.getElementById('liveChatInput');
+            const submit = document.getElementById('liveChatSubmit');
+            const messagesEl = document.getElementById('liveChatMessages');
+            const emptyState = document.getElementById('liveChatEmptyState');
+            const statusBanner = document.getElementById('liveChatStatusBanner');
+            if (!widget || !toggle || !windowEl) return;
+
+            const storageKey = 'payAsYouMowLiveChatSessionId';
+            let sessionId = '';
+            let lastMessageId = 0;
+            try {
+                sessionId = localStorage.getItem(storageKey) || '';
+            } catch {
+                sessionId = '';
+            }
+
+            const open = () => {
+                windowEl.classList.add('visible');
+                windowEl.setAttribute('aria-hidden', 'false');
+                toggle.setAttribute('aria-expanded', 'true');
+            };
+            const close = () => {
+                windowEl.classList.remove('visible');
+                windowEl.setAttribute('aria-hidden', 'true');
+                toggle.setAttribute('aria-expanded', 'false');
+            };
+            const isOpen = () => windowEl.classList.contains('visible') || toggle.getAttribute('aria-expanded') === 'true';
+
+            const showBanner = (text, kind = 'online') => {
+                if (!statusBanner) return;
+                statusBanner.textContent = text;
+                statusBanner.classList.add('visible');
+                statusBanner.classList.toggle('error', kind === 'error');
+                statusBanner.classList.toggle('offline', kind === 'offline');
+                statusBanner.classList.toggle('online', kind === 'online');
+            };
+
+            const createMessageEl = (message) => {
+                if (!message || !messagesEl) return null;
+                const sender = typeof message.sender === 'string' ? message.sender : 'visitor';
+                const isAdmin = sender === 'admin' || sender === 'autopilot';
+                const wrapper = document.createElement('div');
+                wrapper.className = `live-chat-message ${isAdmin ? 'from-admin' : 'from-visitor'}`;
+                if (sender === 'autopilot') wrapper.classList.add('autopilot');
+
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble';
+                bubble.textContent = message.text || '';
+                wrapper.appendChild(bubble);
+
+                const meta = document.createElement('span');
+                meta.className = 'message-meta';
+                meta.textContent = isAdmin ? 'Team' : 'You';
+                wrapper.appendChild(meta);
+
+                return wrapper;
+            };
+
+            const autopilotTypingQueue = Promise.resolve();
+            let autopilotQueueChain = autopilotTypingQueue;
+
+            const getRandomBetween = (minValue, maxValue) => {
+                const minNum = Number(minValue);
+                const maxNum = Number(maxValue);
+                if (!Number.isFinite(minNum) || !Number.isFinite(maxNum) || maxNum <= minNum) {
+                    return 0;
+                }
+                return minNum + Math.random() * (maxNum - minNum);
+            };
+
+            const getAutopilotTypingIndicatorDelay = () => getRandomBetween(2000, 7000);
+
+            const getAutopilotTypingDelay = (text) => {
+                const content = typeof text === 'string' ? text.trim() : '';
+                const length = content.length;
+                if (length <= 90) return getRandomBetween(2000, 4000);
+                if (length <= 240) return getRandomBetween(3500, 6500);
+                return getRandomBetween(5000, 8000);
+            };
+
+            const createAutopilotTypingIndicator = () => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'live-chat-message from-admin autopilot typing';
+
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble';
+                for (let index = 0; index < 3; index += 1) {
+                    const dot = document.createElement('span');
+                    dot.className = 'live-chat-typing-dot';
+                    bubble.appendChild(dot);
+                }
+                wrapper.appendChild(bubble);
+
+                const meta = document.createElement('span');
+                meta.className = 'message-meta';
+                meta.textContent = 'Agent is typing…';
+                wrapper.appendChild(meta);
+
+                return wrapper;
+            };
+
+            const appendMessage = (message, { allowTypingDelay = false } = {}) => {
+                if (!messagesEl) return;
+                if (emptyState) emptyState.classList.add('hidden');
+
+                const sender = typeof message?.sender === 'string' ? message.sender : 'visitor';
+                const isAutopilot = sender === 'autopilot';
+
+                if (!allowTypingDelay || !isAutopilot) {
+                    const el = createMessageEl(message);
+                    if (!el) return;
+                    messagesEl.appendChild(el);
+                    messagesEl.scrollTop = messagesEl.scrollHeight;
+                    return;
+                }
+
+                autopilotQueueChain = autopilotQueueChain.then(
+                    () =>
+                        new Promise((resolve) => {
+                            const indicator = createAutopilotTypingIndicator();
+                            const indicatorDelay = getAutopilotTypingIndicatorDelay();
+                            const typingDelay = getAutopilotTypingDelay(message?.text);
+
+                            const showIndicator = () => {
+                                if (!messagesEl) return;
+                                messagesEl.appendChild(indicator);
+                                messagesEl.scrollTop = messagesEl.scrollHeight;
+                            };
+
+                            const showMessage = () => {
+                                const el = createMessageEl(message);
+                                if (indicator.parentNode && el) {
+                                    indicator.replaceWith(el);
+                                } else if (el && messagesEl) {
+                                    messagesEl.appendChild(el);
+                                } else if (indicator.parentNode) {
+                                    indicator.remove();
+                                }
+                                if (messagesEl) {
+                                    messagesEl.scrollTop = messagesEl.scrollHeight;
+                                }
+                                resolve();
+                            };
+
+                            window.setTimeout(showIndicator, indicatorDelay);
+                            window.setTimeout(showMessage, indicatorDelay + typingDelay);
+                        })
+                );
+            };
+
+            const ensureSession = async () => {
+                const res = await fetch(ENDPOINTS.session, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        page: window.location.pathname || '/',
+                    }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data?.message || 'Unable to start live chat.');
+
+                if (data.session_id) {
+                    sessionId = data.session_id;
+                    try {
+                        localStorage.setItem(storageKey, sessionId);
+                    } catch {
+                        // ignore
+                    }
+                }
+
+                if (typeof data.online === 'boolean' && !data.online) {
+                    showBanner("We're offline right now. Please use WhatsApp or the contact form.", 'offline');
+                } else {
+                    showBanner('Typically replies within a few minutes.', 'online');
+                }
+
+                if (Array.isArray(data.messages) && messagesEl) {
+                    messagesEl.innerHTML = '';
+                    lastMessageId = 0;
+                    data.messages.forEach((m) => {
+                        const idNum = Number(m?.id);
+                        if (Number.isFinite(idNum)) lastMessageId = Math.max(lastMessageId, idNum);
+                        appendMessage(m, { allowTypingDelay: false });
+                    });
+                }
+            };
+
+            const fetchUpdates = async () => {
+                if (!sessionId) return;
+                const params = new URLSearchParams({ session_id: sessionId, page: window.location.pathname || '/' });
+                if (lastMessageId) params.set('after', String(lastMessageId));
+                const res = await fetch(`${ENDPOINTS.messages}?${params.toString()}`);
+                const data = await res.json();
+                if (!res.ok) return;
+                if (typeof data.online === 'boolean' && !data.online) {
+                    showBanner("We're offline right now. Please use WhatsApp or the contact form.", 'offline');
+                }
+                if (Array.isArray(data.messages)) {
+                    data.messages.forEach((m) => {
+                        const idNum = Number(m?.id);
+                        if (Number.isFinite(idNum)) lastMessageId = Math.max(lastMessageId, idNum);
+                        appendMessage(m, { allowTypingDelay: true });
+                    });
+                }
+            };
+
+            const sendMessage = async (text) => {
+                if (!text) return;
+                if (!sessionId) {
+                    await ensureSession();
+                }
+
+                appendMessage({ sender: 'visitor', text });
+
+                const res = await fetch(ENDPOINTS.send, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        message: text,
+                        page: window.location.pathname || '/',
+                    }),
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data?.message || 'Unable to send your message.');
+                }
+                if (data.entry) {
+                    const idNum = Number(data.entry?.id);
+                    if (Number.isFinite(idNum)) lastMessageId = Math.max(lastMessageId, idNum);
+                }
+                if (data.autopilot_entry) {
+                    const idNum = Number(data.autopilot_entry?.id);
+                    if (Number.isFinite(idNum)) lastMessageId = Math.max(lastMessageId, idNum);
+                    appendMessage(data.autopilot_entry, { allowTypingDelay: true });
+                } else {
+                    // Pull any admin replies
+                    await fetchUpdates();
+                }
+            };
+
+            // If the main live-chat script is working, it will toggle the UI immediately.
+            // This fallback only kicks in if nothing changed after the click.
+            toggle.addEventListener(
+                'click',
+                () => {
+                    const before = isOpen();
+                    window.setTimeout(() => {
+                        const after = isOpen();
+                        if (after === before) {
+                            before ? close() : open();
+                            if (!before) {
+                                ensureSession().catch((err) => {
+                                    showBanner(err.message || 'Unable to start live chat.', 'error');
+                                });
+                            }
+                        }
+                    }, 0);
+                },
+                false
+            );
+            closeBtn?.addEventListener('click', () => close(), false);
+
+            // Prevent full page reload on submit if the main handler didn't bind.
+            if (form && form.dataset.liveChatBound !== '1') {
+                form.dataset.liveChatBound = '1';
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const text = (input?.value || '').trim();
+                    if (!text) return;
+                    if (submit) submit.disabled = true;
+                    try {
+                        await sendMessage(text);
+                        if (input) input.value = '';
+                    } catch (err) {
+                        showBanner(err.message || 'Unable to send your message.', 'error');
+                    } finally {
+                        if (submit) submit.disabled = false;
+                    }
+                });
+            }
+
+            // Light polling while open
+            window.setInterval(() => {
+                if (isOpen()) {
+                    fetchUpdates().catch(() => {});
+                }
+            }, 3500);
+        })();
+    </script>
+
+    <!-- Preloader Script -->
+    <script>
+        (function() {
+            const preloader = document.getElementById('preloader');
+            const progressBar = document.querySelector('.progress-bar');
+            const progressText = document.querySelector('.progress-text');
+            
+            const startTime = Date.now();
+            const minimumDisplayTime = 3000; // 3 seconds minimum
+            
+            let progress = 0;
+            const totalResources = document.images.length + document.querySelectorAll('link[rel="stylesheet"]').length;
+            let loadedResources = 0;
+
+            // Simulate initial progress
+            const initialInterval = setInterval(() => {
+                if (progress < 30) {
+                    progress += Math.random() * 3;
+                    updateProgress(progress);
+                }
+            }, 100);
+
+            // Track actual resource loading
+            const updateLoadProgress = () => {
+                loadedResources++;
+                const realProgress = 30 + (loadedResources / totalResources) * 60;
+                progress = Math.max(progress, realProgress);
+                updateProgress(progress);
+            };
+
+            // Monitor images
+            Array.from(document.images).forEach(img => {
+                if (img.complete) {
+                    updateLoadProgress();
+                } else {
+                    img.addEventListener('load', updateLoadProgress);
+                    img.addEventListener('error', updateLoadProgress);
+                }
+            });
+
+            // Monitor stylesheets
+            Array.from(document.querySelectorAll('link[rel="stylesheet"]')).forEach(link => {
+                link.addEventListener('load', updateLoadProgress);
+                link.addEventListener('error', updateLoadProgress);
+            });
+
+            function updateProgress(value) {
+                const percent = Math.min(Math.floor(value), 100);
+                progressBar.style.width = percent + '%';
+                progressText.textContent = `Loading ${percent}%`;
+            }
+
+            function hidePreloader() {
+                const elapsed = Date.now() - startTime;
+                const remainingTime = Math.max(0, minimumDisplayTime - elapsed);
+                
+                setTimeout(() => {
+                    preloader.classList.add('hidden');
+                    setTimeout(() => {
+                        preloader.style.display = 'none';
+                    }, 500);
+                }, remainingTime);
+            }
+
+            // Complete loading
+            window.addEventListener('load', () => {
+                clearInterval(initialInterval);
+                progress = 100;
+                updateProgress(100);
+                hidePreloader();
+            });
+
+            // Fallback: hide after 8 seconds regardless (5s + 3s minimum)
+            setTimeout(() => {
+                if (!preloader.classList.contains('hidden')) {
+                    progress = 100;
+                    updateProgress(100);
+                    hidePreloader();
+                }
+            }, 8000);
+        })();
+    </script>
+
+    <!-- Testimonials: resilient loader (runs even if earlier scripts error) -->
+    <script>
+        (() => {
+            const slider = document.getElementById('testimonialSlider');
+            if (!slider) return;
+
+            const initRotationFromDom = () => {
+                const cards = Array.from(slider.querySelectorAll('.testimonial'));
+                if (cards.length <= 1) {
+                    return;
+                }
+
+                // Ensure nav + dots exist and are wired.
+                let nav = slider.querySelector('.testimonial-nav');
+                if (!nav) {
+                    nav = document.createElement('div');
+                    nav.className = 'testimonial-nav';
+                    slider.appendChild(nav);
+                }
+
+                // Rebuild dots to guarantee correct count + click handlers.
+                nav.innerHTML = '';
+                const dots = cards.map((_, index) => {
+                    const dot = document.createElement('span');
+                    dot.className = 'testimonial-dot';
+                    dot.dataset.index = String(index);
+                    nav.appendChild(dot);
+                    return dot;
+                });
+
+                const setActive = (index) => {
+                    const nextIndex = ((index % cards.length) + cards.length) % cards.length;
+                    cards.forEach((card, i) => card.classList.toggle('active', i === nextIndex));
+                    dots.forEach((dot, i) => dot.classList.toggle('active', i === nextIndex));
+                    return nextIndex;
+                };
+
+                let currentIndex = 0;
+                const initiallyActive = cards.findIndex((card) => card.classList.contains('active'));
+                currentIndex = setActive(initiallyActive >= 0 ? initiallyActive : 0);
+
+                let timer = null;
+                const start = () => {
+                    if (timer) clearInterval(timer);
+                    timer = setInterval(() => {
+                        currentIndex = setActive(currentIndex + 1);
+                    }, 5000);
+                };
+
+                dots.forEach((dot) => {
+                    dot.addEventListener('click', () => {
+                        const index = Number.parseInt(dot.dataset.index || '0', 10);
+                        currentIndex = setActive(index);
+                        start();
+                    });
+                });
+
+                start();
+            };
+
+            // If testimonials already exist (server-rendered fallback or earlier script), wire up rotation.
+            if (slider.querySelector('.testimonial')) {
+                initRotationFromDom();
+                return;
+            }
+
+            const showStatus = (message, isError = false) => {
+                slider.innerHTML = '';
+                const status = document.createElement('div');
+                status.className = 'testimonial-status' + (isError ? ' error' : '');
+                status.textContent = message;
+                slider.appendChild(status);
+            };
+
+            const render = (reviews) => {
+                slider.innerHTML = '';
+                if (!Array.isArray(reviews) || reviews.length === 0) {
+                    showStatus('No testimonials have been published yet.');
+                    return;
+                }
+
+                const fragment = document.createDocumentFragment();
+                const nav = document.createElement('div');
+                nav.className = 'testimonial-nav';
+
+                const cards = [];
+                const dots = [];
+
+                const setActive = (index) => {
+                    const nextIndex = ((index % cards.length) + cards.length) % cards.length;
+                    cards.forEach((card, i) => card.classList.toggle('active', i === nextIndex));
+                    dots.forEach((dot, i) => dot.classList.toggle('active', i === nextIndex));
+                    return nextIndex;
+                };
+
+                let currentIndex = 0;
+                let timer = null;
+
+                const start = () => {
+                    if (timer) clearInterval(timer);
+                    if (cards.length <= 1) return;
+                    timer = setInterval(() => {
+                        currentIndex = setActive(currentIndex + 1);
+                    }, 5000);
+                };
+
+                reviews.forEach((review, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'testimonial' + (index === 0 ? ' active' : '');
+
+                    const quote = document.createElement('p');
+                    quote.className = 'testimonial-text';
+                    const quoteText = typeof review?.quote === 'string' ? review.quote.trim() : '';
+                    quote.textContent = quoteText ? `“${quoteText}”` : '“A happy customer story will appear here.”';
+
+                    const author = document.createElement('p');
+                    author.className = 'testimonial-author';
+                    const name = typeof review?.author === 'string' ? review.author.trim() : '';
+                    const location = typeof review?.location === 'string' ? review.location.trim() : '';
+                    const authorLine = [name, location].filter(Boolean).join(', ');
+                    author.textContent = authorLine ? `- ${authorLine}` : '- Anonymous';
+
+                    card.appendChild(quote);
+                    card.appendChild(author);
+                    fragment.appendChild(card);
+                    cards.push(card);
+
+                    if (reviews.length > 1) {
+                        const dot = document.createElement('span');
+                        dot.className = 'testimonial-dot' + (index === 0 ? ' active' : '');
+                        dot.addEventListener('click', () => {
+                            currentIndex = setActive(index);
+                            start();
+                        });
+                        nav.appendChild(dot);
+                        dots.push(dot);
+                    }
+                });
+
+                slider.appendChild(fragment);
+                if (reviews.length > 1) {
+                    slider.appendChild(nav);
+                }
+
+                currentIndex = setActive(0);
+                start();
+            };
+
+            const load = async () => {
+                try {
+                    showStatus('Loading testimonials…');
+                    const url = new URL('/api/reviews', window.location.origin);
+                    url.searchParams.set('_', Date.now().toString());
+                    const res = await fetch(url.href, { cache: 'no-store' });
+                    if (!res.ok) throw new Error('Unable to load testimonials.');
+                    const data = await res.json();
+                    const reviews = Array.isArray(data) ? data : (Array.isArray(data?.reviews) ? data.reviews : []);
+                    render(reviews);
+                } catch (err) {
+                    console.warn('Testimonials loader failed:', err);
+                    showStatus('Testimonials are unavailable at the moment.', true);
+                }
+            };
+
+            load();
+        })();
+    </script>
+
+    <!-- Mobile nav: resilient binder (ensures hamburger works even if other scripts fail) -->
+    <script>
+        (() => {
+            try {
+                const btn = document.getElementById('mobileMenuBtn');
+                const navEl = document.getElementById('nav');
+                const headerEl = document.getElementById('header');
+                if (!btn || !navEl) return;
+                if (btn.dataset.navToggleBound === '1') return;
+
+                let backdrop = document.querySelector('.nav-backdrop');
+                if (!backdrop) {
+                    backdrop = document.createElement('div');
+                    backdrop.className = 'nav-backdrop';
+                    document.body.appendChild(backdrop);
+                }
+
+                const syncHeaderHeight = () => {
+                    if (!headerEl) return;
+                    const height = Math.max(0, Math.round(headerEl.getBoundingClientRect().height));
+                    if (height) document.documentElement.style.setProperty('--header-height', `${height}px`);
+                };
+
+                const setOpen = (open) => {
+                    const nextOpen = typeof open === 'boolean' ? open : !navEl.classList.contains('active');
+                    navEl.classList.toggle('active', nextOpen);
+                    document.body.classList.toggle('nav-open', nextOpen);
+                    backdrop.classList.toggle('visible', nextOpen);
+                    btn.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
+                    btn.setAttribute('aria-label', nextOpen ? 'Close menu' : 'Open menu');
+                    btn.innerHTML = nextOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+                };
+
+                btn.addEventListener('click', () => {
+                    syncHeaderHeight();
+                    setOpen();
+                });
+
+                // Ensure nav links actually navigate (and don't get trapped by nav-open scroll lock)
+                if (!window.__payAsYouMowAnchorScrollBound) {
+                    navEl.addEventListener('click', (event) => {
+                        const link = event.target && event.target.closest ? event.target.closest('a[href^="#"]') : null;
+                        if (!link) return;
+                        const targetId = link.getAttribute('href');
+                        if (!targetId || targetId === '#') return;
+
+                        event.preventDefault();
+                        setOpen(false);
+                        syncHeaderHeight();
+
+                        const target = document.querySelector(targetId);
+                        if (!target) return;
+                        const headerOffset = headerEl ? Math.round(headerEl.getBoundingClientRect().height) : 80;
+                        const top = target.getBoundingClientRect().top + window.pageYOffset;
+
+                        window.scrollTo({
+                            top: Math.max(0, top - headerOffset - 12),
+                            behavior: 'smooth',
+                        });
+                    });
+                    window.__payAsYouMowAnchorScrollBound = true;
+                }
+
+                backdrop.addEventListener('click', () => setOpen(false));
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape' && navEl.classList.contains('active')) {
+                        setOpen(false);
+                    }
+                });
+
+                syncHeaderHeight();
+                window.addEventListener('resize', syncHeaderHeight);
+                btn.dataset.navToggleBound = '1';
+            } catch (e) {
+                // Intentionally swallow to avoid breaking the page.
+            }
+        })();
+    </script>
+
 </body>
 </html>
