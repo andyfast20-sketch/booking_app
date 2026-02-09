@@ -39,9 +39,10 @@ ADMIN_PASSWORD_HASH = init_admin_security(app)
 CORS(
     app,
     resources={
-        r"/api/*": {"origins": "*"},
+        # NOTE: Flask-CORS expects regex patterns. "/api/*" only matches "/api/".
+        r"/api/.*": {"origins": "*"},
         r"/verify-email": {"origins": "*"},
-        r"/*": {
+        r"/.*": {
             "origins": [
                 "https://payasyoumow.org",
                 "https://www.payasyoumow.org",
