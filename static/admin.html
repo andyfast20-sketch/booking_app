@@ -1833,19 +1833,19 @@
             <p class="input-note" id="telnyxStatus" style="font-weight: 600; font-size: 1rem; margin-top: 16px;"></p>
 
             <!-- Diagnostics panel -->
-            <div id="telnyxDiagnosticsPanel" style="display:none; background: #1a1a2e; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; margin-top: 16px;">
-              <p style="margin: 0 0 12px 0; font-weight: 600; color: #fff;">🔍 Configuration Check</p>
+            <div id="telnyxDiagnosticsPanel" style="display:none; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px; padding: 16px; margin-top: 16px;">
+              <p style="margin: 0 0 12px 0; font-weight: 600; color: var(--text-primary);">🔍 Configuration Check</p>
               <div id="telnyxDiagnosticsList" style="font-family: monospace; font-size: 0.85rem; line-height: 1.8;"></div>
             </div>
           </div>
           <div class="form-feedback" id="telnyxFeedback"></div>
           <div class="panel-actions">
             <button type="submit" class="primary">Save Telnyx settings</button>
-            <button type="button" class="primary" id="telnyxDiagnosticsBtn" style="background: #2a6; margin-left: 8px;" onclick="runTelnyxDiagnostics()">Check Config</button>
+            <button type="button" class="primary" id="telnyxDiagnosticsBtn" style="margin-left: 8px;" onclick="runTelnyxDiagnostics()">Check Config</button>
           </div>
 
           <!-- Test SMS section -->
-          <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 24px; padding-top: 20px;">
+          <div style="border-top: 1px solid var(--panel-border); margin-top: 24px; padding-top: 20px;">
             <p style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">📲 Send a Test SMS</p>
             <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
               Enter your mobile number below and click "Send Test" to verify everything is working.
@@ -1858,7 +1858,7 @@
                 placeholder="e.g. 07123456789"
                 style="flex: 1; min-width: 180px;"
               />
-              <button type="button" class="primary" id="telnyxTestBtn" style="background: #e67e22; white-space: nowrap;" onclick="sendTelnyxTest()">Send Test SMS</button>
+              <button type="button" class="primary" id="telnyxTestBtn" style="white-space: nowrap;" onclick="sendTelnyxTest()">Send Test SMS</button>
             </div>
             <p id="telnyxTestResult" style="margin-top: 12px; font-weight: 600; font-size: 0.95rem;"></p>
           </div>
@@ -3913,7 +3913,7 @@
       btn.disabled = true;
       btn.textContent = 'Checking…';
       panel.style.display = 'block';
-      list.innerHTML = '<p style="color: #aaa;">Loading diagnostics…</p>';
+      list.innerHTML = '<p style="color: var(--text-muted);">Loading diagnostics…</p>';
 
       try {
         const res = await fetch('/admin/telnyx/diagnostics');
@@ -3923,19 +3923,19 @@
         let html = '';
         for (const c of checks) {
           const icon = c.status === 'ok' ? '✅' : c.status === 'fail' ? '❌' : c.status === 'warn' ? '⚠️' : 'ℹ️';
-          const color = c.status === 'ok' ? '#30c3a6' : c.status === 'fail' ? '#ff6b6b' : c.status === 'warn' ? '#ffd166' : '#aaa';
+          const color = c.status === 'ok' ? 'var(--accent)' : c.status === 'fail' ? 'var(--danger)' : c.status === 'warn' ? 'var(--warning)' : 'var(--text-muted)';
           html += `<div style="color: ${color}; margin-bottom: 4px;">${icon} <strong>${c.label}:</strong> ${c.detail}</div>`;
         }
 
         if (data.all_ok) {
-          html += '<div style="color: #30c3a6; margin-top: 12px; font-weight: 700;">All checks passed — config looks good. Try sending a test SMS below.</div>';
+          html += '<div style="color: var(--accent); margin-top: 12px; font-weight: 700;">All checks passed — config looks good. Try sending a test SMS below.</div>';
         } else {
-          html += '<div style="color: #ff6b6b; margin-top: 12px; font-weight: 700;">Some checks failed — fix the issues above, then Save and re-check.</div>';
+          html += '<div style="color: var(--danger); margin-top: 12px; font-weight: 700;">Some checks failed — fix the issues above, then Save and re-check.</div>';
         }
 
         list.innerHTML = html;
       } catch (err) {
-        list.innerHTML = `<p style="color: #ff6b6b;">Error running diagnostics: ${err.message}</p>`;
+        list.innerHTML = `<p style="color: var(--danger);">Error running diagnostics: ${err.message}</p>`;
       } finally {
         btn.disabled = false;
         btn.textContent = 'Check Config';
@@ -3951,14 +3951,14 @@
       const phone = phoneInput.value.trim();
       if (!phone) {
         resultEl.textContent = '⚠ Please enter a phone number first.';
-        resultEl.style.color = '#ffd166';
+        resultEl.style.color = 'var(--warning)';
         return;
       }
 
       btn.disabled = true;
       btn.textContent = 'Sending…';
       resultEl.textContent = '📤 Sending test SMS…';
-      resultEl.style.color = '#aaa';
+      resultEl.style.color = 'var(--text-muted)';
 
       try {
         const res = await fetch('/admin/telnyx/test', {
@@ -3970,10 +3970,10 @@
 
         if (data.ok) {
           resultEl.textContent = '✅ ' + (data.message || 'Test SMS sent!');
-          resultEl.style.color = '#30c3a6';
+          resultEl.style.color = 'var(--accent)';
         } else {
           resultEl.textContent = '❌ ' + (data.message || 'Test failed.');
-          resultEl.style.color = '#ff6b6b';
+          resultEl.style.color = 'var(--danger)';
         }
 
         // Show diagnostics if returned
@@ -3984,7 +3984,7 @@
         }
       } catch (err) {
         resultEl.textContent = '❌ Network error: ' + err.message;
-        resultEl.style.color = '#ff6b6b';
+        resultEl.style.color = 'var(--danger)';
       } finally {
         btn.disabled = false;
         btn.textContent = 'Send Test SMS';
