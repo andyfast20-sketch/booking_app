@@ -27,19 +27,7 @@
         }
 
         .nav-backdrop {
-            position: fixed;
-            inset: 0;
-            background: var(--nav-backdrop);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 200ms ease;
-            z-index: 1040;
-            backdrop-filter: blur(2px);
-        }
-
-        .nav-backdrop.visible {
-            opacity: 1;
-            pointer-events: auto;
+            display: none;
         }
 
         body.nav-open {
@@ -6240,7 +6228,6 @@
             if (!nav || !mobileMenuBtn) return;
             const nextOpen = typeof open === 'boolean' ? open : !nav.classList.contains('active');
             nav.classList.toggle('active', nextOpen);
-            navBackdrop.classList.toggle('visible', nextOpen);
             mobileMenuBtn.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
             mobileMenuBtn.setAttribute('aria-label', nextOpen ? 'Close menu' : 'Open menu');
             mobileMenuBtn.innerHTML = nextOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
@@ -6260,9 +6247,15 @@
             mobileMenuBtn.dataset.navToggleBound = '1';
         }
 
+        // Close menu when clicking anywhere outside it
+        document.addEventListener('click', (event) => {
+            if (!nav || !nav.classList.contains('active')) return;
+            if (nav.contains(event.target)) return;
+            if (mobileMenuBtn && mobileMenuBtn.contains(event.target)) return;
+            setNavOpen(false);
+        });
+
         // Mobile nav links: close menu then scroll to section.
-        // NOTE: This is the ONLY handler that scrolls for nav links.
-        // The general anchor listener below bails out for anchors inside <nav>.
         if (nav) {
             nav.addEventListener('click', (event) => {
                 const link = event.target && event.target.closest ? event.target.closest('a[href^="#"]') : null;
@@ -6276,12 +6269,17 @@
                 event.preventDefault();
                 event.stopPropagation();
 
+                // Close menu first
                 setNavOpen(false);
-                navScrollTo(target);
+
+                if (!target) return;
+
+                // Scroll immediately — no overflow:hidden on body so scrollY is always accurate
+                const headerH = header ? Math.round(header.getBoundingClientRect().height) : 92;
+                const top = Math.max(0, target.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - headerH - 8);
+                window.scrollTo({ top, behavior: 'smooth' });
             });
         }
-
-        navBackdrop.addEventListener('click', () => setNavOpen(false));
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && nav && nav.classList.contains('active')) {
                 setNavOpen(false);
@@ -9178,9 +9176,6 @@
                 const setOpen = (open) => {
                     const nextOpen = typeof open === 'boolean' ? open : !navEl.classList.contains('active');
                     navEl.classList.toggle('active', nextOpen);
-                    // NOTE: body.nav-open intentionally NOT toggled here — overflow:hidden
-                    // on body freezes window.scrollY on iOS and breaks programmatic scrolling.
-                    backdrop.classList.toggle('visible', nextOpen);
                     btn.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
                     btn.setAttribute('aria-label', nextOpen ? 'Close menu' : 'Open menu');
                     btn.innerHTML = nextOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
