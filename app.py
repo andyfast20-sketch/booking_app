@@ -80,6 +80,8 @@ EMAIL_MAGIC_FILE = _data_path("email_magic.json")
 ADMIN_AUTH_FILE = _data_path("admin_auth.json")
 WATCHDOG_CONFIG_FILE = _data_path("watchdog_config.json")
 SEO_CONFIG_FILE = _data_path("seo_config.json")
+FACEBOOK_CONFIG_FILE = _data_path("facebook_config.json")
+FACEBOOK_ALERTS_FILE = _data_path("facebook_alerts.json")
 
 CUSTOMER_ACCESS_CODE = os.getenv("CUSTOMER_ACCESS_CODE", "GARDENCARE2024")
 
@@ -174,6 +176,23 @@ _SEO_DEFAULTS: dict = {
 }
 _seo_config_lock = Lock()
 _seo_config: dict = dict(_SEO_DEFAULTS)
+
+# Facebook Group post monitoring
+_FACEBOOK_CONFIG_DEFAULTS: dict = {
+    "enabled": False,
+    "group_id": "",
+    "access_token": "",
+    "keywords": "gardener,lawn mowing,grass cutting,garden maintenance,lawn care,hedge trimming,mowing,grass cutter,landscaping",
+    "poll_interval_minutes": 30,
+    "notify_sms": False,
+    "last_checked": None,
+    "token_expiry_date": "",
+}
+_facebook_config_lock = Lock()
+_facebook_config: dict = dict(_FACEBOOK_CONFIG_DEFAULTS)
+_facebook_alerts_lock = Lock()
+_facebook_alerts: list = []
+_facebook_known_post_ids: set = set()
 
 # Local area SEO landing pages — each generates a separately indexed, location-targeted page
 _LOCAL_AREA_PAGES: dict[str, dict] = {
@@ -316,6 +335,8 @@ _ensure_storage_file(SMSAPI_CONFIG_FILE, default={"oauth_token": "", "sender_nam
 _ensure_storage_file(TELNYX_CONFIG_FILE, default={"api_key": "", "from_number": ""})
 _ensure_storage_file(WATCHDOG_CONFIG_FILE, default={"enabled": False, "to_number": "+447595289669", "last_sent": None})
 _ensure_storage_file(SEO_CONFIG_FILE, default=dict(_SEO_DEFAULTS))
+_ensure_storage_file(FACEBOOK_CONFIG_FILE, default=dict(_FACEBOOK_CONFIG_DEFAULTS))
+_ensure_storage_file(FACEBOOK_ALERTS_FILE, default=[])
 _ensure_storage_file(
     SMTP_CONFIG_FILE,
     default={
@@ -2408,6 +2429,204 @@ with _seo_config_lock:
     stored_seo = _load_seo_config_from_disk()
     _seo_config.update(stored_seo)
 
+with _facebook_config_lock:
+    _stored_fb_cfg = _load_facebook_config_from_disk()
+    _facebook_config.update(_stored_fb_cfg)
+
+with _facebook_alerts_lock:
+    _stored_fb_alerts = _load_facebook_alerts_from_disk()
+    _facebook_alerts.extend(_stored_fb_alerts)
+    _facebook_known_post_ids.update(
+        a["post_id"] for a in _stored_fb_alerts if a.get("post_id")
+    )
+
+
+def _load_facebook_config_from_disk() -> dict:
+    defaults = dict(_FACEBOOK_CONFIG_DEFAULTS)
+    if not os.path.exists(FACEBOOK_CONFIG_FILE):
+        return defaults
+    try:
+        with open(FACEBOOK_CONFIG_FILE, "r", encoding="utf-8") as fh:
+            payload = json.load(fh)
+        if not isinstance(payload, dict):
+            return defaults
+        merged = dict(defaults)
+        merged.update(payload)
+        return merged
+    except (OSError, json.JSONDecodeError):
+        return defaults
+
+
+def _save_facebook_config(config: dict | None = None) -> None:
+    snapshot = dict(config or _facebook_config)
+    try:
+        with open(FACEBOOK_CONFIG_FILE, "w", encoding="utf-8") as fh:
+            json.dump(snapshot, fh, indent=2)
+    except OSError:
+        pass
+
+
+def _load_facebook_alerts_from_disk() -> list:
+    if not os.path.exists(FACEBOOK_ALERTS_FILE):
+        return []
+    try:
+        with open(FACEBOOK_ALERTS_FILE, "r", encoding="utf-8") as fh:
+            payload = json.load(fh)
+        return payload if isinstance(payload, list) else []
+    except (OSError, json.JSONDecodeError):
+        return []
+
+
+def _save_facebook_alerts(alerts: list | None = None) -> None:
+    data = alerts if alerts is not None else _facebook_alerts
+    try:
+        with open(FACEBOOK_ALERTS_FILE, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, indent=2)
+    except OSError:
+        pass
+
+
+def _facebook_poll_once() -> dict:
+    """Fetch recent group posts and create alerts for keyword matches. Returns a summary dict."""
+    global _facebook_alerts, _facebook_known_post_ids
+
+    with _facebook_config_lock:
+        cfg = dict(_facebook_config)
+
+    group_id = (cfg.get("group_id") or "").strip()
+    access_token = (cfg.get("access_token") or "").strip()
+    keywords_raw = cfg.get("keywords") or ""
+    notify_sms = bool(cfg.get("notify_sms", False))
+
+    if not group_id or not access_token:
+        return {"ok": False, "error": "Group ID or access token not configured."}
+
+    keywords = [k.strip().lower() for k in keywords_raw.split(",") if k.strip()]
+    if not keywords:
+        return {"ok": False, "error": "No keywords configured."}
+
+    api_url = (
+        f"https://graph.facebook.com/v21.0/{group_id}/feed"
+        f"?fields=id,message,from,created_time,permalink_url"
+        f"&access_token={access_token}"
+        f"&limit=50"
+    )
+
+    try:
+        req = Request(api_url, headers={"User-Agent": "Mozilla/5.0"})
+        with urlopen(req, timeout=20) as resp:
+            raw = json.loads(resp.read().decode("utf-8"))
+    except HTTPError as e:
+        body = ""
+        try:
+            body = e.read().decode("utf-8")[:400]
+        except Exception:
+            pass
+        error_msg = f"HTTP {e.code}: {body}"
+        now_str = datetime.utcnow().isoformat()
+        with _facebook_config_lock:
+            _facebook_config["last_checked"] = now_str
+            _facebook_config["last_error"] = error_msg
+        _save_facebook_config()
+        return {"ok": False, "error": error_msg}
+    except Exception as exc:
+        error_msg = str(exc)[:300]
+        now_str = datetime.utcnow().isoformat()
+        with _facebook_config_lock:
+            _facebook_config["last_checked"] = now_str
+            _facebook_config["last_error"] = error_msg
+        _save_facebook_config()
+        return {"ok": False, "error": error_msg}
+
+    posts = raw.get("data") or []
+    new_alerts = []
+
+    with _facebook_alerts_lock:
+        known = set(_facebook_known_post_ids)
+
+        for post in posts:
+            post_id = post.get("id") or ""
+            message = (post.get("message") or "").strip()
+            if not post_id or not message or post_id in known:
+                continue
+
+            message_lower = message.lower()
+            matched = [kw for kw in keywords if kw in message_lower]
+            if not matched:
+                continue
+
+            author_name = ""
+            if isinstance(post.get("from"), dict):
+                author_name = post["from"].get("name") or ""
+
+            alert = {
+                "id": str(uuid4()),
+                "post_id": post_id,
+                "message_preview": message[:400],
+                "author_name": author_name,
+                "created_time": post.get("created_time") or "",
+                "permalink_url": post.get("permalink_url") or f"https://www.facebook.com/groups/{group_id}",
+                "matched_keywords": matched,
+                "seen": False,
+                "alerted_at": datetime.utcnow().isoformat(),
+            }
+            _facebook_alerts.insert(0, alert)
+            _facebook_known_post_ids.add(post_id)
+            new_alerts.append(alert)
+
+        # Keep only the newest 200 alerts to prevent unbounded growth
+        if len(_facebook_alerts) > 200:
+            _facebook_alerts = _facebook_alerts[:200]
+            _facebook_known_post_ids = {a["post_id"] for a in _facebook_alerts}
+
+        _save_facebook_alerts(_facebook_alerts)
+
+    # Update last_checked and clear any previous error
+    now_str = datetime.utcnow().isoformat()
+    with _facebook_config_lock:
+        _facebook_config["last_checked"] = now_str
+        _facebook_config["last_error"] = ""
+    _save_facebook_config()
+
+    # Optional SMS notification
+    if notify_sms and new_alerts:
+        for alert in new_alerts[:3]:  # Batch max 3 SMS per poll
+            sms_body = (
+                f"Facebook alert: {alert['author_name']} posted in your group.\n"
+                f"\"{alert['message_preview'][:120]}\"\n"
+                f"Keywords: {', '.join(alert['matched_keywords'])}"
+            )
+            watchdog_to = _watchdog_config.get("to_number") or "+447595289669"
+            _send_sms_via_telnyx(watchdog_to, sms_body)
+
+    return {"ok": True, "new_alerts": len(new_alerts), "posts_checked": len(posts)}
+
+
+def _start_facebook_poller() -> None:
+    """Launch the Facebook group monitoring poller in a daemon background thread."""
+    import threading
+    import time
+
+    def _poller_loop():
+        time.sleep(30)  # Initial delay — let server fully start
+        while True:
+            try:
+                with _facebook_config_lock:
+                    cfg = dict(_facebook_config)
+
+                if cfg.get("enabled") and cfg.get("group_id") and cfg.get("access_token"):
+                    _facebook_poll_once()
+
+                interval = int(cfg.get("poll_interval_minutes") or 30)
+                interval = max(5, min(interval, 120))  # clamp 5–120 min
+            except Exception:
+                interval = 30
+
+            time.sleep(interval * 60)
+
+    t = threading.Thread(target=_poller_loop, name="fb-group-poller", daemon=True)
+    t.start()
+
 
 with _customer_settings_lock:
     stored_customer_settings = _load_customer_settings_from_disk()
@@ -3565,6 +3784,85 @@ def admin_seo_config():
 
     _save_seo_config(cfg)
     return jsonify({"message": "SEO settings saved.", "config": cfg})
+
+
+# ── Facebook Group Monitor admin routes ──────────────────────────────────────
+
+@app.route("/admin/facebook/config", methods=["GET", "POST"])
+@require_admin_auth
+def admin_facebook_config():
+    if request.method == "GET":
+        with _facebook_config_lock:
+            snap = dict(_facebook_config)
+        return jsonify({"config": snap})
+
+    payload = request.get_json(silent=True) or {}
+    with _facebook_config_lock:
+        if "enabled" in payload:
+            _facebook_config["enabled"] = bool(payload["enabled"])
+        for key in ("group_id", "access_token", "token_expiry_date"):
+            if key in payload:
+                _facebook_config[key] = str(payload[key]).strip()
+        if "keywords" in payload:
+            raw_kw = payload["keywords"]
+            if isinstance(raw_kw, list):
+                _facebook_config["keywords"] = [str(k).strip() for k in raw_kw if str(k).strip()]
+            else:
+                _facebook_config["keywords"] = [k.strip() for k in str(raw_kw).split(",") if k.strip()]
+        if "poll_interval_minutes" in payload:
+            try:
+                _facebook_config["poll_interval_minutes"] = max(5, min(120, int(payload["poll_interval_minutes"])))
+            except (ValueError, TypeError):
+                pass
+        if "notify_sms" in payload:
+            _facebook_config["notify_sms"] = bool(payload["notify_sms"])
+        cfg = dict(_facebook_config)
+    _save_facebook_config(cfg)
+    return jsonify({"message": "Facebook settings saved.", "config": cfg})
+
+
+@app.route("/admin/facebook/alerts", methods=["GET"])
+@require_admin_auth
+def admin_facebook_alerts():
+    with _facebook_alerts_lock:
+        alerts_copy = list(_facebook_alerts)
+    unseen = sum(1 for a in alerts_copy if not a.get("seen", False))
+    return jsonify({"alerts": alerts_copy, "unseen_count": unseen})
+
+
+@app.route("/admin/facebook/alerts/mark-seen", methods=["POST"])
+@require_admin_auth
+def admin_facebook_mark_seen():
+    payload = request.get_json(silent=True) or {}
+    mark_all = payload.get("all", False)
+    ids = payload.get("ids", [])
+    with _facebook_alerts_lock:
+        for alert in _facebook_alerts:
+            if mark_all or alert.get("id") in ids:
+                alert["seen"] = True
+        _save_facebook_alerts()
+    return jsonify({"message": "Alerts marked as seen."})
+
+
+@app.route("/admin/facebook/alerts/clear", methods=["POST"])
+@require_admin_auth
+def admin_facebook_clear_alerts():
+    global _facebook_alerts, _facebook_known_post_ids
+    with _facebook_alerts_lock:
+        _facebook_alerts.clear()
+        _facebook_known_post_ids.clear()
+        _save_facebook_alerts()
+    return jsonify({"message": "All alerts cleared."})
+
+
+@app.route("/admin/facebook/test", methods=["POST"])
+@require_admin_auth
+def admin_facebook_test():
+    result = _facebook_poll_once()
+    return jsonify(result)
+
+
+# ── End Facebook Group Monitor admin routes ───────────────────────────────────
 
 
 @app.route("/admin/email/config", methods=["GET", "POST"])
@@ -5436,6 +5734,9 @@ def admin_logout():
 
 # Start the server-down watchdog (works with both direct run and gunicorn)
 _start_watchdog_thread()
+
+# Start Facebook Group post monitor
+_start_facebook_poller()
 
 if __name__ == '__main__':
     import sys

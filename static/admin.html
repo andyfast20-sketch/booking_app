@@ -2163,6 +2163,143 @@
       </div>
     </section>
 
+    <!-- ── Facebook Group Monitor ──────────────────────────────────────── -->
+    <section class="panel" aria-labelledby="facebook-heading" data-panel data-expanded="false">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="facebook-heading">Facebook Group Monitor <span id="fbUnreadBadge" style="display:none;background:var(--accent);color:#fff;border-radius:999px;padding:2px 9px;font-size:0.78rem;margin-left:8px;vertical-align:middle;"></span></h2>
+          <p>Watch a Facebook Group for posts looking for a gardener and get instant alerts here (and optionally via SMS).</p>
+        </div>
+        <div class="panel-actions">
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="facebookPanelBody">Expand</button>
+        </div>
+      </div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight" id="facebookSummaryHighlight">Monitor Facebook groups for new gardening enquiries.</p>
+        <p class="panel-summary-note">Requires a Facebook User Access Token. You must be a member of the group.</p>
+      </div>
+      <div class="panel-body" id="facebookPanelBody" hidden>
+
+        <!-- How-to box -->
+        <div style="background:rgba(0,112,243,0.07);border:1px solid rgba(0,112,243,0.25);border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:0.9rem;line-height:1.6;">
+          <strong style="display:block;margin-bottom:6px;">How to get your Group ID and Access Token</strong>
+          <ol style="margin:0;padding-left:1.2em;">
+            <li>Go to <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener" style="color:var(--accent);">Graph API Explorer</a> (you need a Facebook Developer account — it's free).</li>
+            <li>Click <strong>Generate Access Token</strong> and grant <code>groups_access_member_info</code> + <code>public_profile</code> permission.</li>
+            <li>Find your group's numeric ID: visit the group on Facebook, copy the number from the URL <em>(facebook.com/groups/<strong>123456789</strong>)</em>.</li>
+            <li>Paste both below and save. Tokens expire in ~60 days — come back here to refresh when needed.</li>
+          </ol>
+        </div>
+
+        <form id="facebookForm" class="grid" autocomplete="off" novalidate>
+          <div class="section">
+            <div class="autopilot-api-header">
+              <div>
+                <p class="eyebrow">Feature Toggle</p>
+                <h3 class="autopilot-api-title">Enable Group Monitoring</h3>
+              </div>
+            </div>
+            <label class="toggle-label" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+              <input type="checkbox" id="fbEnabled" style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);" />
+              <span>Enable Facebook Group Monitor</span>
+            </label>
+          </div>
+
+          <div class="section">
+            <div class="autopilot-api-header">
+              <div>
+                <p class="eyebrow">Group Settings</p>
+                <h3 class="autopilot-api-title">Facebook Group</h3>
+              </div>
+            </div>
+            <div class="field-row">
+              <label class="field-label" for="fbGroupId">Group ID</label>
+              <input type="text" id="fbGroupId" class="field-input" placeholder="e.g. 123456789012345" autocomplete="off" />
+              <p class="input-note">The numeric ID from the group's URL on Facebook.</p>
+            </div>
+            <div class="field-row" style="margin-top:12px;">
+              <label class="field-label" for="fbAccessToken">User Access Token</label>
+              <input type="password" id="fbAccessToken" class="field-input" placeholder="Paste token from Graph API Explorer" autocomplete="off" />
+              <p class="input-note">Treat this like a password — it grants read access to your Facebook groups.</p>
+            </div>
+            <div class="field-row" style="margin-top:12px;">
+              <label class="field-label" for="fbTokenExpiry">Token Expiry Date</label>
+              <input type="date" id="fbTokenExpiry" class="field-input" />
+              <p class="input-note">Optional reminder — tokens typically expire ~60 days after generation.</p>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="autopilot-api-header">
+              <div>
+                <p class="eyebrow">Keyword Matching</p>
+                <h3 class="autopilot-api-title">Alert Keywords</h3>
+              </div>
+            </div>
+            <div class="field-row">
+              <label class="field-label" for="fbKeywords">Keywords (comma-separated)</label>
+              <textarea id="fbKeywords" class="field-input" rows="3" placeholder="gardener, lawn mowing, grass cutting, garden tidy"></textarea>
+              <p class="input-note">A post must contain at least one of these words/phrases to trigger an alert.</p>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="autopilot-api-header">
+              <div>
+                <p class="eyebrow">Polling &amp; Notifications</p>
+                <h3 class="autopilot-api-title">Check Interval &amp; SMS</h3>
+              </div>
+            </div>
+            <div class="field-row">
+              <label class="field-label" for="fbPollInterval">Check Every</label>
+              <select id="fbPollInterval" class="field-input">
+                <option value="15">15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60">60 minutes</option>
+                <option value="120">2 hours</option>
+              </select>
+            </div>
+            <label class="toggle-label" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-top:12px;">
+              <input type="checkbox" id="fbNotifySms" style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);" />
+              <span>Send SMS alert when match is found (uses Telnyx)</span>
+            </label>
+          </div>
+
+          <div id="fbStatusRow" style="display:none;margin-top:16px;padding:12px 16px;background:var(--panel-bg);border:1px solid var(--panel-border);border-radius:10px;">
+            <div style="font-size:0.88rem;color:var(--text-secondary);">
+              Last checked: <strong id="fbLastChecked" style="color:var(--text-primary);">never</strong>
+            </div>
+            <div id="fbLastErrorRow" style="display:none;margin-top:6px;font-size:0.85rem;color:#e53e3e;">
+              Last error: <span id="fbLastError"></span>
+            </div>
+          </div>
+
+          <div class="form-feedback" id="facebookFeedback"></div>
+
+          <div class="panel-actions">
+            <button type="submit" class="primary">Save settings</button>
+            <button type="button" class="primary" id="fbPollNowBtn" style="margin-left:8px;" onclick="pollFacebookNow()">Poll now</button>
+          </div>
+        </form>
+
+        <!-- Alerts feed -->
+        <div style="margin-top:28px;border-top:1px solid var(--panel-border);padding-top:22px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+            <h3 style="margin:0;font-size:1.1rem;">Matched Posts <span id="fbAlertCount" style="font-size:0.85rem;color:var(--text-secondary);"></span></h3>
+            <div style="display:flex;gap:8px;">
+              <button type="button" class="secondary" onclick="markFacebookAlertsSeen(true)">Mark all read</button>
+              <button type="button" class="secondary" onclick="clearFacebookAlerts()">Clear all</button>
+            </div>
+          </div>
+          <div id="fbAlertFeed" style="display:flex;flex-direction:column;gap:10px;">
+            <p style="color:var(--text-secondary);font-size:0.9rem;">No alerts yet. Save your settings and click "Poll now" to fetch the latest posts.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <!-- ── End Facebook Group Monitor ──────────────────────────────────── -->
+
     <section class="panel" aria-labelledby="smsapi-heading" data-panel data-expanded="false">
       <div class="panel-header">
         <div class="meta">
@@ -4525,6 +4662,172 @@
     const watchdogForm = document.getElementById('watchdogForm');
     if (watchdogForm) watchdogForm.addEventListener('submit', persistWatchdogConfig);
 
+    // ── Facebook Group Monitor JS ─────────────────────────────────────────────
+    let _fbConfig = {};
+
+    async function loadFacebookConfig() {
+      try {
+        const res = await fetch('/admin/facebook/config');
+        if (!res.ok) return;
+        const data = await res.json().catch(() => ({}));
+        _fbConfig = data.config || {};
+        renderFacebookConfig();
+      } catch (err) { console.error('loadFacebookConfig:', err); }
+    }
+
+    function renderFacebookConfig() {
+      const c = _fbConfig;
+      const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
+      const setChk = (id, v) => { const el = document.getElementById(id); if (el) el.checked = !!v; };
+
+      setChk('fbEnabled', c.enabled);
+      setVal('fbGroupId', c.group_id || '');
+      // Never pre-fill the token for security — only show placeholder if stored
+      const tokenEl = document.getElementById('fbAccessToken');
+      if (tokenEl) tokenEl.placeholder = c.access_token ? '(token saved — paste new to replace)' : 'Paste token from Graph API Explorer';
+      setVal('fbTokenExpiry', c.token_expiry_date || '');
+      const kwEl = document.getElementById('fbKeywords');
+      if (kwEl) kwEl.value = Array.isArray(c.keywords) ? c.keywords.join(', ') : (c.keywords || '');
+      const intervalEl = document.getElementById('fbPollInterval');
+      if (intervalEl) {
+        const v = String(c.poll_interval_minutes || 30);
+        const opt = [...intervalEl.options].find(o => o.value === v);
+        if (opt) intervalEl.value = v; else intervalEl.value = '30';
+      }
+      setChk('fbNotifySms', c.notify_sms);
+
+      // Status row
+      const statusRow = document.getElementById('fbStatusRow');
+      if (statusRow) statusRow.style.display = (c.last_checked && c.last_checked !== '0') ? 'block' : 'none';
+      const lastCheckedEl = document.getElementById('fbLastChecked');
+      if (lastCheckedEl) lastCheckedEl.textContent = c.last_checked && c.last_checked !== '0' ? new Date(c.last_checked).toLocaleString() : 'never';
+      const lastErrRow = document.getElementById('fbLastErrorRow');
+      const lastErrEl = document.getElementById('fbLastError');
+      if (lastErrRow && lastErrEl) {
+        if (c.last_error) { lastErrRow.style.display = 'block'; lastErrEl.textContent = c.last_error; }
+        else { lastErrRow.style.display = 'none'; }
+      }
+    }
+
+    async function persistFacebookConfig(e) {
+      if (e) e.preventDefault();
+      const feedbackEl = document.getElementById('facebookFeedback');
+      if (feedbackEl) { feedbackEl.classList.remove('visible', 'success'); feedbackEl.textContent = ''; }
+
+      const kwRaw = (document.getElementById('fbKeywords')?.value || '').split(',').map(k => k.trim()).filter(Boolean);
+      const tokenVal = (document.getElementById('fbAccessToken')?.value || '').trim();
+      const payload = {
+        enabled: document.getElementById('fbEnabled')?.checked ?? false,
+        group_id: (document.getElementById('fbGroupId')?.value || '').trim(),
+        keywords: kwRaw,
+        poll_interval_minutes: parseInt(document.getElementById('fbPollInterval')?.value || '30', 10),
+        notify_sms: document.getElementById('fbNotifySms')?.checked ?? false,
+        token_expiry_date: (document.getElementById('fbTokenExpiry')?.value || '').trim(),
+      };
+      if (tokenVal) payload.access_token = tokenVal;
+
+      try {
+        const res = await fetch('/admin/facebook/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const data = await res.json().catch(() => ({}));
+        if (feedbackEl) {
+          feedbackEl.textContent = res.ok ? '✅ ' + (data.message || 'Saved!') : '❌ ' + (data.message || 'Save failed.');
+          feedbackEl.classList.add('visible');
+          if (res.ok) feedbackEl.classList.add('success');
+        }
+        if (res.ok && data.config) { _fbConfig = data.config; renderFacebookConfig(); }
+      } catch (err) {
+        if (feedbackEl) { feedbackEl.textContent = '❌ Network error: ' + err.message; feedbackEl.classList.add('visible'); }
+      }
+    }
+
+    async function loadFacebookAlerts() {
+      try {
+        const res = await fetch('/admin/facebook/alerts');
+        if (!res.ok) return;
+        const data = await res.json().catch(() => ({}));
+        renderFacebookAlerts(data.alerts || [], data.unseen_count || 0);
+      } catch (err) { console.error('loadFacebookAlerts:', err); }
+    }
+
+    function _escHtml(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function renderFacebookAlerts(alerts, unseen) {
+      const feed = document.getElementById('fbAlertFeed');
+      const badge = document.getElementById('fbUnreadBadge');
+      const countEl = document.getElementById('fbAlertCount');
+
+      if (badge) { badge.style.display = unseen > 0 ? 'inline' : 'none'; badge.textContent = unseen; }
+      if (countEl) countEl.textContent = alerts.length ? '(' + alerts.length + ')' : '';
+
+      if (!feed) return;
+      if (!alerts.length) {
+        feed.innerHTML = '<p style="color:var(--text-secondary);font-size:0.9rem;">No alerts yet. Save your settings and click "Poll now" to fetch the latest posts.</p>';
+        return;
+      }
+
+      feed.innerHTML = alerts.map(a => {
+        const unseen = !a.seen;
+        const kws = Array.isArray(a.matched_keywords) ? a.matched_keywords.join(', ') : '';
+        const ts = a.alerted_at ? new Date(a.alerted_at).toLocaleString() : '';
+        return `<div style="padding:14px 16px;border-radius:10px;border:1px solid ${unseen ? 'var(--accent)' : 'var(--panel-border)'};background:${unseen ? 'rgba(0,112,243,0.05)' : 'var(--panel-bg)'};position:relative;">
+          ${unseen ? '<span style="position:absolute;top:10px;right:12px;background:var(--accent);color:#fff;border-radius:999px;padding:1px 8px;font-size:0.72rem;font-weight:700;">NEW</span>' : ''}
+          <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:4px;">${_escHtml(ts)} &nbsp;·&nbsp; <strong style="color:var(--text-primary);">${_escHtml(a.author_name || 'Unknown')}</strong></div>
+          <div style="font-size:0.93rem;line-height:1.5;margin-bottom:8px;">${_escHtml(a.message_preview)}</div>
+          ${kws ? `<div style="font-size:0.8rem;color:var(--text-secondary);">Matched: <em>${_escHtml(kws)}</em></div>` : ''}
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+            ${a.permalink_url ? `<a href="${_escHtml(a.permalink_url)}" target="_blank" rel="noopener" style="font-size:0.85rem;color:var(--accent);text-decoration:none;font-weight:600;">View on Facebook ↗</a>` : ''}
+            ${unseen ? `<button type="button" onclick="markFacebookAlertsSeen(false,'${_escHtml(a.id)}')" style="font-size:0.82rem;background:none;border:1px solid var(--panel-border);border-radius:6px;padding:2px 10px;cursor:pointer;color:var(--text-secondary);">Mark read</button>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function pollFacebookNow() {
+      const btn = document.getElementById('fbPollNowBtn');
+      const feedbackEl = document.getElementById('facebookFeedback');
+      if (btn) { btn.disabled = true; btn.textContent = 'Polling…'; }
+      if (feedbackEl) { feedbackEl.classList.remove('visible','success'); feedbackEl.textContent = ''; }
+      try {
+        const res = await fetch('/admin/facebook/test', { method: 'POST' });
+        const data = await res.json().catch(() => ({}));
+        if (feedbackEl) {
+          const msg = data.error ? ('❌ ' + data.error) : ('✅ Done — ' + (data.new_alerts || 0) + ' new match(es) found. Posts checked: ' + (data.posts_checked || 0) + '.');
+          feedbackEl.textContent = msg;
+          feedbackEl.classList.add('visible');
+          if (!data.error) feedbackEl.classList.add('success');
+        }
+        // Refresh config (last_checked/last_error) and alerts
+        loadFacebookConfig();
+        loadFacebookAlerts();
+      } catch (err) {
+        if (feedbackEl) { feedbackEl.textContent = '❌ Network error: ' + err.message; feedbackEl.classList.add('visible'); }
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Poll now'; }
+      }
+    }
+
+    async function markFacebookAlertsSeen(all, id) {
+      const payload = all ? { all: true } : { ids: [id] };
+      try {
+        await fetch('/admin/facebook/alerts/mark-seen', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        loadFacebookAlerts();
+      } catch (err) { console.error('markFacebookAlertsSeen:', err); }
+    }
+
+    async function clearFacebookAlerts() {
+      if (!confirm('Clear all Facebook Group alerts? This cannot be undone.')) return;
+      try {
+        await fetch('/admin/facebook/alerts/clear', { method: 'POST' });
+        loadFacebookAlerts();
+      } catch (err) { console.error('clearFacebookAlerts:', err); }
+    }
+
+    const facebookForm = document.getElementById('facebookForm');
+    if (facebookForm) facebookForm.addEventListener('submit', persistFacebookConfig);
+    // ── End Facebook Group Monitor JS ─────────────────────────────────────────
+
     async function loadSmsapiConfig() {
       try {
         const res = await fetch('/admin/smsapi/config');
@@ -6843,6 +7146,8 @@
     loadSeoConfig();
     loadTelnyxConfig();
     loadWatchdogConfig();
+    loadFacebookConfig();
+    loadFacebookAlerts();
     loadSmsapiConfig();
     loadEmailConfig();
     loadSiteImages();
