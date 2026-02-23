@@ -1866,6 +1866,92 @@
       </div>
     </section>
 
+    <!-- ── Server-Down Watchdog ──────────────────────────────────── -->
+    <section class="panel" aria-labelledby="watchdog-heading" data-panel data-expanded="false">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="watchdog-heading">Server-Down SMS Alert</h2>
+          <p>Automatically send an SMS if this server stops responding. Alerts once per 24 hours at most.</p>
+        </div>
+        <div class="panel-actions">
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="watchdogPanelBody">Expand</button>
+        </div>
+      </div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight" id="watchdogSummaryHighlight">Get an SMS alert if your server goes offline.</p>
+        <p class="panel-summary-note">Expand to enable the watchdog and set your alert number.</p>
+      </div>
+      <div class="panel-body" id="watchdogPanelBody" hidden>
+        <form id="watchdogForm" class="grid" autocomplete="off" novalidate>
+          <div class="section">
+            <div class="autopilot-api-header">
+              <div>
+                <p class="eyebrow">Watchdog Configuration</p>
+                <h3 class="autopilot-api-title">Server-Down Alert</h3>
+                <p class="autopilot-api-description">
+                  When enabled, the server pings itself every <strong>60 seconds</strong>. If it fails to respond,
+                  an SMS is sent via Telnyx to the number below. You will only be alerted
+                  <strong>once every 24 hours</strong> to avoid spam.
+                </p>
+              </div>
+            </div>
+
+            <div style="background: rgba(48, 195, 166, 0.08); border: 1px solid rgba(48, 195, 166, 0.25); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+              <p style="margin: 0; font-size: 0.9rem; line-height: 1.7;">
+                ⚙️ <strong>Requires Telnyx to be configured.</strong> Make sure your Telnyx API key and phone number are saved in the <em>SMS Verification (Telnyx)</em> panel above before enabling this.
+              </p>
+            </div>
+
+            <!-- Enable toggle -->
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 20px;">
+              <input type="checkbox" id="watchdogEnabled" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);" />
+              <span style="font-weight: 600; color: var(--text-primary);">Enable server-down watchdog</span>
+            </label>
+
+            <!-- Alert phone number -->
+            <label for="watchdogToNumber">
+              <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">
+                Alert phone number <span style="color: var(--danger);">*</span>
+              </strong>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 8px 0;">
+                The mobile number that will receive the server-down alert. Use international format.
+              </p>
+              <div class="autopilot-api-row">
+                <input
+                  id="watchdogToNumber"
+                  name="to_number"
+                  type="tel"
+                  inputmode="tel"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="+447595289669"
+                  value="+447595289669"
+                />
+              </div>
+            </label>
+
+            <!-- Last alerted -->
+            <div id="watchdogLastSentRow" style="margin-top: 16px; padding: 12px 16px; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 10px; display: none;">
+              <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted);">
+                🕐 Last alert sent: <strong id="watchdogLastSentLabel" style="color: var(--text-primary);">never</strong>
+                &nbsp;—&nbsp;
+                <button type="button" onclick="watchdogResetTimer()" style="background: none; border: none; color: var(--accent); cursor: pointer; font-size: 0.9rem; text-decoration: underline; padding: 0;">Reset 24 h cooldown</button>
+              </p>
+            </div>
+
+            <p class="input-note" id="watchdogStatus" style="font-weight: 600; font-size: 1rem; margin-top: 16px;"></p>
+          </div>
+
+          <div class="form-feedback" id="watchdogFeedback"></div>
+
+          <div class="panel-actions">
+            <button type="submit" class="primary">Save watchdog settings</button>
+            <button type="button" class="primary" id="watchdogTestBtn" style="margin-left: 8px;" onclick="sendWatchdogTest()">Send test alert</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
     <section class="panel" aria-labelledby="smsapi-heading" data-panel data-expanded="false">
       <div class="panel-header">
         <div class="meta">
@@ -3990,6 +4076,123 @@
         btn.textContent = 'Send Test SMS';
       }
     }
+
+    // ── Watchdog JS ─────────────────────────────────────────────────────────
+
+    let watchdogConfig = { enabled: false, to_number: '+447595289669', last_sent: null };
+
+    async function loadWatchdogConfig() {
+      try {
+        const res = await fetch('/admin/watchdog/config');
+        if (!res.ok) throw new Error('Unable to load watchdog settings.');
+        const data = await res.json().catch(() => ({}));
+        const incoming = data && typeof data.config === 'object' ? data.config : {};
+        watchdogConfig = { ...watchdogConfig, ...incoming };
+        renderWatchdogState();
+      } catch (err) {
+        console.error('Unable to load watchdog settings.', err);
+      }
+    }
+
+    function renderWatchdogState() {
+      const enabledBox = document.getElementById('watchdogEnabled');
+      const numberInput = document.getElementById('watchdogToNumber');
+      const statusEl = document.getElementById('watchdogStatus');
+      const lastRow = document.getElementById('watchdogLastSentRow');
+      const lastLabel = document.getElementById('watchdogLastSentLabel');
+
+      if (enabledBox) enabledBox.checked = !!watchdogConfig.enabled;
+      if (numberInput && watchdogConfig.to_number) numberInput.value = watchdogConfig.to_number;
+
+      if (statusEl) {
+        if (watchdogConfig.enabled) {
+          statusEl.textContent = '✓ Watchdog enabled — you will receive an SMS if the server goes offline.';
+          statusEl.style.color = '#30c3a6';
+        } else {
+          statusEl.textContent = '⚠ Watchdog disabled — no alerts will be sent.';
+          statusEl.style.color = '#ffd166';
+        }
+      }
+
+      if (lastRow && lastLabel) {
+        if (watchdogConfig.last_sent) {
+          const dt = new Date(watchdogConfig.last_sent + 'Z');
+          lastLabel.textContent = isNaN(dt.getTime()) ? watchdogConfig.last_sent : dt.toLocaleString();
+          lastRow.style.display = 'block';
+        } else {
+          lastLabel.textContent = 'never';
+          lastRow.style.display = watchdogConfig.enabled ? 'block' : 'none';
+        }
+      }
+    }
+
+    async function persistWatchdogConfig(event) {
+      if (event) event.preventDefault();
+      const feedbackEl = document.getElementById('watchdogFeedback');
+      if (feedbackEl) { feedbackEl.classList.remove('visible', 'success'); feedbackEl.textContent = ''; }
+
+      const enabled = document.getElementById('watchdogEnabled')?.checked || false;
+      const toNumber = document.getElementById('watchdogToNumber')?.value.trim() || '+447595289669';
+
+      try {
+        const res = await fetch('/admin/watchdog/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled, to_number: toNumber }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || 'Unable to save watchdog settings.');
+        watchdogConfig = { ...watchdogConfig, ...(data.config || {}) };
+        renderWatchdogState();
+        if (feedbackEl) {
+          feedbackEl.textContent = '✓ Watchdog settings saved.';
+          feedbackEl.classList.add('visible', 'success');
+        }
+      } catch (err) {
+        if (feedbackEl) { feedbackEl.textContent = err.message; feedbackEl.classList.add('visible'); }
+      }
+    }
+
+    async function watchdogResetTimer() {
+      try {
+        const res = await fetch('/admin/watchdog/reset-timer', { method: 'POST' });
+        const data = await res.json().catch(() => ({}));
+        watchdogConfig = { ...watchdogConfig, ...(data.config || {}) };
+        renderWatchdogState();
+        const statusEl = document.getElementById('watchdogStatus');
+        if (statusEl) {
+          statusEl.textContent = '✓ 24-hour cooldown reset. Next failure will send immediately.';
+          statusEl.style.color = '#30c3a6';
+        }
+      } catch (err) {
+        console.error('Reset timer failed:', err);
+      }
+    }
+
+    async function sendWatchdogTest() {
+      const btn = document.getElementById('watchdogTestBtn');
+      const feedbackEl = document.getElementById('watchdogFeedback');
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+      if (feedbackEl) { feedbackEl.classList.remove('visible', 'success'); feedbackEl.textContent = ''; }
+
+      try {
+        const res = await fetch('/admin/watchdog/test', { method: 'POST' });
+        const data = await res.json().catch(() => ({}));
+        if (feedbackEl) {
+          feedbackEl.textContent = data.ok ? '✅ ' + (data.message || 'Test alert sent!') : '❌ ' + (data.message || 'Test failed.');
+          feedbackEl.classList.add('visible');
+          if (data.ok) feedbackEl.classList.add('success');
+        }
+      } catch (err) {
+        if (feedbackEl) { feedbackEl.textContent = '❌ Network error: ' + err.message; feedbackEl.classList.add('visible'); }
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Send test alert'; }
+      }
+    }
+
+    // Bind watchdog form
+    const watchdogForm = document.getElementById('watchdogForm');
+    if (watchdogForm) watchdogForm.addEventListener('submit', persistWatchdogConfig);
 
     async function loadSmsapiConfig() {
       try {
@@ -6307,6 +6510,7 @@
     loadAutopilotConfig();
     loadWeatherConfig();
     loadTelnyxConfig();
+    loadWatchdogConfig();
     loadSmsapiConfig();
     loadEmailConfig();
     loadSiteImages();

@@ -78,6 +78,7 @@ TELNYX_CONFIG_FILE = _data_path("telnyx_config.json")
 SMTP_CONFIG_FILE = _data_path("smtp_config.json")
 EMAIL_MAGIC_FILE = _data_path("email_magic.json")
 ADMIN_AUTH_FILE = _data_path("admin_auth.json")
+WATCHDOG_CONFIG_FILE = _data_path("watchdog_config.json")
 
 CUSTOMER_ACCESS_CODE = os.getenv("CUSTOMER_ACCESS_CODE", "GARDENCARE2024")
 
@@ -146,6 +147,8 @@ _smsapi_config = {"oauth_token": "", "sender_name": ""}
 _telnyx_config_lock = Lock()
 _telnyx_config = {"api_key": "", "from_number": "", "messaging_profile_id": ""}
 _verification_codes = {}  # Store verification codes temporarily
+_watchdog_config_lock = Lock()
+_watchdog_config = {"enabled": False, "to_number": "+447595289669", "last_sent": None}
 
 _smtp_config_lock = Lock()
 _smtp_config = {
@@ -212,6 +215,7 @@ _ensure_storage_file(CUSTOMER_SETTINGS_FILE, default={"access_code": CUSTOMER_AC
 _ensure_storage_file(WEATHER_CONFIG_FILE, default={"api_key": ""})
 _ensure_storage_file(SMSAPI_CONFIG_FILE, default={"oauth_token": "", "sender_name": ""})
 _ensure_storage_file(TELNYX_CONFIG_FILE, default={"api_key": "", "from_number": ""})
+_ensure_storage_file(WATCHDOG_CONFIG_FILE, default={"enabled": False, "to_number": "+447595289669", "last_sent": None})
 _ensure_storage_file(
     SMTP_CONFIG_FILE,
     default={
@@ -665,6 +669,92 @@ def _telnyx_config_snapshot(*, include_secret: bool = False) -> dict:
         "messaging_profile_id": effective_profile,
         "has_config": has_config,
     }
+
+
+# ---------------------------------------------------------------------------
+# Server-Down Watchdog
+# ---------------------------------------------------------------------------
+
+def _load_watchdog_config_from_disk() -> dict:
+    defaults = {"enabled": False, "to_number": "+447595289669", "last_sent": None}
+    if not os.path.exists(WATCHDOG_CONFIG_FILE):
+        return dict(defaults)
+    try:
+        with open(WATCHDOG_CONFIG_FILE, "r", encoding="utf-8") as fh:
+            payload = json.load(fh)
+        if not isinstance(payload, dict):
+            return dict(defaults)
+        merged = dict(defaults)
+        merged.update(payload)
+        return merged
+    except (OSError, json.JSONDecodeError):
+        return dict(defaults)
+
+
+def _save_watchdog_config(config: dict | None = None) -> None:
+    snapshot = dict(config or _watchdog_config)
+    try:
+        with open(WATCHDOG_CONFIG_FILE, "w", encoding="utf-8") as fh:
+            json.dump(snapshot, fh, indent=2)
+    except OSError:
+        pass
+
+
+def _start_watchdog_thread() -> None:
+    """Launch the server-down watchdog in a daemon background thread."""
+    import threading
+    import urllib.request
+
+    def _watchdog_loop():
+        # Short initial delay so the server is ready before the first ping
+        import time
+        time.sleep(15)
+        while True:
+            try:
+                with _watchdog_config_lock:
+                    cfg = dict(_watchdog_config)
+
+                if cfg.get("enabled"):
+                    port = int(os.environ.get("PORT", 5015))
+                    url = f"http://127.0.0.1:{port}/health"
+                    server_ok = False
+                    try:
+                        req = urllib.request.urlopen(url, timeout=10)
+                        server_ok = req.getcode() == 200
+                    except Exception:
+                        server_ok = False
+
+                    if not server_ok:
+                        # Check 24-hour throttle
+                        last_sent_str = cfg.get("last_sent")
+                        now = datetime.utcnow()
+                        can_send = True
+                        if last_sent_str:
+                            try:
+                                last_dt = datetime.fromisoformat(last_sent_str)
+                                if (now - last_dt).total_seconds() < 86400:
+                                    can_send = False
+                            except ValueError:
+                                pass
+
+                        if can_send:
+                            to_number = cfg.get("to_number") or "+447595289669"
+                            msg = "ALERT: Pay As You Mow server may be down. Please check your server."
+                            ok, _detail = _send_sms_via_telnyx(to_number, msg)
+                            if ok:
+                                new_last = now.isoformat()
+                                with _watchdog_config_lock:
+                                    _watchdog_config["last_sent"] = new_last
+                                _save_watchdog_config()
+
+            except Exception:
+                pass  # Never let the watchdog thread die
+
+            import time
+            time.sleep(60)  # Check every 60 seconds
+
+    t = threading.Thread(target=_watchdog_loop, name="server-watchdog", daemon=True)
+    t.start()
 
 
 def _normalize_phone_number(phone: str) -> str:
@@ -2179,6 +2269,11 @@ with _telnyx_config_lock:
     _telnyx_config.update(stored_telnyx)
 
 
+with _watchdog_config_lock:
+    stored_watchdog = _load_watchdog_config_from_disk()
+    _watchdog_config.update(stored_watchdog)
+
+
 with _customer_settings_lock:
     stored_customer_settings = _load_customer_settings_from_disk()
     if isinstance(stored_customer_settings, dict):
@@ -3176,6 +3271,70 @@ def admin_telnyx_diagnostics():
         "has_config": cfg.get("has_config", False),
         "checks": checks,
     })
+
+
+# ---------------------------------------------------------------------------
+# Health endpoint (used by watchdog self-ping)
+# ---------------------------------------------------------------------------
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({"status": "ok"})
+
+
+# ---------------------------------------------------------------------------
+# Admin: Server-Down Watchdog config
+# ---------------------------------------------------------------------------
+
+@app.route("/admin/watchdog/config", methods=["GET", "POST"])
+@require_admin_auth
+def admin_watchdog_config():
+    global _watchdog_config
+
+    if request.method == "GET":
+        with _watchdog_config_lock:
+            cfg = dict(_watchdog_config)
+        return jsonify({"config": cfg})
+
+    payload = request.get_json(silent=True) or {}
+    enabled = bool(payload.get("enabled", False))
+    to_number_raw = str(payload.get("to_number", "") or "").strip() or "+447595289669"
+    to_number = _normalize_phone_number(to_number_raw) or to_number_raw
+
+    with _watchdog_config_lock:
+        _watchdog_config["enabled"] = enabled
+        _watchdog_config["to_number"] = to_number
+        cfg = dict(_watchdog_config)
+
+    _save_watchdog_config(cfg)
+    return jsonify({"message": "Watchdog settings saved.", "config": cfg})
+
+
+@app.route("/admin/watchdog/reset-timer", methods=["POST"])
+@require_admin_auth
+def admin_watchdog_reset_timer():
+    """Clear the 24-hour cooldown so the next failure will send immediately."""
+    global _watchdog_config
+    with _watchdog_config_lock:
+        _watchdog_config["last_sent"] = None
+        cfg = dict(_watchdog_config)
+    _save_watchdog_config(cfg)
+    return jsonify({"message": "Watchdog cooldown timer reset.", "config": cfg})
+
+
+@app.route("/admin/watchdog/test", methods=["POST"])
+@require_admin_auth
+def admin_watchdog_test():
+    """Send an immediate test watchdog alert, bypassing the 24-hour cooldown."""
+    with _watchdog_config_lock:
+        cfg = dict(_watchdog_config)
+
+    to_number = cfg.get("to_number") or "+447595289669"
+    msg = "TEST ALERT: Pay As You Mow server-down watchdog test. If you see this, it's working!"
+    ok, detail = _send_sms_via_telnyx(to_number, msg)
+    if ok:
+        return jsonify({"ok": True, "message": f"Test alert sent to {to_number}."})
+    return jsonify({"ok": False, "message": f"Failed: {detail}"}), 500
 
 
 @app.route("/admin/email/config", methods=["GET", "POST"])
@@ -5043,6 +5202,10 @@ def admin_login():
 def admin_logout():
     session.clear()
     return jsonify({"success": True})
+
+
+# Start the server-down watchdog (works with both direct run and gunicorn)
+_start_watchdog_thread()
 
 if __name__ == '__main__':
     import sys
