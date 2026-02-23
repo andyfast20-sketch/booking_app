@@ -43,7 +43,8 @@
         }
 
         body.nav-open {
-            overflow: hidden;
+            /* overflow:hidden intentionally removed — it freezes window.scrollY on iOS
+               and breaks programmatic scrolling. The fixed backdrop handles visual lock. */
         }
 
         /* Preloader Styles */
@@ -4336,21 +4337,23 @@
                 position: fixed;
                 left: 50%;
                 right: auto;
-                top: calc(var(--header-height, 92px) + 10px);
-                width: min(300px, calc(100vw - 24px));
-                background: linear-gradient(135deg, rgba(46, 125, 50, 0.99), rgba(26, 94, 32, 0.98));
-                border-radius: 16px;
-                border: 1px solid rgba(255, 255, 255, 0.14);
-                box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
-                /* NOTE: backdrop-filter can make text look blurry on some mobile devices */
-                backdrop-filter: none;
-                -webkit-backdrop-filter: none;
-                max-height: min(380px, calc(100vh - var(--header-height, 92px) - 24px));
+                top: calc(var(--header-height, 92px) + 12px);
+                width: min(320px, calc(100vw - 24px));
+                background: linear-gradient(160deg, #0d2b14 0%, #0f3318 40%, #112e18 70%, #0a2010 100%);
+                border-radius: 20px;
+                border: 1px solid rgba(255, 215, 80, 0.18);
+                box-shadow:
+                    0 24px 60px rgba(0, 0, 0, 0.55),
+                    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+                    0 1px 0 rgba(255, 215, 80, 0.22) inset;
+                backdrop-filter: blur(20px) saturate(1.4);
+                -webkit-backdrop-filter: blur(20px) saturate(1.4);
+                max-height: min(520px, calc(100vh - var(--header-height, 92px) - 32px));
                 overflow: auto;
                 opacity: 0;
-                transform: translate(-50%, -10px) scale(0.985);
+                transform: translate(-50%, -16px) scale(0.96);
                 pointer-events: none;
-                transition: transform 200ms ease, opacity 200ms ease;
+                transition: transform 260ms cubic-bezier(0.34, 1.48, 0.64, 1), opacity 220ms ease;
                 z-index: 1090;
             }
 
@@ -4360,9 +4363,26 @@
                 pointer-events: auto;
             }
 
+            /* Stagger-in each menu item when the nav opens */
+            nav.active ul li {
+                animation: navItemIn 320ms cubic-bezier(0.34, 1.48, 0.64, 1) both;
+            }
+            nav.active ul li:nth-child(1)  { animation-delay: 30ms; }
+            nav.active ul li:nth-child(2)  { animation-delay: 70ms; }
+            nav.active ul li:nth-child(3)  { animation-delay: 110ms; }
+            nav.active ul li:nth-child(4)  { animation-delay: 150ms; }
+            nav.active ul li:nth-child(5)  { animation-delay: 190ms; }
+            nav.active ul li:nth-child(6)  { animation-delay: 230ms; }
+            nav.active ul li:nth-child(7)  { animation-delay: 270ms; }
+
+            @keyframes navItemIn {
+                from { opacity: 0; transform: translateX(-14px); }
+                to   { opacity: 1; transform: translateX(0); }
+            }
+
             nav ul {
                 flex-direction: column;
-                padding: 8px;
+                padding: 10px;
                 gap: 4px;
             }
 
@@ -4373,25 +4393,112 @@
 
             nav ul li a {
                 color: rgba(255, 255, 255, 0.92);
-                font-size: 0.92rem;
+                font-size: 0.93rem;
+                font-weight: 600;
+                letter-spacing: 0.02em;
                 width: 100%;
-                justify-content: space-between;
-                padding: 9px 12px;
-                border-radius: 12px;
-                background: rgba(255, 255, 255, 0.12);
-                text-shadow: 0 1px 0 rgba(0, 0, 0, 0.14);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 11px 14px;
+                border-radius: 13px;
+                background: rgba(255, 255, 255, 0.055);
+                border: 1px solid rgba(255, 255, 255, 0.07);
+                transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+                position: relative;
+                overflow: hidden;
+                text-shadow: none;
             }
 
-            .nav-backdrop {
-                /* Keep dim, but remove blur to avoid any compositor weirdness on some phones */
-                backdrop-filter: none;
-                -webkit-backdrop-filter: none;
+            /* shimmer sweep on tap */
+            nav ul li a::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%);
+                transform: translateX(-100%);
+                transition: transform 0s;
+                border-radius: inherit;
+            }
+
+            nav ul li a:active::before {
+                transform: translateX(100%);
+                transition: transform 380ms ease;
+            }
+
+            /* coloured icon circle */
+            nav ul li a .nav-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 32px;
+                height: 32px;
+                border-radius: 10px;
+                flex-shrink: 0;
+                font-size: 0.88rem;
+                border: 1px solid rgba(255,255,255,0.1);
+                transition: transform 220ms ease;
+            }
+
+            nav ul li:nth-child(1) a .nav-icon { background: linear-gradient(135deg, #1a6b2a, #2e9e44); box-shadow: 0 4px 12px rgba(46,158,68,0.4); }
+            nav ul li:nth-child(2) a .nav-icon { background: linear-gradient(135deg, #1a5e6b, #1e8a9e); box-shadow: 0 4px 12px rgba(30,138,158,0.4); }
+            nav ul li:nth-child(3) a .nav-icon { background: linear-gradient(135deg, #6b4a1a, #c47e28); box-shadow: 0 4px 12px rgba(196,126,40,0.4); }
+            nav ul li:nth-child(4) a .nav-icon { background: linear-gradient(135deg, #1a2d6b, #2e50c4); box-shadow: 0 4px 12px rgba(46,80,196,0.4); }
+            nav ul li:nth-child(5) a .nav-icon { background: linear-gradient(135deg, #5e1a6b, #a028c4); box-shadow: 0 4px 12px rgba(160,40,196,0.4); }
+            nav ul li:nth-child(6) a .nav-icon { background: linear-gradient(135deg, #6b1a2a, #c42840); box-shadow: 0 4px 12px rgba(196,40,64,0.4); }
+            nav ul li:nth-child(7) a .nav-icon { background: linear-gradient(135deg, #1e6b1a, #ffb300); box-shadow: 0 4px 12px rgba(255,179,0,0.45); }
+
+            nav ul li a .nav-label {
+                flex: 1;
+                text-align: left;
+            }
+
+            nav ul li a .nav-arrow {
+                font-size: 0.72rem;
+                opacity: 0.4;
+                transition: opacity 180ms ease, transform 180ms ease;
+                flex-shrink: 0;
             }
 
             nav ul li a:hover,
             nav ul li a:focus-visible {
-                background: rgba(255, 255, 255, 0.14);
+                background: rgba(255, 255, 255, 0.1);
+                border-color: rgba(255, 215, 80, 0.2);
+                transform: translateX(3px);
                 outline: none;
+            }
+
+            nav ul li a:hover .nav-icon {
+                transform: scale(1.1);
+            }
+
+            nav ul li a:hover .nav-arrow {
+                opacity: 0.9;
+                transform: translateX(3px);
+            }
+
+            /* Book item special gold treatment */
+            nav ul li:last-child a {
+                background: linear-gradient(120deg, rgba(255,179,0,0.15), rgba(255,215,80,0.08));
+                border-color: rgba(255, 215, 80, 0.25);
+                color: #ffe082;
+            }
+
+            nav ul li:last-child a:hover {
+                background: linear-gradient(120deg, rgba(255,179,0,0.25), rgba(255,215,80,0.14));
+                border-color: rgba(255, 215, 80, 0.45);
+            }
+
+            /* divider before Book */
+            nav ul li:last-child {
+                margin-top: 4px;
+                padding-top: 4px;
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
+            }
+
+            .nav-backdrop {
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
             }
 
             nav ul li a::after {
@@ -4735,13 +4842,13 @@
             </button>
             <nav id="nav">
                 <ul>
-                    <li><a href="#home">Home</a></li>
-                    <li><a href="#services">My Services</a></li>
-                    <li><a href="#why">Why Choose Me</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#faq">FAQ</a></li>
-                    <li><a href="#testimonials">Testimonials</a></li>
-                    <li><a href="#appointments">Book</a></li>
+                    <li><a href="#home"><span class="nav-icon"><i class="fas fa-house"></i></span><span class="nav-label">Home</span><i class="fas fa-chevron-right nav-arrow"></i></a></li>
+                    <li><a href="#services"><span class="nav-icon"><i class="fas fa-leaf"></i></span><span class="nav-label">My Services</span><i class="fas fa-chevron-right nav-arrow"></i></a></li>
+                    <li><a href="#why"><span class="nav-icon"><i class="fas fa-star"></i></span><span class="nav-label">Why Choose Me</span><i class="fas fa-chevron-right nav-arrow"></i></a></li>
+                    <li><a href="#about"><span class="nav-icon"><i class="fas fa-user"></i></span><span class="nav-label">About</span><i class="fas fa-chevron-right nav-arrow"></i></a></li>
+                    <li><a href="#faq"><span class="nav-icon"><i class="fas fa-circle-question"></i></span><span class="nav-label">FAQ</span><i class="fas fa-chevron-right nav-arrow"></i></a></li>
+                    <li><a href="#testimonials"><span class="nav-icon"><i class="fas fa-comments"></i></span><span class="nav-label">Testimonials</span><i class="fas fa-chevron-right nav-arrow"></i></a></li>
+                    <li><a href="#appointments"><span class="nav-icon"><i class="fas fa-calendar-check"></i></span><span class="nav-label">Book a Quote</span><i class="fas fa-chevron-right nav-arrow"></i></a></li>
                 </ul>
             </nav>
         </div>
@@ -6133,24 +6240,19 @@
             if (!nav || !mobileMenuBtn) return;
             const nextOpen = typeof open === 'boolean' ? open : !nav.classList.contains('active');
             nav.classList.toggle('active', nextOpen);
-            document.body.classList.toggle('nav-open', nextOpen);
             navBackdrop.classList.toggle('visible', nextOpen);
             mobileMenuBtn.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
             mobileMenuBtn.setAttribute('aria-label', nextOpen ? 'Close menu' : 'Open menu');
             mobileMenuBtn.innerHTML = nextOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
         }
 
-        // Scroll to a section after closing the nav menu.
-        // Handles iOS Safari where overflow:hidden can freeze window.scrollY.
+        // Scroll to a target section cleanly.
+        // body.nav-open no longer sets overflow:hidden so window.scrollY is always accurate.
         function navScrollTo(targetEl) {
             if (!targetEl) return;
-            // Use setTimeout(100) so the browser has fully re-painted and
-            // restored the scroll position after removing overflow:hidden.
-            window.setTimeout(() => {
-                const headerH = header ? Math.round(header.getBoundingClientRect().height) : 92;
-                const top = Math.max(0, targetEl.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - headerH - 8);
-                window.scrollTo({ top, behavior: 'smooth' });
-            }, 100);
+            const headerH = header ? Math.round(header.getBoundingClientRect().height) : 92;
+            const top = Math.max(0, targetEl.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - headerH - 8);
+            window.scrollTo({ top, behavior: 'smooth' });
         }
 
         if (mobileMenuBtn && nav) {
@@ -9076,7 +9178,8 @@
                 const setOpen = (open) => {
                     const nextOpen = typeof open === 'boolean' ? open : !navEl.classList.contains('active');
                     navEl.classList.toggle('active', nextOpen);
-                    document.body.classList.toggle('nav-open', nextOpen);
+                    // NOTE: body.nav-open intentionally NOT toggled here — overflow:hidden
+                    // on body freezes window.scrollY on iOS and breaks programmatic scrolling.
                     backdrop.classList.toggle('visible', nextOpen);
                     btn.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
                     btn.setAttribute('aria-label', nextOpen ? 'Close menu' : 'Open menu');
@@ -9088,7 +9191,7 @@
                     setOpen();
                 });
 
-                // Ensure nav links actually navigate (and don't get trapped by nav-open scroll lock)
+                // Ensure nav links actually navigate
                 if (!window.__payAsYouMowAnchorScrollBound) {
                     navEl.addEventListener('click', (event) => {
                         const link = event.target && event.target.closest ? event.target.closest('a[href^="#"]') : null;
@@ -9101,19 +9204,15 @@
 
                         const target = document.querySelector(targetId);
 
-                        // Close the menu FIRST so overflow:hidden is removed.
                         syncHeaderHeight();
                         setOpen(false);
 
                         if (!target) return;
 
-                        // setTimeout(100) gives the browser time to fully repaint
-                        // and restore scrollY after removing overflow:hidden.
-                        window.setTimeout(() => {
-                            const headerH = headerEl ? Math.round(headerEl.getBoundingClientRect().height) : 92;
-                            const top = Math.max(0, target.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - headerH - 8);
-                            window.scrollTo({ top, behavior: 'smooth' });
-                        }, 100);
+                        // No overflow:hidden on body so window.scrollY is always accurate.
+                        const headerH = headerEl ? Math.round(headerEl.getBoundingClientRect().height) : 92;
+                        const top = Math.max(0, target.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - headerH - 8);
+                        window.scrollTo({ top, behavior: 'smooth' });
                     });
                     window.__payAsYouMowAnchorScrollBound = true;
                 }
