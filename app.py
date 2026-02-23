@@ -2429,17 +2429,6 @@ with _seo_config_lock:
     stored_seo = _load_seo_config_from_disk()
     _seo_config.update(stored_seo)
 
-with _facebook_config_lock:
-    _stored_fb_cfg = _load_facebook_config_from_disk()
-    _facebook_config.update(_stored_fb_cfg)
-
-with _facebook_alerts_lock:
-    _stored_fb_alerts = _load_facebook_alerts_from_disk()
-    _facebook_alerts.extend(_stored_fb_alerts)
-    _facebook_known_post_ids.update(
-        a["post_id"] for a in _stored_fb_alerts if a.get("post_id")
-    )
-
 
 def _load_facebook_config_from_disk() -> dict:
     defaults = dict(_FACEBOOK_CONFIG_DEFAULTS)
@@ -2626,6 +2615,18 @@ def _start_facebook_poller() -> None:
 
     t = threading.Thread(target=_poller_loop, name="fb-group-poller", daemon=True)
     t.start()
+
+
+with _facebook_config_lock:
+    _stored_fb_cfg = _load_facebook_config_from_disk()
+    _facebook_config.update(_stored_fb_cfg)
+
+with _facebook_alerts_lock:
+    _stored_fb_alerts = _load_facebook_alerts_from_disk()
+    _facebook_alerts.extend(_stored_fb_alerts)
+    _facebook_known_post_ids.update(
+        a["post_id"] for a in _stored_fb_alerts if a.get("post_id")
+    )
 
 
 with _customer_settings_lock:
