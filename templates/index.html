@@ -1923,11 +1923,28 @@
             color: var(--text-light);
         }
 
+        /* ══════════════════════════════════════════
+           DESKTOP NAV — Spectacular Edition
+        ══════════════════════════════════════════ */
+
+        /* Hide mobile-only elements on desktop */
+        nav .nav-icon,
+        nav .nav-arrow { display: none; }
+
         nav ul {
             display: flex;
             list-style: none;
             align-items: center;
-            gap: 24px;
+            gap: 2px;
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 999px;
+            padding: 5px 8px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow:
+                0 4px 24px rgba(0,0,0,.22),
+                0 1px 0 rgba(255,215,80,.1) inset;
         }
 
         nav ul li {
@@ -1935,47 +1952,100 @@
         }
 
         nav ul li a {
-            color: rgba(255, 255, 255, 0.85);
+            color: rgba(255, 255, 255, 0.82);
             text-decoration: none;
+            font-family: 'Montserrat', sans-serif;
             font-weight: 600;
-            letter-spacing: 0.4px;
-            transition: var(--transition);
-            padding: 6px 4px;
+            font-size: 0.82rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            padding: 9px 16px;
+            border-radius: 999px;
             display: inline-flex;
             align-items: center;
             position: relative;
+            transition: color 220ms ease, background 220ms ease;
+            white-space: nowrap;
         }
 
+        /* Hover pill highlight */
+        nav ul li a::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 999px;
+            background: rgba(255,255,255,0);
+            transition: background 220ms ease;
+        }
+        nav ul li a:hover::before {
+            background: rgba(255,255,255,.1);
+        }
+
+        /* Gold shimmer underline on hover */
         nav ul li a::after {
             content: '';
             position: absolute;
-            left: 0;
-            bottom: -8px;
-            width: 0;
-            height: 3px;
+            left: 16px;
+            right: 16px;
+            bottom: 4px;
+            height: 2px;
             border-radius: 999px;
-            background: linear-gradient(120deg, var(--secondary), #ffe082);
-            transition: var(--transition);
+            background: linear-gradient(90deg, transparent, #ffe082, #ffd740, transparent);
+            transform: scaleX(0);
+            transition: transform 240ms cubic-bezier(0.34,1.56,0.64,1);
+        }
+        nav ul li a:hover { color: #ffffff; }
+        nav ul li a:hover::after { transform: scaleX(1); }
+
+        /* ── Book a Quote CTA pill ── */
+        nav ul li:last-child a {
+            background: linear-gradient(135deg, #ffd740 0%, #ffab00 60%, #ff8f00 100%);
+            color: #1a2e00;
+            font-weight: 800;
+            letter-spacing: 0.6px;
+            padding: 9px 20px;
+            box-shadow:
+                0 4px 16px rgba(255,183,0,.35),
+                0 1px 0 rgba(255,255,255,.3) inset;
+            transition: all 220ms ease;
+        }
+        nav ul li:last-child a::before { display: none; }
+        nav ul li:last-child a::after  { display: none; }
+        nav ul li:last-child a:hover {
+            background: linear-gradient(135deg, #ffe57f 0%, #ffca28 60%, #ffab00 100%);
+            color: #0d1f00;
+            box-shadow:
+                0 6px 22px rgba(255,183,0,.55),
+                0 1px 0 rgba(255,255,255,.4) inset;
+            transform: translateY(-1px);
         }
 
-        nav ul li a:hover {
-            color: var(--white);
+        /* ── Scrolled (white header) states ── */
+        header.scrolled nav ul {
+            background: rgba(255,255,255,.85);
+            border-color: rgba(46,125,50,.15);
+            box-shadow: 0 4px 20px rgba(0,0,0,.1), 0 1px 0 rgba(46,125,50,.1) inset;
         }
-
-        nav ul li a:hover::after {
-            width: 100%;
-        }
-
         header.scrolled nav ul li a {
-            color: var(--text);
+            color: #2e3a28;
         }
-
         header.scrolled nav ul li a:hover {
-            color: var(--primary);
+            color: #1b5e20;
         }
-
+        header.scrolled nav ul li a:hover::before {
+            background: rgba(46,125,50,.1);
+        }
         header.scrolled nav ul li a::after {
-            background: linear-gradient(120deg, var(--primary), var(--secondary));
+            background: linear-gradient(90deg, transparent, #2e7d32, #66bb6a, transparent);
+        }
+        header.scrolled nav ul li:last-child a {
+            background: linear-gradient(135deg, #2e7d32 0%, #388e3c 60%, #43a047 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 16px rgba(46,125,50,.35), 0 1px 0 rgba(255,255,255,.25) inset;
+        }
+        header.scrolled nav ul li:last-child a:hover {
+            background: linear-gradient(135deg, #388e3c 0%, #43a047 60%, #56ac5b 100%);
+            box-shadow: 0 6px 22px rgba(46,125,50,.5), 0 1px 0 rgba(255,255,255,.3) inset;
         }
 
         .mobile-menu-btn {
