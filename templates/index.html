@@ -6243,7 +6243,14 @@
         }
 
         if (mobileMenuBtn && nav) {
-            mobileMenuBtn.addEventListener('click', () => setNavOpen());
+            mobileMenuBtn.addEventListener('click', (e) => {
+                // stopPropagation prevents the document 'click' outside-handler from
+                // immediately re-closing the menu. This is necessary because setNavOpen()
+                // replaces innerHTML, detaching the original event.target (<i> icon) from
+                // the DOM, which causes mobileMenuBtn.contains(target) to return false.
+                e.stopPropagation();
+                setNavOpen();
+            });
             mobileMenuBtn.dataset.navToggleBound = '1';
         }
 
