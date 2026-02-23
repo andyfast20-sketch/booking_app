@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ area.title }}</title>
+  <meta name="description" content="{{ area.description }}">
+  <meta name="robots" content="{{ 'index, follow' if (seo.enabled and seo.robots_index) else 'noindex, nofollow' }}">
+  <!-- Geo targeting -->
+  <meta name="geo.region" content="GB-MEN">
+  <meta name="geo.placename" content="{{ area.area }}, Greater Manchester, UK">
+  {% if seo.canonical_url %}
+  <link rel="canonical" href="{{ seo.canonical_url }}/lawn-mowing-{{ area_slug }}">
+  {% endif %}
+  {% if seo.google_verification %}
+  <meta name="google-site-verification" content="{{ seo.google_verification }}">
+  {% endif %}
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_GB">
+  <meta property="og:title" content="{{ area.title }}">
+  <meta property="og:description" content="{{ area.description }}">
+  {% if seo.canonical_url %}<meta property="og:url" content="{{ seo.canonical_url }}/lawn-mowing-{{ area_slug }}">{% endif %}
+  {% if seo.og_image %}<meta property="og:image" content="{{ seo.og_image }}">{% endif %}
+  <!-- Schema.org: LocalBusiness for this area -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "{{ seo.business_name }}",
+    "description": "{{ area.description }}",
+    {% if seo.canonical_url %}"url": "{{ seo.canonical_url }}",{% endif %}
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "{{ area.area }}",
+      "addressRegion": "Greater Manchester",
+      "addressCountry": "GB"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": "{{ seo.lat }}",
+      "longitude": "{{ seo.lng }}"
+    },
+    "areaServed": "{{ area.area }}, Greater Manchester",
+    "priceRange": "££",
+    "currenciesAccepted": "GBP"{% if reviews and reviews|length > 0 %},
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5.0",
+      "bestRating": "5",
+      "worstRating": "1",
+      "reviewCount": "{{ reviews|length }}"
+    }{% endif %}
+  }
+  </script>
+  <!-- Schema.org: BreadcrumbList -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ base_url }}/"},
+      {"@type": "ListItem", "position": 2, "name": "{{ area.h1 }}", "item": "{{ base_url }}/lawn-mowing-{{ area_slug }}"}
+    ]
+  }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Montserrat', sans-serif;
+      background: #f4f8f4;
+      color: #222;
+      line-height: 1.6;
+    }
+    a { color: #2e7d32; }
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 50%, #388e3c 100%);
+      color: #fff;
+      padding: 60px 24px 56px;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 50px;
+      padding: 5px 16px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .hero h1 {
+      font-size: clamp(1.9rem, 5vw, 3rem);
+      font-weight: 800;
+      margin: 0 0 16px;
+      line-height: 1.15;
+    }
+    .hero p {
+      font-size: 1.1rem;
+      opacity: 0.92;
+      max-width: 620px;
+      margin: 0 auto 28px;
+    }
+    .cta-btn {
+      display: inline-block;
+      background: #ff9800;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.05rem;
+      padding: 16px 36px;
+      border-radius: 50px;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      transition: background 0.2s, transform 0.15s;
+    }
+    .cta-btn:hover { background: #e65100; transform: translateY(-2px); }
+    .cta-sub {
+      margin-top: 14px;
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+    /* ── Usp bar ── */
+    .usp-bar {
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0;
+    }
+    .usp-bar .usp {
+      padding: 16px 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #2e7d32;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      border-right: 1px solid #e0e0e0;
+    }
+    .usp-bar .usp:last-child { border-right: none; }
+    /* ── Main layout ── */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    .section { padding: 48px 0; }
+    .section h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #1b5e20;
+      margin: 0 0 20px;
+    }
+    /* ── Services grid ── */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .service-card {
+      background: #fff;
+      border: 1px solid #c8e6c9;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .service-card .icon { font-size: 2rem; margin-bottom: 10px; }
+    .service-card h3 { font-size: 0.95rem; font-weight: 700; color: #1b5e20; margin: 0 0 6px; }
+    .service-card p { font-size: 0.83rem; color: #555; margin: 0; }
+    /* ── Why choose us ── */
+    .why-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+    .why-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 14px 16px;
+      border: 1px solid #e8f5e9;
+    }
+    .why-list li .check { color: #2e7d32; font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+    .why-list li strong { display: block; color: #1b5e20; margin-bottom: 2px; }
+    .why-list li span { font-size: 0.88rem; color: #555; }
+    /* ── Reviews ── */
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .review-card {
+      background: #fff;
+      border: 1px solid #e8f5e9;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .stars { color: #ff9800; font-size: 1rem; margin-bottom: 8px; letter-spacing: 2px; }
+    .review-card blockquote { margin: 0 0 12px; font-size: 0.88rem; color: #444; font-style: italic; line-height: 1.5; }
+    .review-card cite { font-size: 0.82rem; font-weight: 700; color: #2e7d32; font-style: normal; }
+    /* ── Area links ── */
+    .area-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+    .area-links a {
+      display: inline-block;
+      background: #fff;
+      border: 1px solid #c8e6c9;
+      border-radius: 50px;
+      padding: 7px 18px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #2e7d32;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .area-links a:hover { background: #e8f5e9; }
+    /* ── Bottom CTA ── */
+    .bottom-cta {
+      background: linear-gradient(135deg, #1b5e20, #2e7d32);
+      color: #fff;
+      text-align: center;
+      padding: 56px 24px;
+    }
+    .bottom-cta h2 { font-size: 1.8rem; font-weight: 800; margin: 0 0 12px; }
+    .bottom-cta p { opacity: 0.9; margin: 0 0 28px; font-size: 1rem; }
+    /* ── Footer ── */
+    footer {
+      background: #111;
+      color: #aaa;
+      text-align: center;
+      padding: 20px;
+      font-size: 0.82rem;
+    }
+    footer a { color: #4caf50; }
+    @media (max-width: 600px) {
+      .usp-bar .usp { border-right: none; border-bottom: 1px solid #e0e0e0; width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Hero ── -->
+  <section class="hero">
+    <div class="container">
+      <span class="hero-badge">&#127807; Greater Manchester</span>
+      <h1>{{ area.h1 }}</h1>
+      <p>{{ area.intro }}</p>
+      <a href="{{ base_url }}/#booking" class="cta-btn">Get a Free Quote &rarr;</a>
+      <p class="cta-sub">No contracts &bull; Pay per visit &bull; Local &amp; reliable</p>
+    </div>
+  </section>
+
+  <!-- ── USP bar ── -->
+  <div class="usp-bar">
+    <div class="usp">&#10003; No contracts</div>
+    <div class="usp">&#10003; Pay per visit</div>
+    <div class="usp">&#10003; Free quotes</div>
+    <div class="usp">&#10003; Local team</div>
+    {% if reviews %}<div class="usp">&#9733; {{ reviews|length }}&times; 5-star reviews</div>{% endif %}
+  </div>
+
+  <!-- ── Services ── -->
+  <div class="container">
+    <div class="section">
+      <h2>Our Services in {{ area.area }}</h2>
+      <p>We provide a full range of garden maintenance services throughout {{ area.area }} and the surrounding areas.</p>
+      <div class="services-grid">
+        <div class="service-card">
+          <div class="icon">&#127807;</div>
+          <h3>Lawn Mowing</h3>
+          <p>Regular or one-off grass cutting to keep your lawn looking its best.</p>
+        </div>
+        <div class="service-card">
+          <div class="icon">&#9986;&#65039;</div>
+          <h3>Hedge Trimming</h3>
+          <p>Precise hedge and shrub shaping for neat, tidy boundaries.</p>
+        </div>
+        <div class="service-card">
+          <div class="icon">&#127820;</div>
+          <h3>Garden Maintenance</h3>
+          <p>Full garden tidy-ups, weeding, and seasonal maintenance.</p>
+        </div>
+        <div class="service-card">
+          <div class="icon">&#128663;</div>
+          <h3>Grass Cutting</h3>
+          <p>Clean, professional cuts for all garden sizes — large or small.</p>
+        </div>
+        <div class="service-card">
+          <div class="icon">&#9752;&#65039;</div>
+          <h3>Garden Tidying</h3>
+          <p>Leave-clearing, border tiding and general garden clearing.</p>
+        </div>
+        <div class="service-card">
+          <div class="icon">&#128197;</div>
+          <h3>One-Off Visits</h3>
+          <p>No subscription needed — book a single visit whenever you need it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Why choose us ── -->
+  <div style="background:#e8f5e9;">
+    <div class="container">
+      <div class="section">
+        <h2>Why Choose Pay As You Mow in {{ area.area }}?</h2>
+        <ul class="why-list">
+          <li>
+            <span class="check">&#10003;</span>
+            <div><strong>Pay-as-you-go — no contracts ever</strong><span>Book when you need it, cancel any time. No subscriptions, no minimum visits, no tie-in.</span></div>
+          </li>
+          <li>
+            <span class="check">&#10003;</span>
+            <div><strong>Local to {{ area.area }}</strong><span>We're based in the local area, so you get fast response times and a gardener who knows the local conditions.</span></div>
+          </li>
+          <li>
+            <span class="check">&#10003;</span>
+            <div><strong>Free, no-obligation quotes</strong><span>Get a fast personalised quote at no cost. No hard sell, no pressure.</span></div>
+          </li>
+          <li>
+            <span class="check">&#10003;</span>
+            <div><strong>Professional and reliable</strong><span>We turn up on time, do the job properly, and leave your garden looking great.</span></div>
+          </li>
+          <li>
+            <span class="check">&#10003;</span>
+            <div><strong>Trusted by {{ area.area }} homeowners</strong><span>Rated 5 stars by our customers across Greater Manchester.</span></div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Reviews ── -->
+  {% if reviews %}
+  <div class="container">
+    <div class="section">
+      <h2>What Our Customers Say</h2>
+      <div class="reviews-grid">
+        {% for r in reviews[:3] %}
+        <div class="review-card">
+          <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <blockquote>{{ r.quote }}</blockquote>
+          <cite>{{ r.author }}{% if r.location %}, {{ r.location }}{% endif %}</cite>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── Area coverage links ── -->
+  <div style="background:#f0f7f0; border-top:1px solid #c8e6c9; border-bottom:1px solid #c8e6c9;">
+    <div class="container">
+      <div class="section">
+        <h2>Areas We Cover Across Greater Manchester</h2>
+        <p>As well as {{ area.area }}, Pay As You Mow provides lawn mowing and garden maintenance across the wider Greater Manchester region:</p>
+        <div class="area-links">
+          <a href="{{ base_url }}/lawn-mowing-manchester">Manchester</a>
+          <a href="{{ base_url }}/lawn-mowing-salford">Salford</a>
+          <a href="{{ base_url }}/lawn-mowing-trafford">Trafford</a>
+          <a href="{{ base_url }}/lawn-mowing-tameside">Tameside</a>
+          <a href="{{ base_url }}/lawn-mowing-audenshaw">Audenshaw</a>
+          <a href="{{ base_url }}/lawn-mowing-denton">Denton</a>
+          <a href="{{ base_url }}/lawn-mowing-stockport">Stockport</a>
+          <a href="{{ base_url }}/lawn-mowing-oldham">Oldham</a>
+          <a href="{{ base_url }}/lawn-mowing-ashton-under-lyne">Ashton-under-Lyne</a>
+          <a href="{{ base_url }}/lawn-mowing-stretford">Stretford</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Bottom CTA ── -->
+  <section class="bottom-cta">
+    <div class="container">
+      <h2>Ready to Book Lawn Mowing in {{ area.area }}?</h2>
+      <p>Get your free, no-obligation quote today. No contracts, pay per visit.</p>
+      <a href="{{ base_url }}/#booking" class="cta-btn">Book a Free Quote &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ── Footer ── -->
+  <footer>
+    <p>&copy; {{ seo.business_name }}. Lawn mowing and garden maintenance in {{ area.area }}, Greater Manchester. &bull;
+      <a href="{{ base_url }}/">Home</a> &bull;
+      <a href="{{ base_url }}/#booking">Book a Quote</a>
+    </p>
+    <p style="margin-top:6px;font-size:0.78rem;">
+      Also serving:
+      <a href="{{ base_url }}/lawn-mowing-manchester">Manchester</a>,
+      <a href="{{ base_url }}/lawn-mowing-salford">Salford</a>,
+      <a href="{{ base_url }}/lawn-mowing-trafford">Trafford</a>,
+      <a href="{{ base_url }}/lawn-mowing-tameside">Tameside</a>,
+      <a href="{{ base_url }}/lawn-mowing-audenshaw">Audenshaw</a>,
+      <a href="{{ base_url }}/lawn-mowing-denton">Denton</a>,
+      <a href="{{ base_url }}/lawn-mowing-stockport">Stockport</a>,
+      <a href="{{ base_url }}/lawn-mowing-oldham">Oldham</a>,
+      <a href="{{ base_url }}/lawn-mowing-ashton-under-lyne">Ashton-under-Lyne</a>,
+      <a href="{{ base_url }}/lawn-mowing-stretford">Stretford</a>
+    </p>
+  </footer>
+
+</body>
+</html>

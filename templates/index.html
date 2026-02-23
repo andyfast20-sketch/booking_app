@@ -33,7 +33,16 @@
     {% if seo.google_verification %}<meta name="google-site-verification" content="{{ seo.google_verification }}">{% endif %}
     {% if seo.bing_verification %}<meta name="msvalidate.01" content="{{ seo.bing_verification }}">{% endif %}
     {% if seo.schema_enabled %}
-    <!-- Schema.org LocalBusiness (helps Google understand who you are) -->
+    <!-- Schema.org: WebSite -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "{{ seo.business_name }}",
+      "url": "{{ seo.canonical_url or '' }}"
+    }
+    </script>
+    <!-- Schema.org: LocalBusiness with AggregateRating (star ratings in search results) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -57,27 +66,98 @@
       "priceRange": "££",
       "currenciesAccepted": "GBP",
       "paymentAccepted": "Cash, Card",
-      "@id": "{{ seo.canonical_url or '' }}#business"
+      "@id": "{{ seo.canonical_url or '' }}#business",
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Lawn & Garden Services",
+        "itemListElement": [
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Lawn Mowing"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Grass Cutting"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Hedge Trimming"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Garden Maintenance"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Garden Tidying"}}
+        ]
+      }{% if reviews and reviews|length > 0 %},
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5.0",
+        "bestRating": "5",
+        "worstRating": "1",
+        "reviewCount": "{{ reviews|length }}"
+      },
+      "review": [
+        {% for r in reviews[:5] %}
+        {
+          "@type": "Review",
+          "author": {"@type": "Person", "name": {{ r.author | tojson }}},
+          "reviewBody": {{ r.quote | tojson }},
+          "reviewRating": {"@type": "Rating", "ratingValue": "5", "bestRating": "5"}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+      ]{% endif %}
     }
     </script>
+    <!-- Schema.org: FAQ (expandable Q&As in Google results — takes up more SERP real estate) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "Service",
-      "name": "Lawn Mowing &amp; Garden Maintenance",
-      "provider": {
-        "@type": "LocalBusiness",
-        "name": "{{ seo.business_name }}"
-      },
-      "areaServed": "{{ seo.service_area }}",
-      "serviceType": "Lawn Mowing, Garden Maintenance",
-      "description": "{{ seo.meta_description }}"
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How much does lawn mowing cost in Manchester?",
+          "acceptedAnswer": {"@type": "Answer", "text": "Pay As You Mow offers flexible pay-as-you-go pricing in Manchester with no contracts or subscription fees. Prices are based on garden size and service required — contact us for a free personalised quote."}
+        },
+        {
+          "@type": "Question",
+          "name": "Do you offer garden maintenance without a contract in Manchester?",
+          "acceptedAnswer": {"@type": "Answer", "text": "Yes. Pay As You Mow is completely contract-free. You only pay for the visits you need — ideal for homeowners, landlords and businesses across Manchester and Greater Manchester."}
+        },
+        {
+          "@type": "Question",
+          "name": "Which areas of Manchester do you cover for lawn mowing?",
+          "acceptedAnswer": {"@type": "Answer", "text": "We cover Manchester and the surrounding areas of Greater Manchester including Salford, Trafford, Tameside, Audenshaw, Denton, Ashton-under-Lyne, Stockport, Oldham and Stretford."}
+        },
+        {
+          "@type": "Question",
+          "name": "How quickly can I get a gardener in Manchester?",
+          "acceptedAnswer": {"@type": "Answer", "text": "We typically offer appointments within a few days of your booking request. Use the booking form on our website to check availability and secure your slot."}
+        },
+        {
+          "@type": "Question",
+          "name": "Can I get a one-off lawn mow in Manchester?",
+          "acceptedAnswer": {"@type": "Answer", "text": "Absolutely. One-off mows are one of our most popular services. There is no minimum number of visits required — book a single visit and pay per use."}
+        },
+        {
+          "@type": "Question",
+          "name": "Do you cut grass in Salford, Trafford and Tameside as well as Manchester?",
+          "acceptedAnswer": {"@type": "Answer", "text": "Yes. Pay As You Mow covers the full Greater Manchester area including Salford, Trafford, Tameside, Stockport, Oldham, Audenshaw, Denton and Ashton-under-Lyne."}
+        }
+      ]
+    }
+    </script>
+    <!-- Schema.org: BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "{{ seo.canonical_url or '' }}/"
+      }]
     }
     </script>
     {% endif %}
     {% else %}
     <title>Pay As You Mow | Professional Garden Maintenance</title>
     {% endif %}
+    <!-- Resource hints: faster font/icon loading (Core Web Vitals ranking factor) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>

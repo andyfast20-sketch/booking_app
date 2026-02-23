@@ -1,7 +1,7 @@
 import json
 from uuid import uuid4
 
-from flask import Flask, request, jsonify, render_template_string, render_template, session, redirect, Response
+from flask import Flask, request, jsonify, render_template_string, render_template, session, redirect, Response, abort
 from flask_cors import CORS
 from flask_compress import Compress
 import os
@@ -174,6 +174,80 @@ _SEO_DEFAULTS: dict = {
 }
 _seo_config_lock = Lock()
 _seo_config: dict = dict(_SEO_DEFAULTS)
+
+# Local area SEO landing pages — each generates a separately indexed, location-targeted page
+_LOCAL_AREA_PAGES: dict[str, dict] = {
+    "manchester": {
+        "area": "Manchester",
+        "title": "Lawn Mowing & Garden Maintenance Manchester | Pay As You Mow",
+        "description": "Professional lawn mowing and garden maintenance across Manchester. Pay-as-you-go, no contracts. Book your free quote from Pay As You Mow — Manchester's flexible local gardening service.",
+        "h1": "Lawn Mowing in Manchester",
+        "intro": "Looking for reliable, affordable lawn mowing in Manchester? Pay As You Mow delivers flexible, pay-as-you-go garden maintenance across Manchester — no contracts, no hidden fees, just great results.",
+    },
+    "salford": {
+        "area": "Salford",
+        "title": "Lawn Mowing & Garden Maintenance Salford | Pay As You Mow",
+        "description": "Pay As You Mow provides professional lawn mowing and garden maintenance in Salford. No contracts, pay per visit. Get your free quote today.",
+        "h1": "Lawn Mowing in Salford",
+        "intro": "Need a reliable gardener in Salford? Pay As You Mow offers pay-as-you-go lawn mowing and garden maintenance throughout Salford — book just when you need it.",
+    },
+    "trafford": {
+        "area": "Trafford",
+        "title": "Lawn Mowing & Garden Maintenance Trafford | Pay As You Mow",
+        "description": "Flexible, pay-as-you-go lawn mowing and garden maintenance in Trafford. Professional service, no subscription. Book a free quote with Pay As You Mow.",
+        "h1": "Lawn Mowing in Trafford",
+        "intro": "Pay As You Mow covers Trafford with pay-per-visit lawn mowing and garden maintenance. No long-term commitment — book exactly when your garden needs it.",
+    },
+    "tameside": {
+        "area": "Tameside",
+        "title": "Lawn Mowing & Garden Maintenance Tameside | Pay As You Mow",
+        "description": "Professional lawn mowing and garden care in Tameside. Pay-as-you-go with no contracts. Pay As You Mow covers Tameside and all surrounding areas.",
+        "h1": "Lawn Mowing in Tameside",
+        "intro": "Pay As You Mow provides flexible lawn and garden maintenance across Tameside — including Audenshaw, Denton, Ashton-under-Lyne and Hyde. No contract needed.",
+    },
+    "audenshaw": {
+        "area": "Audenshaw",
+        "title": "Lawn Mowing & Garden Maintenance Audenshaw | Pay As You Mow",
+        "description": "Local lawn mowing and garden maintenance in Audenshaw. Flexible pay-as-you-go service with no contracts. Book a free quote from Pay As You Mow.",
+        "h1": "Lawn Mowing in Audenshaw",
+        "intro": "Looking for a local gardener in Audenshaw? Pay As You Mow is based in the Audenshaw and Denton area, offering fast, friendly garden maintenance whenever you need it.",
+    },
+    "denton": {
+        "area": "Denton",
+        "title": "Lawn Mowing & Garden Maintenance Denton | Pay As You Mow",
+        "description": "Professional lawn mowing and garden care in Denton, Greater Manchester. No contracts, pay per visit. Pay As You Mow — your local gardening service.",
+        "h1": "Lawn Mowing in Denton",
+        "intro": "Pay As You Mow is your local gardening service in Denton. Whether it's a one-off tidy-up or regular grass cutting, we're available when you need us — no contract required.",
+    },
+    "stockport": {
+        "area": "Stockport",
+        "title": "Lawn Mowing & Garden Maintenance Stockport | Pay As You Mow",
+        "description": "Flexible lawn mowing and garden maintenance in Stockport. Pay-as-you-go, no contracts. Professional service from Pay As You Mow across Stockport.",
+        "h1": "Lawn Mowing in Stockport",
+        "intro": "Pay As You Mow offers professional lawn mowing and garden maintenance in Stockport. Book a single visit or as many as you like — completely flexible, no tie-in.",
+    },
+    "oldham": {
+        "area": "Oldham",
+        "title": "Lawn Mowing & Garden Maintenance Oldham | Pay As You Mow",
+        "description": "Professional lawn care and garden maintenance in Oldham. Pay-as-you-go service with no contracts. Get a free quote from Pay As You Mow today.",
+        "h1": "Lawn Mowing in Oldham",
+        "intro": "Need a gardener in Oldham? Pay As You Mow provides flexible, pay-per-visit lawn mowing and garden maintenance across Oldham. No subscription, no hassle.",
+    },
+    "ashton-under-lyne": {
+        "area": "Ashton-under-Lyne",
+        "title": "Lawn Mowing & Garden Maintenance Ashton-under-Lyne | Pay As You Mow",
+        "description": "Local lawn mowing and garden maintenance in Ashton-under-Lyne. Flexible pay-as-you-go with no contracts. Book a free quote from Pay As You Mow.",
+        "h1": "Lawn Mowing in Ashton-under-Lyne",
+        "intro": "Pay As You Mow covers Ashton-under-Lyne with professional, pay-per-visit lawn mowing and garden maintenance. Great results, fully flexible — book when it suits you.",
+    },
+    "stretford": {
+        "area": "Stretford",
+        "title": "Lawn Mowing & Garden Maintenance Stretford | Pay As You Mow",
+        "description": "Professional lawn mowing and garden care in Stretford. Pay-as-you-go, no contracts. Pay As You Mow serves Stretford and the wider Trafford area.",
+        "h1": "Lawn Mowing in Stretford",
+        "intro": "Pay As You Mow provides flexible lawn and garden maintenance in Stretford. Perfect for busy homeowners who want a tidy garden without any long-term commitment.",
+    },
+}
 
 _smtp_config_lock = Lock()
 _smtp_config = {
@@ -3411,18 +3485,39 @@ def sitemap_xml():
     if not canonical:
         canonical = request.url_root.rstrip("/")
     today = datetime.utcnow().strftime("%Y-%m-%d")
+    entries = [
+        f'  <url>\n    <loc>{canonical}/</loc>\n    <lastmod>{today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>'
+    ]
+    for slug in _LOCAL_AREA_PAGES:
+        entries.append(
+            f'  <url>\n    <loc>{canonical}/lawn-mowing-{slug}</loc>\n    <lastmod>{today}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n  </url>'
+        )
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-        f'  <url>\n'
-        f'    <loc>{canonical}/</loc>\n'
-        f'    <lastmod>{today}</lastmod>\n'
-        f'    <changefreq>weekly</changefreq>\n'
-        f'    <priority>1.0</priority>\n'
-        f'  </url>\n'
-        f'</urlset>'
+        + "\n".join(entries)
+        + "\n</urlset>"
     )
     return Response(xml, mimetype="application/xml")
+
+
+@app.route("/lawn-mowing-<area_slug>")
+def local_area_page(area_slug: str):
+    """Location-specific SEO landing page, e.g. /lawn-mowing-manchester"""
+    area_data = _LOCAL_AREA_PAGES.get(area_slug.lower())
+    if not area_data:
+        abort(404)
+    seo = _seo_snapshot()
+    reviews = load_reviews()
+    base_url = (seo.get("canonical_url") or "").rstrip("/")
+    return render_template(
+        "area_service.html",
+        area=area_data,
+        area_slug=area_slug,
+        seo=seo,
+        reviews=reviews,
+        base_url=base_url,
+    )
 
 
 @app.route("/robots.txt", methods=["GET"])
