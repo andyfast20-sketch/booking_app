@@ -1,1 +1,318 @@
-{}
+{
+  "127.0.0.1": {
+    "ip": "127.0.0.1",
+    "first_seen": "2026-01-25T15:58:53.942187Z",
+    "last_seen": "2026-01-25T19:13:02.105550Z",
+    "location": "Local network",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "pages": [
+      "/"
+    ],
+    "visits": [
+      {
+        "first_seen": "2026-01-25T15:58:53.942187Z",
+        "last_seen": "2026-01-25T15:59:53.862990Z",
+        "duration_seconds": 59.920803,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T15:59:59.869108Z",
+        "last_seen": "2026-01-25T15:59:59.869108Z",
+        "duration_seconds": 0.0,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T15:59:59.989946Z",
+        "last_seen": "2026-01-25T16:20:56.056770Z",
+        "duration_seconds": 1256.066824,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:20:59.771002Z",
+        "last_seen": "2026-01-25T16:20:59.771002Z",
+        "duration_seconds": 0.0,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:20:59.989410Z",
+        "last_seen": "2026-01-25T16:27:59.859016Z",
+        "duration_seconds": 419.869606,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:28:50.231630Z",
+        "last_seen": "2026-01-25T16:29:51.160247Z",
+        "duration_seconds": 60.928617,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:29:55.547611Z",
+        "last_seen": "2026-01-25T16:29:55.547611Z",
+        "duration_seconds": 0.0,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:29:55.668323Z",
+        "last_seen": "2026-01-25T16:31:11.849288Z",
+        "duration_seconds": 76.180965,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:31:48.655875Z",
+        "last_seen": "2026-01-25T16:34:28.865741Z",
+        "duration_seconds": 160.209866,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:34:47.642681Z",
+        "last_seen": "2026-01-25T16:34:47.642681Z",
+        "duration_seconds": 0.0,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:34:47.754889Z",
+        "last_seen": "2026-01-25T16:35:47.856165Z",
+        "duration_seconds": 60.101276,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:35:50.939229Z",
+        "last_seen": "2026-01-25T16:35:56.166829Z",
+        "duration_seconds": 5.2276,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:36:14.328371Z",
+        "last_seen": "2026-01-25T16:36:14.328371Z",
+        "duration_seconds": 0.0,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:36:16.197617Z",
+        "last_seen": "2026-01-25T16:39:47.858994Z",
+        "duration_seconds": 211.661377,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:39:50.712137Z",
+        "last_seen": "2026-01-25T16:39:50.712137Z",
+        "duration_seconds": 0.0,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:39:50.766257Z",
+        "last_seen": "2026-01-25T16:45:50.779083Z",
+        "duration_seconds": 360.012826,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:46:06.426349Z",
+        "last_seen": "2026-01-25T16:46:06.532280Z",
+        "duration_seconds": 0.105931,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:46:25.858475Z",
+        "last_seen": "2026-01-25T16:52:36.167344Z",
+        "duration_seconds": 370.308869,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:57:46.753823Z",
+        "last_seen": "2026-01-25T16:58:20.420909Z",
+        "duration_seconds": 33.667086,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:58:25.238392Z",
+        "last_seen": "2026-01-25T16:58:27.543986Z",
+        "duration_seconds": 2.305594,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:58:28.192877Z",
+        "last_seen": "2026-01-25T16:58:28.192877Z",
+        "duration_seconds": 0.0,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:58:29.670556Z",
+        "last_seen": "2026-01-25T16:58:29.670556Z",
+        "duration_seconds": 0.0,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T16:58:35.532374Z",
+        "last_seen": "2026-01-25T17:00:36.539466Z",
+        "duration_seconds": 121.007092,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T17:00:56.443520Z",
+        "last_seen": "2026-01-25T17:00:56.443520Z",
+        "duration_seconds": 0.0,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T17:00:56.585912Z",
+        "last_seen": "2026-01-25T18:01:27.219742Z",
+        "duration_seconds": 3630.63383,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T18:49:19.637648Z",
+        "last_seen": "2026-01-25T18:49:19.637648Z",
+        "duration_seconds": 0.0,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T18:49:24.945848Z",
+        "last_seen": "2026-01-25T18:49:24.945848Z",
+        "duration_seconds": 0.0,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T19:00:27.536558Z",
+        "last_seen": "2026-01-25T19:12:27.452518Z",
+        "duration_seconds": 719.91596,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T19:12:30.830397Z",
+        "last_seen": "2026-01-25T19:12:30.830397Z",
+        "duration_seconds": 0.0,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      },
+      {
+        "first_seen": "2026-01-25T19:13:02.105550Z",
+        "last_seen": "2026-01-25T19:13:02.105550Z",
+        "duration_seconds": 0.0,
+        "pages": [
+          "/"
+        ],
+        "location": "Local network",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+      }
+    ],
+    "visit_count": 30,
+    "total_duration_seconds": 7548.124122,
+    "current_visit": null,
+    "visited_index": true
+  }
+}

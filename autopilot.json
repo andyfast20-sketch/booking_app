@@ -1,6 +1,17 @@
 {
-  "enabled": false,
-  "business_profile": "",
+  "enabled": true,
+  "business_profile": "Pay As You Mow have been in business for 16 years",
+  "provider": "openrouter",
   "model": "deepseek-chat",
-  "temperature": 0.3
+  "temperature": 0.3,
+  "api_key": "",
+  "api_keys": [],
+  "openrouter_api_key": "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",
+  "openrouter_api_keys": [
+    {
+      "id": "ffb8f053-a071-494b-af5f-03344b829651",
+      "value": "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",
+      "created_at": "2026-01-25T20:49:19.820558"
+    }
+  ]
 }

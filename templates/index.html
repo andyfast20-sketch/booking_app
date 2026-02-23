@@ -44,7 +44,6 @@
 
         body.nav-open {
             overflow: hidden;
-            touch-action: none;
         }
 
         /* Preloader Styles */
@@ -682,6 +681,7 @@
             .auto-quote-card {
                 max-width: 860px;
                 display: flex;
+                flex-direction: row;
                 align-items: stretch;
             }
 
@@ -748,7 +748,7 @@
 
         .auto-quote-text {
             text-align: center;
-            margin-bottom: 28px;
+            margin-bottom: 18px;
         }
 
         .auto-quote-text p {
@@ -1056,8 +1056,8 @@
 
         .live-chat-toggle {
             border: none;
-            width: 64px;
-            height: 64px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             padding: 0;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
@@ -1066,14 +1066,14 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 20px 36px rgba(27, 94, 32, 0.3);
+            box-shadow: 0 14px 28px rgba(27, 94, 32, 0.3);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             position: relative;
         }
 
         .live-chat-toggle:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 24px 42px rgba(27, 94, 32, 0.38);
+            transform: translateY(-3px);
+            box-shadow: 0 18px 34px rgba(27, 94, 32, 0.38);
         }
 
         .live-chat-toggle:focus-visible {
@@ -1083,14 +1083,14 @@
 
         .live-chat-toggle .live-chat-indicator {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 12px;
-            height: 12px;
+            top: 7px;
+            right: 7px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background: #66bb6a;
             border: 2px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 0 0 6px rgba(102, 187, 106, 0.2);
+            box-shadow: 0 0 0 4px rgba(102, 187, 106, 0.2);
             transition: background 0.3s ease, box-shadow 0.3s ease;
         }
 
@@ -1098,9 +1098,9 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 32px;
-            height: 32px;
-            font-size: 1.45rem;
+            width: 26px;
+            height: 26px;
+            font-size: 1.15rem;
             pointer-events: none;
         }
 
@@ -1629,11 +1629,11 @@
             left: 0;
             width: 100%;
             z-index: 1000;
-            background: linear-gradient(120deg, rgba(46, 125, 50, 0.95) 0%, rgba(26, 94, 32, 0.92) 60%, rgba(255, 152, 0, 0.85) 100%);
-            box-shadow: 0 20px 45px rgba(14, 51, 23, 0.18);
+            background: linear-gradient(135deg, #0a2010 0%, #163d1e 40%, #1e5c28 75%, #1a4d22 100%);
+            box-shadow: 0 8px 32px rgba(5, 20, 10, 0.55), 0 1px 0 rgba(255, 215, 80, 0.18) inset;
             transition: var(--transition);
-            backdrop-filter: blur(6px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 215, 80, 0.14);
             overflow: hidden;
         }
 
@@ -1641,7 +1641,9 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 65%);
+            background:
+                radial-gradient(ellipse 80% 60% at 0% 0%, rgba(255, 220, 60, 0.1) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 80% at 100% 100%, rgba(46, 125, 50, 0.18) 0%, transparent 65%);
             pointer-events: none;
             z-index: 1;
         }
@@ -2271,6 +2273,10 @@
             }
 
             .why-row.why-head {
+                display: none;
+            }
+
+            .why-row-local {
                 display: none;
             }
 
@@ -4185,6 +4191,17 @@
                 gap: 35px;
             }
 
+            .about-video {
+                width: 100%;
+                min-height: 200px;
+            }
+
+            .about-video .video-frame {
+                height: auto;
+                aspect-ratio: 16 / 9;
+                min-height: 200px;
+            }
+
             .faq .section-title h2 {
                 font-size: 1.9rem;
             }
@@ -4320,20 +4337,20 @@
                 left: 50%;
                 right: auto;
                 top: calc(var(--header-height, 92px) + 10px);
-                width: min(420px, calc(100vw - 24px));
+                width: min(300px, calc(100vw - 24px));
                 background: linear-gradient(135deg, rgba(46, 125, 50, 0.99), rgba(26, 94, 32, 0.98));
-                border-radius: 24px;
+                border-radius: 16px;
                 border: 1px solid rgba(255, 255, 255, 0.14);
-                box-shadow: 0 22px 50px rgba(0, 0, 0, 0.35);
+                box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
                 /* NOTE: backdrop-filter can make text look blurry on some mobile devices */
                 backdrop-filter: none;
                 -webkit-backdrop-filter: none;
-                max-height: min(520px, calc(100vh - var(--header-height, 92px) - 24px));
+                max-height: min(380px, calc(100vh - var(--header-height, 92px) - 24px));
                 overflow: auto;
                 opacity: 0;
-                transform: translate(-50%, -14px) scale(0.985);
+                transform: translate(-50%, -10px) scale(0.985);
                 pointer-events: none;
-                transition: transform 220ms ease, opacity 220ms ease;
+                transition: transform 200ms ease, opacity 200ms ease;
                 z-index: 1090;
             }
 
@@ -4345,8 +4362,8 @@
 
             nav ul {
                 flex-direction: column;
-                padding: 14px;
-                gap: 10px;
+                padding: 8px;
+                gap: 4px;
             }
 
             nav ul li {
@@ -4356,11 +4373,11 @@
 
             nav ul li a {
                 color: rgba(255, 255, 255, 0.92);
-                font-size: 1.1rem;
+                font-size: 0.92rem;
                 width: 100%;
                 justify-content: space-between;
-                padding: 14px 14px;
-                border-radius: 18px;
+                padding: 9px 12px;
+                border-radius: 12px;
                 background: rgba(255, 255, 255, 0.12);
                 text-shadow: 0 1px 0 rgba(0, 0, 0, 0.14);
             }
@@ -4520,6 +4537,10 @@
                 gap: 12px;
             }
 
+            .hero-actions [aria-label="Existing customer login"] {
+                display: none;
+            }
+
             .hero h1 {
                 font-size: 2.3rem;
             }
@@ -4627,7 +4648,9 @@
     <!-- Preloader -->
     <div id="preloader">
         <div class="preloader-content">
-            <div class="preloader-logo">??</div>
+            <div class="preloader-logo" aria-label="Loading">
+                <i class="fas fa-seedling" aria-hidden="true"></i>
+            </div>
             <h1 class="preloader-title">Pay As You Mow</h1>
             <p class="preloader-subtitle">Professional Garden Maintenance</p>
             <div class="progress-container">
@@ -4833,7 +4856,7 @@
                     <div class="why-cell other" role="columnheader">Typical gardener</div>
                 </div>
 
-                <div class="why-row" role="row">
+                <div class="why-row why-row-local" role="row">
                     <div class="why-cell feature" role="rowheader">Local &amp; dependable</div>
                     <div class="why-cell you" data-col="Pay As You Mow"><i class="fas fa-check" aria-hidden="true"></i> Focused on your area, so you're not "one of many" across a huge patch.</div>
                     <div class="why-cell other" data-col="Typical gardener"><i class="fas fa-minus" aria-hidden="true"></i> Covers a wider area, which can mean less flexibility.</div>
@@ -5115,7 +5138,7 @@
                 <i class="fas fa-times"></i>
             </button>
             <div class="auto-quote-header" id="autoQuoteHeader">
-                <div class="auto-quote-icon">??</div>
+                <div class="auto-quote-icon" aria-hidden="true"><i class="fas fa-seedling"></i></div>
                 <h3 id="autoQuoteTitle">Would You Like a Free Quote?</h3>
             </div>
             <div class="auto-quote-body">
@@ -6117,44 +6140,42 @@
             mobileMenuBtn.innerHTML = nextOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
         }
 
+        // Scroll to a section after closing the nav menu.
+        // Handles iOS Safari where overflow:hidden can freeze window.scrollY.
+        function navScrollTo(targetEl) {
+            if (!targetEl) return;
+            // Use setTimeout(100) so the browser has fully re-painted and
+            // restored the scroll position after removing overflow:hidden.
+            window.setTimeout(() => {
+                const headerH = header ? Math.round(header.getBoundingClientRect().height) : 92;
+                const top = Math.max(0, targetEl.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - headerH - 8);
+                window.scrollTo({ top, behavior: 'smooth' });
+            }, 100);
+        }
+
         if (mobileMenuBtn && nav) {
             mobileMenuBtn.addEventListener('click', () => setNavOpen());
             mobileMenuBtn.dataset.navToggleBound = '1';
         }
 
         // Mobile nav links: close menu then scroll to section.
+        // NOTE: This is the ONLY handler that scrolls for nav links.
+        // The general anchor listener below bails out for anchors inside <nav>.
         if (nav) {
             nav.addEventListener('click', (event) => {
-                const closest = event.target && event.target.closest ? event.target.closest('a[href^="#"]') : null;
-                const link = closest || null;
+                const link = event.target && event.target.closest ? event.target.closest('a[href^="#"]') : null;
                 if (!link) return;
 
                 const href = link.getAttribute('href');
                 if (!href || href === '#') return;
 
                 const target = document.querySelector(href);
-                // Always close the menu (even if target is missing)
+
                 event.preventDefault();
-                syncHeaderHeightVar();
+                event.stopPropagation();
+
                 setNavOpen(false);
-
-                try {
-                    history.pushState(null, '', href);
-                } catch {
-                    // Ignore
-                }
-
-                if (!target) return;
-
-                const headerOffset = header ? Math.round(header.getBoundingClientRect().height) : 80;
-                // Allow the body scroll lock to lift before scrolling.
-                window.setTimeout(() => {
-                    const top = target.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0);
-                    window.scrollTo({
-                        top: Math.max(0, top - headerOffset - 12),
-                        behavior: 'smooth',
-                    });
-                }, 30);
+                navScrollTo(target);
             });
         }
 
@@ -6424,9 +6445,13 @@
 
         fetchTestimonials();
 
-        // Smooth scrolling for anchor links
+        // Smooth scrolling for anchor links (outside of <nav>).
+        // Nav-link scrolling is handled exclusively by the nav click handler above.
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
+                // Let the dedicated nav click handler deal with nav links.
+                if (nav && nav.contains(this)) return;
+
                 e.preventDefault();
 
                 const targetId = this.getAttribute('href');
@@ -6434,19 +6459,9 @@
 
                 const targetElement = document.querySelector(targetId);
                 if (targetElement) {
-                    if (nav && nav.classList.contains('active')) {
-                        setNavOpen(false);
-                    }
-
-                    syncHeaderHeightVar();
-                    const headerOffset = header ? Math.round(header.getBoundingClientRect().height) : 80;
-                    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                    const targetTop = targetElement.getBoundingClientRect().top + window.pageYOffset;
-
-                    window.scrollTo({
-                        top: Math.max(0, targetTop - headerOffset - 12),
-                        behavior: prefersReducedMotion ? 'auto' : 'smooth'
-                    });
+                    const headerH = header ? Math.round(header.getBoundingClientRect().height) : 92;
+                    const top = Math.max(0, targetElement.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - headerH - 8);
+                    window.scrollTo({ top, behavior: 'smooth' });
                 }
             });
         });
@@ -6624,6 +6639,17 @@
 
             availabilityGrid.innerHTML = '';
 
+            // Filter out any slots that are in the past
+            const now = Date.now();
+            if (Array.isArray(slots)) {
+                slots = slots.filter((slot) => {
+                    if (!slot || typeof slot !== 'string') return false;
+                    const normalized = slot.trim().replace(' ', 'T');
+                    const d = new Date(normalized);
+                    return !Number.isNaN(d.getTime()) && d.getTime() > now;
+                });
+            }
+
             if (!Array.isArray(slots) || slots.length === 0) {
                 const empty = document.createElement('div');
                 empty.className = 'availability-empty';
@@ -6730,7 +6756,15 @@
                 if (timeSelect) {
                     timeSelect.innerHTML = "";
 
-                    if (slots.length === 0) {
+                    // Filter out past slots for the dropdown too
+                const nowTs = Date.now();
+                const futureSlots = slots.filter((slot) => {
+                    if (!slot || typeof slot !== 'string') return false;
+                    const d = new Date(slot.trim().replace(' ', 'T'));
+                    return !Number.isNaN(d.getTime()) && d.getTime() > nowTs;
+                });
+
+                if (futureSlots.length === 0) {
                         const opt = document.createElement("option");
                         opt.text = "Sorry no slots available at the moment";
                         opt.disabled = true;
@@ -6743,7 +6777,7 @@
                         defaultOpt.value = "";
                         timeSelect.add(defaultOpt);
 
-                        slots.forEach((slot) => {
+                        futureSlots.forEach((slot) => {
                             const opt = document.createElement("option");
                             opt.value = slot;
                             opt.text = formatSlotLabel(slot);
@@ -7420,8 +7454,8 @@
             } catch (error) {
                 console.error('Error loading dates:', error);
                 const message = error && error.name === 'AbortError'
-                    ? '?? The booking server is taking too long to respond. Please try again in a moment.'
-                    : '?? Unable to load available dates. Please try again or contact us directly.';
+                    ? 'The booking server is taking too long to respond. Please try again in a moment.'
+                    : 'Unable to load available dates. Please try again or contact us directly.';
                 const errorHTML = `
                     <div class="auto-quote-text">
                         <p style="color: var(--secondary);">${message}</p>
@@ -7624,7 +7658,7 @@
         async function sendSmsVerification(selectedSlot, selectedArea, serviceType, name, email, phone) {
             const sendingHTML = `
                 <div class="auto-quote-text">
-                    <p>Sending a verification code to <strong>${phone}</strong>…</p>
+                    <p><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Sending a verification code to <strong>${phone}</strong>…</p>
                 </div>
             `;
             transitionContent(sendingHTML, 'Verify Mobile');
@@ -7642,7 +7676,7 @@
                 const friendlyMsg = (err.message || 'Unable to send verification code.').replace(/</g, '&lt;');
                 const errorHTML = `
                     <div class="auto-quote-text">
-                        <p style="color: var(--secondary);">?? ${friendlyMsg}</p>
+                        <p style="color: var(--secondary);">${friendlyMsg}</p>
                         <p style="margin-top: 16px; font-size: 0.9rem;">We'll process your quote without phone verification.</p>
                     </div>
                     <div class="auto-quote-actions">
@@ -7661,7 +7695,7 @@
             const codeHTML = `
                 <div class="auto-quote-text">
                     <p style="margin-bottom: 12px;">We've sent a <strong>4-digit code</strong> to <strong>${phone}</strong>.</p>
-                    <p style="font-size: 0.9rem; color: var(--text-light);">Enter the code below to verify it's you.</p>
+                    <p style="font-size: 0.9rem; color: var(--text-light);">Enter it below to verify it's you.</p>
                 </div>
                 <div class="auto-quote-form">
                     <div class="auto-quote-form-group">
@@ -7669,7 +7703,7 @@
                         <input type="text" id="smsVerifyCode" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" autocomplete="one-time-code" required placeholder="Enter 4-digit code" style="text-align:center; font-size:1.6rem; letter-spacing:0.5em; font-weight:700;" />
                     </div>
                     <button type="button" id="smsVerifyBtn" class="auto-quote-submit">Verify</button>
-                    <button type="button" id="smsResendBtn" class="auto-quote-btn auto-quote-btn-no" style="width:100%; margin-top:10px;">Resend code</button>
+                    <p style="font-size: 0.85rem; color: var(--text-light); margin: 10px 0 0; text-align: center;">Didn't get a code? Close this and try again in a minute.</p>
                     <div class="auto-quote-feedback" id="smsVerifyFeedback" style="margin-top: 14px;"></div>
                 </div>
             `;
@@ -7679,7 +7713,6 @@
             setTimeout(() => {
                 const codeInput = document.getElementById('smsVerifyCode');
                 const verifyBtn = document.getElementById('smsVerifyBtn');
-                const resendBtn = document.getElementById('smsResendBtn');
                 const feedback = document.getElementById('smsVerifyFeedback');
 
                 codeInput?.focus();
@@ -7713,32 +7746,6 @@
                         }
                     }
                 });
-
-                resendBtn?.addEventListener('click', async () => {
-                    resendBtn.disabled = true;
-                    resendBtn.textContent = 'Sending…';
-                    try {
-                        const res = await fetchWithTimeout(API_BASE + '/api/send-verification', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ phone })
-                        });
-                        const data = await res.json().catch(() => ({}));
-                        if (!res.ok) throw new Error(data.message || 'Unable to resend.');
-                        if (feedback) {
-                            feedback.textContent = 'New code sent!';
-                            feedback.className = 'auto-quote-feedback visible success';
-                        }
-                    } catch (err) {
-                        if (feedback) {
-                            feedback.textContent = err.message || 'Unable to resend code.';
-                            feedback.className = 'auto-quote-feedback visible error';
-                        }
-                    } finally {
-                        resendBtn.disabled = false;
-                        resendBtn.textContent = 'Resend code';
-                    }
-                });
             }, 450);
         }
 
@@ -7763,16 +7770,16 @@
                 const data = await res.json();
 
                 if (!res.ok) {
-                    throw new Error(data.message || '? Unable to submit your quote request.');
+                    throw new Error(data.message || 'Unable to submit your quote request.');
                 }
 
                 // Show success message
                 const successHTML = `
                     <div class="auto-quote-text" style="padding: 24px 0;">
-                        <div style="font-size: 64px; margin-bottom: 16px;">?</div>
+                        <div style="font-size: 64px; margin-bottom: 16px; color: var(--primary);"><i class="fas fa-seedling" aria-hidden="true"></i></div>
                         <p style="font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 12px;">Quote Request Received!</p>
                         <p style="margin-bottom: 20px;">${data.message || 'Thank you! We\'ll be in touch soon to discuss your free quote.'}</p>
-                        ${verified ? '<p style="font-size: 0.9rem; color: var(--primary);">? Email verified</p>' : ''}
+                        ${verified ? '<p style="font-size: 0.9rem; color: var(--primary);"><i class="fas fa-check-circle" aria-hidden="true"></i> Phone verified</p>' : ''}
                         <button type="button" class="auto-quote-btn auto-quote-btn-yes" onclick="closeAutoQuotePopup()" style="margin-top: 16px;">Close</button>
                     </div>
                 `;
@@ -7784,7 +7791,7 @@
             } catch (error) {
                 const errorHTML = `
                     <div class="auto-quote-text">
-                        <p style="color: var(--secondary);">${error.message || '? Unable to submit. Please try again.'}</p>
+                        <p style="color: var(--secondary);">${error.message || 'Unable to submit. Please try again.'}</p>
                     </div>
                     <div class="auto-quote-actions">
                         <button type="button" class="auto-quote-btn auto-quote-btn-no" onclick="closeAutoQuotePopup()">Close</button>
@@ -7809,7 +7816,7 @@
 
             if (!name || !email || !phone) {
                 if (feedback) {
-                    feedback.textContent = '? Please fill in all required fields.';
+                    feedback.textContent = 'Please fill in all required fields.';
                     feedback.className = 'auto-quote-feedback visible error';
                 }
                 return;
@@ -7842,13 +7849,13 @@
                 const data = await res.json();
 
                 if (!res.ok) {
-                    throw new Error(data.message || '? Unable to submit your quote request.');
+                    throw new Error(data.message || 'Unable to submit your quote request.');
                 }
 
                 // Show success message
                 const successHTML = `
                     <div class="auto-quote-text" style="padding: 24px 0;">
-                        <div style="font-size: 64px; margin-bottom: 16px;">?</div>
+                        <div style="font-size: 64px; margin-bottom: 16px; color: var(--primary);"><i class="fas fa-seedling" aria-hidden="true"></i></div>
                         <p style="font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 12px;">Quote Request Received!</p>
                         <p style="margin-bottom: 20px;">${data.message || 'Thank you! We\'ll be in touch soon to discuss your free quote.'}</p>
                         <button type="button" class="auto-quote-btn auto-quote-btn-yes" onclick="closeAutoQuotePopup()">Close</button>
@@ -7860,7 +7867,7 @@
 
             } catch (error) {
                 if (feedback) {
-                    feedback.textContent = error.message || '? Unable to submit. Please try again.';
+                    feedback.textContent = error.message || 'Unable to submit. Please try again.';
                     feedback.className = 'auto-quote-feedback visible error';
                 }
                 if (submitBtn) {
@@ -8317,7 +8324,7 @@
 
                 const sendingHTML = `
                     <div class="auto-quote-text">
-                        <p>Sending a verification code to <strong>${customerPhone.replace(/</g, '&lt;')}</strong>…</p>
+                        <p><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Sending a verification code to <strong>${customerPhone.replace(/</g, '&lt;')}</strong>…</p>
                     </div>
                 `;
                 transition(sendingHTML, 'Verify Mobile');
@@ -8335,7 +8342,7 @@
                     const friendlyMsg = String(err.message || 'Unable to send verification code.').replace(/</g, '&lt;');
                     const errorHTML = `
                         <div class="auto-quote-text">
-                            <p style="color: var(--secondary);">?? ${friendlyMsg}</p>
+                            <p style="color: var(--secondary);">${friendlyMsg}</p>
                             <p style="margin-top: 16px; font-size: 0.9rem;">We'll process your quote without phone verification.</p>
                         </div>
                         <div class="auto-quote-actions" style="margin-top:16px;">
@@ -8355,7 +8362,7 @@
                 const codeHTML = `
                     <div class="auto-quote-text">
                         <p style="margin-bottom: 12px;">We've sent a <strong>4-digit code</strong> to <strong>${customerPhone.replace(/</g, '&lt;')}</strong>.</p>
-                        <p style="font-size: 0.9rem; color: var(--text-light);">Enter the code below to verify it's you.</p>
+                        <p style="font-size: 0.9rem; color: var(--text-light);">Enter it below to verify it's you.</p>
                     </div>
                     <div class="auto-quote-form">
                         <div class="auto-quote-form-group">
@@ -8363,7 +8370,7 @@
                             <input type="text" id="resilientSmsCode" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" autocomplete="one-time-code" required placeholder="Enter 4-digit code" style="text-align:center; font-size:1.6rem; letter-spacing:0.5em; font-weight:700;" />
                         </div>
                         <button type="button" id="resilientSmsVerifyBtn" class="auto-quote-submit">Verify</button>
-                        <button type="button" id="resilientSmsResendBtn" class="auto-quote-btn auto-quote-btn-no" style="width:100%; margin-top:10px;">Resend code</button>
+                        <p style="font-size: 0.85rem; color: var(--text-light); margin: 10px 0 0; text-align: center;">Didn't get a code? Close this and try again in a minute.</p>
                         <div class="auto-quote-feedback" id="resilientSmsFeedback" style="margin-top: 14px;"></div>
                     </div>
                 `;
@@ -8373,7 +8380,6 @@
                 window.setTimeout(() => {
                     const codeInput = document.getElementById('resilientSmsCode');
                     const verifyBtn = document.getElementById('resilientSmsVerifyBtn');
-                    const resendBtn = document.getElementById('resilientSmsResendBtn');
                     const feedback = document.getElementById('resilientSmsFeedback');
 
                     codeInput?.focus();
@@ -8408,39 +8414,13 @@
                             }
                         }
                     });
-
-                    resendBtn?.addEventListener('click', async () => {
-                        resendBtn.disabled = true;
-                        resendBtn.textContent = 'Sending…';
-                        try {
-                            const res = await fetchT(API_BASE + '/api/send-verification', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ phone: customerPhone })
-                            });
-                            const data = await res.json().catch(() => ({}));
-                            if (!res.ok) throw new Error(data.message || 'Unable to resend.');
-                            if (feedback) {
-                                feedback.textContent = 'New code sent!';
-                                feedback.className = 'auto-quote-feedback visible success';
-                            }
-                        } catch (err) {
-                            if (feedback) {
-                                feedback.textContent = err.message || 'Unable to resend code.';
-                                feedback.className = 'auto-quote-feedback visible error';
-                            }
-                        } finally {
-                            resendBtn.disabled = false;
-                            resendBtn.textContent = 'Resend code';
-                        }
-                    });
                 }, 450);
             };
 
             const submitQuote = async () => {
                 const html = `
                     <div class="auto-quote-text" style="padding: 18px 0;">
-                        <div style="font-size: 42px; margin-bottom: 12px;">?</div>
+                        <div style="font-size: 42px; margin-bottom: 12px; color: var(--primary);"><i class="fas fa-seedling" aria-hidden="true"></i></div>
                         <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">Submitting…</p>
                         <p>Please wait a moment.</p>
                     </div>
@@ -8467,7 +8447,7 @@
 
                     const success = `
                         <div class="auto-quote-text" style="padding: 24px 0;">
-                            <div style="font-size: 64px; margin-bottom: 16px;">?</div>
+                            <div style="font-size: 64px; margin-bottom: 16px; color: var(--primary);"><i class="fas fa-seedling" aria-hidden="true"></i></div>
                             <p style="font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 12px;">Quote Request Received!</p>
                             <p style="margin-bottom: 20px;">${(data?.message || "Thank you! We'll be in touch soon.").replace(/</g, '&lt;')}</p>
                             <button type="button" class="auto-quote-btn auto-quote-btn-yes" id="autoQuoteDone">Close</button>
@@ -8481,7 +8461,7 @@
                 } catch (err) {
                     const fail = `
                         <div class="auto-quote-text" style="padding: 18px 0;">
-                            <div style="font-size: 48px; margin-bottom: 12px;">?</div>
+                            <div style="font-size: 48px; margin-bottom: 12px; color: var(--primary);"><i class="fas fa-seedling" aria-hidden="true"></i></div>
                             <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">Something went wrong</p>
                             <p style="margin-bottom: 16px;">${String(err.message || 'Unable to submit. Please try again.').replace(/</g, '&lt;')}</p>
                             <button type="button" class="auto-quote-btn auto-quote-btn-yes" id="autoQuoteBackToDetails">Back</button>
@@ -9117,18 +9097,23 @@
                         if (!targetId || targetId === '#') return;
 
                         event.preventDefault();
-                        setOpen(false);
-                        syncHeaderHeight();
+                        event.stopPropagation();
 
                         const target = document.querySelector(targetId);
-                        if (!target) return;
-                        const headerOffset = headerEl ? Math.round(headerEl.getBoundingClientRect().height) : 80;
-                        const top = target.getBoundingClientRect().top + window.pageYOffset;
 
-                        window.scrollTo({
-                            top: Math.max(0, top - headerOffset - 12),
-                            behavior: 'smooth',
-                        });
+                        // Close the menu FIRST so overflow:hidden is removed.
+                        syncHeaderHeight();
+                        setOpen(false);
+
+                        if (!target) return;
+
+                        // setTimeout(100) gives the browser time to fully repaint
+                        // and restore scrollY after removing overflow:hidden.
+                        window.setTimeout(() => {
+                            const headerH = headerEl ? Math.round(headerEl.getBoundingClientRect().height) : 92;
+                            const top = Math.max(0, target.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - headerH - 8);
+                            window.scrollTo({ top, behavior: 'smooth' });
+                        }, 100);
                     });
                     window.__payAsYouMowAnchorScrollBound = true;
                 }
