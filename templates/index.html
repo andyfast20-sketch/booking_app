@@ -35,95 +35,234 @@
                and breaks programmatic scrolling. The fixed backdrop handles visual lock. */
         }
 
-        /* Preloader Styles */
+        /* ═══════════════════════════════════════════
+           PRELOADER — Spectacular Edition
+        ═══════════════════════════════════════════ */
         #preloader {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+            inset: 0;
+            background:
+                radial-gradient(ellipse 120% 80% at 50% 110%, #0d2e10 0%, transparent 60%),
+                radial-gradient(ellipse 80% 60% at 10% 0%,  rgba(255,215,80,.07) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 90% 10%, rgba(80,200,90,.06) 0%, transparent 50%),
+                linear-gradient(160deg, #040d05 0%, #071a09 40%, #0b220d 70%, #050f06 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 9999;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
-        }
-
-        #preloader.hidden {
-            opacity: 0;
-            visibility: hidden;
-        }
-
-        .preloader-content {
-            text-align: center;
-            color: white;
-            animation: fadeInUp 0.8s ease;
-        }
-
-        .preloader-logo {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            animation: bounce 2s infinite;
-        }
-
-        .preloader-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        .preloader-subtitle {
-            font-size: 1.2rem;
-            font-weight: 400;
-            margin-bottom: 2rem;
-            opacity: 0.9;
-        }
-
-        .progress-container {
-            width: 300px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
             overflow: hidden;
-            margin-bottom: 1rem;
+            transition: opacity 0.7s ease, visibility 0.7s ease;
+        }
+        #preloader.hidden { opacity: 0; visibility: hidden; }
+
+        /* ── Floating particle sparkles ── */
+        #preloader::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(circle, rgba(255,215,80,.55) 1px, transparent 1px),
+                radial-gradient(circle, rgba(150,255,130,.4) 1px, transparent 1px),
+                radial-gradient(circle, rgba(255,255,255,.3) 1px, transparent 1px);
+            background-size: 180px 180px, 230px 230px, 310px 310px;
+            background-position: 20px 40px, 90px 120px, 150px 60px;
+            animation: particleDrift 14s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes particleDrift {
+            0%   { transform: translateY(0)   rotate(0deg);   opacity: .7; }
+            50%  { transform: translateY(-28px) rotate(1.5deg); opacity: 1; }
+            100% { transform: translateY(0)   rotate(0deg);   opacity: .7; }
         }
 
+        /* ── Bottom grass strip ── */
+        .pl-grass-row {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 90px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .pl-blade {
+            width: 7px;
+            border-radius: 4px 4px 0 0;
+            transform-origin: bottom center;
+            animation: bladeGrow 1.2s cubic-bezier(0.34,1.56,0.64,1) both, bladeSway 3.5s ease-in-out infinite;
+        }
+        .pl-blade:nth-child(odd)  { background: linear-gradient(to top, #1b5e20, #66bb6a); }
+        .pl-blade:nth-child(even) { background: linear-gradient(to top, #2e7d32, #a5d6a7); }
+        @keyframes bladeGrow {
+            from { transform: scaleY(0); opacity: 0; }
+            to   { transform: scaleY(1); opacity: 1; }
+        }
+        @keyframes bladeSway {
+            0%,100% { transform: rotate(0deg); }
+            40%     { transform: rotate(5deg); }
+            65%     { transform: rotate(-4deg); }
+        }
+
+        /* ── Main content wrapper ── */
+        .preloader-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+
+        /* ── Big mower SVG ── */
+        .preloader-logo {
+            width: min(260px, 72vw);
+            margin-bottom: 8px;
+            filter: drop-shadow(0 12px 40px rgba(180,255,100,.22)) drop-shadow(0 0 60px rgba(255,215,80,.12));
+            animation: mowerDrift 3.8s ease-in-out infinite;
+        }
+        @keyframes mowerDrift {
+            0%,100% { transform: translateY(0px)   rotate(0deg);    }
+            45%     { transform: translateY(-10px) rotate(-0.8deg); }
+            70%     { transform: translateY(-7px)  rotate(0.5deg);  }
+        }
+        /* Rear wheel spin */
+        .pl-wheel-rear  { transform-box: fill-box; transform-origin: center; animation: wheelSpin 1.4s linear infinite; }
+        /* Front wheel spin */
+        .pl-wheel-front { transform-box: fill-box; transform-origin: center; animation: wheelSpin 1.4s linear infinite; }
+        @keyframes wheelSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        /* Exhaust smoke */
+        .pl-smoke-1 { animation: smokePuff 2s ease-out infinite; }
+        .pl-smoke-2 { animation: smokePuff 2s ease-out .5s infinite; }
+        .pl-smoke-3 { animation: smokePuff 2s ease-out 1s infinite; }
+        @keyframes smokePuff {
+            0%   { opacity: 0;   transform: translate(0,0) scale(0.4); }
+            30%  { opacity: .55; }
+            100% { opacity: 0;   transform: translate(-12px,-22px) scale(1.6); }
+        }
+        /* Blade speed lines pulse */
+        .pl-speed { animation: speedPulse 1.4s ease-in-out infinite; }
+        @keyframes speedPulse {
+            0%,100% { opacity: .2; transform: translateX(0); }
+            50%     { opacity: .7; transform: translateX(-6px); }
+        }
+
+        /* ── Title ── */
+        .preloader-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(2rem, 9vw, 3.4rem);
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -0.5px;
+            margin: 0 0 6px;
+            background: linear-gradient(90deg,
+                #ffffff 0%, #e0ffe8 15%,
+                #ffe082 32%, #ffffff 50%,
+                #b6f5c8 65%, #ffe082 80%, #ffffff 100%);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: titleReveal .9s cubic-bezier(0.22,1,.36,1) .3s both,
+                       titleShimmer 5s linear 1.2s infinite;
+        }
+        @keyframes titleReveal {
+            from { opacity:0; transform: translateY(24px) scale(.95); }
+            to   { opacity:1; transform: translateY(0)    scale(1);   }
+        }
+        @keyframes titleShimmer {
+            0%   { background-position: 0% center; }
+            100% { background-position: 300% center; }
+        }
+
+        /* ── MOW word (massive, gold) ── */
+        .pl-mow {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(4rem, 22vw, 7.5rem);
+            font-weight: 900;
+            line-height: 0.85;
+            letter-spacing: -2px;
+            background: linear-gradient(160deg, #fffde0 0%, #ffd740 35%, #ff9800 65%, #ffe082 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 4px 24px rgba(255,200,0,.55));
+            animation: mowReveal 1s cubic-bezier(0.22,1,.36,1) .5s both,
+                       mowShimmer 3.5s ease-in-out 1.5s infinite;
+        }
+        @keyframes mowReveal {
+            from { opacity:0; transform: scale(1.18) translateY(16px); letter-spacing: 12px; }
+            to   { opacity:1; transform: scale(1)    translateY(0);    letter-spacing: -2px; }
+        }
+        @keyframes mowShimmer {
+            0%,100% { background-position: 0% center; filter: drop-shadow(0 4px 24px rgba(255,200,0,.55)); }
+            50%     { background-position: 200% center; filter: drop-shadow(0 6px 36px rgba(255,200,0,.9)); }
+        }
+
+        /* ── Subtitle ── */
+        .preloader-subtitle {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(.7rem, 3.2vw, 1rem);
+            font-weight: 500;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: rgba(200,255,180,.7);
+            margin: 10px 0 28px;
+            animation: fadeUp .8s ease .8s both;
+        }
+        @keyframes fadeUp {
+            from { opacity:0; transform: translateY(14px); }
+            to   { opacity:1; transform: translateY(0); }
+        }
+
+        /* ── Progress bar ── */
+        .progress-container {
+            width: min(300px, 78vw);
+            height: 5px;
+            background: rgba(255,255,255,.1);
+            border-radius: 99px;
+            overflow: visible;
+            margin-bottom: 10px;
+            position: relative;
+            animation: fadeUp .6s ease 1s both;
+        }
+        .progress-container::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 99px;
+            border: 1px solid rgba(255,215,80,.18);
+        }
         .progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, #ffb347, #ff7e5f);
-            border-radius: 10px;
+            background: linear-gradient(90deg, #76ff03, #ffe000, #ff9100);
+            border-radius: 99px;
             width: 0%;
-            transition: width 0.3s ease;
-            box-shadow: 0 0 10px rgba(255, 179, 71, 0.5);
+            transition: width .3s ease;
+            box-shadow: 0 0 12px 2px rgba(200,255,50,.6), 0 0 28px 6px rgba(255,200,0,.25);
+            position: relative;
         }
-
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            top: -3px;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 10px 3px rgba(255,230,50,.9);
+        }
         .progress-text {
-            font-size: 0.9rem;
-            opacity: 0.8;
-            margin-top: 0.5rem;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes bounce {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-20px);
-            }
+            font-size: .78rem;
+            letter-spacing: 2px;
+            color: rgba(200,255,170,.55);
+            animation: fadeUp .6s ease 1.1s both;
         }
 
         * {
@@ -4848,13 +4987,181 @@
 </head>
 <body>
     <!-- Preloader -->
-    <div id="preloader">
+    <div id="preloader" role="status" aria-label="Loading Pay As You Mow">
+
+        <!-- Animated grass blades at the bottom -->
+        <div class="pl-grass-row" aria-hidden="true">
+            <div class="pl-blade" style="height:55px;animation-delay:.05s,.05s"></div>
+            <div class="pl-blade" style="height:72px;animation-delay:.12s,.12s"></div>
+            <div class="pl-blade" style="height:48px;animation-delay:.19s,.19s"></div>
+            <div class="pl-blade" style="height:80px;animation-delay:.26s,.26s"></div>
+            <div class="pl-blade" style="height:60px;animation-delay:.08s,.08s"></div>
+            <div class="pl-blade" style="height:68px;animation-delay:.31s,.31s"></div>
+            <div class="pl-blade" style="height:44px;animation-delay:.14s,.14s"></div>
+            <div class="pl-blade" style="height:76px;animation-delay:.22s,.22s"></div>
+            <div class="pl-blade" style="height:52px;animation-delay:.38s,.38s"></div>
+            <div class="pl-blade" style="height:65px;animation-delay:.04s,.04s"></div>
+            <div class="pl-blade" style="height:58px;animation-delay:.17s,.17s"></div>
+            <div class="pl-blade" style="height:84px;animation-delay:.29s,.29s"></div>
+            <div class="pl-blade" style="height:47px;animation-delay:.11s,.11s"></div>
+            <div class="pl-blade" style="height:70px;animation-delay:.34s,.34s"></div>
+            <div class="pl-blade" style="height:63px;animation-delay:.21s,.21s"></div>
+            <div class="pl-blade" style="height:78px;animation-delay:.07s,.07s"></div>
+            <div class="pl-blade" style="height:50px;animation-delay:.25s,.25s"></div>
+            <div class="pl-blade" style="height:73px;animation-delay:.16s,.16s"></div>
+            <div class="pl-blade" style="height:42px;animation-delay:.33s,.33s"></div>
+            <div class="pl-blade" style="height:67px;animation-delay:.09s,.09s"></div>
+        </div>
+
         <div class="preloader-content">
-            <div class="preloader-logo" aria-label="Loading">
-                <i class="fas fa-seedling" aria-hidden="true"></i>
+
+            <!-- Large animated lawnmower SVG -->
+            <div class="preloader-logo" aria-hidden="true">
+                <svg class="pl-mower-svg" viewBox="0 0 420 310" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="pl-deck-top" cx="0.5" cy="0" r="1">
+                            <stop offset="0%" stop-color="#d4f026"/>
+                            <stop offset="100%" stop-color="#6b9a00"/>
+                        </radialGradient>
+                        <linearGradient id="pl-deck-side" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#9dc40a"/>
+                            <stop offset="100%" stop-color="#3d6200"/>
+                        </linearGradient>
+                        <linearGradient id="pl-eng" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#c8f020"/>
+                            <stop offset="100%" stop-color="#5a8000"/>
+                        </linearGradient>
+                        <radialGradient id="pl-whl" cx="0.35" cy="0.3" r="0.75">
+                            <stop offset="0%" stop-color="#555"/>
+                            <stop offset="100%" stop-color="#0a0a0a"/>
+                        </radialGradient>
+                        <radialGradient id="pl-hub" cx="0.38" cy="0.32" r="0.72">
+                            <stop offset="0%" stop-color="#fff"/>
+                            <stop offset="60%" stop-color="#c0c0c0"/>
+                            <stop offset="100%" stop-color="#888"/>
+                        </radialGradient>
+                        <linearGradient id="pl-bar" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#b8b8b8"/>
+                            <stop offset="100%" stop-color="#383838"/>
+                        </linearGradient>
+                        <filter id="pl-glow">
+                            <feGaussianBlur stdDeviation="5" result="blur"/>
+                            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                    </defs>
+
+                    <!-- Speed lines left -->
+                    <g class="pl-speed">
+                        <line x1="10" y1="200" x2="62" y2="200" stroke="rgba(180,255,80,.7)" stroke-width="5" stroke-linecap="round"/>
+                        <line x1="4"  y1="220" x2="52" y2="220" stroke="rgba(180,255,80,.45)" stroke-width="3.5" stroke-linecap="round"/>
+                        <line x1="14" y1="240" x2="58" y2="240" stroke="rgba(180,255,80,.28)" stroke-width="2.5" stroke-linecap="round"/>
+                    </g>
+
+                    <!-- Uncut grass blades (right, ahead of front wheel) -->
+                    <line x1="352" y1="285" x2="344" y2="248" stroke="#4caf50" stroke-width="7" stroke-linecap="round"/>
+                    <line x1="372" y1="285" x2="365" y2="244" stroke="#66bb6a" stroke-width="6" stroke-linecap="round"/>
+                    <line x1="390" y1="285" x2="386" y2="252" stroke="#388e3c" stroke-width="5.5" stroke-linecap="round"/>
+                    <line x1="408" y1="285" x2="404" y2="258" stroke="#4caf50" stroke-width="5" stroke-linecap="round"/>
+
+                    <!-- ── REAR WHEEL (large) ── -->
+                    <g class="pl-wheel-rear">
+                        <circle cx="130" cy="268" r="58" fill="url(#pl-whl)"/>
+                        <!-- tyre band -->
+                        <circle cx="130" cy="268" r="46" fill="none" stroke="#2e2e2e" stroke-width="8"/>
+                        <!-- tread dashes -->
+                        <circle cx="130" cy="268" r="58" fill="none" stroke="#1a1a1a" stroke-width="5" stroke-dasharray="18,16"/>
+                        <!-- rim -->
+                        <circle cx="130" cy="268" r="28" fill="#1e1e1e" stroke="#4a4a4a" stroke-width="3"/>
+                        <!-- spokes -->
+                        <line x1="130" y1="213" x2="130" y2="241" stroke="#6a6a6a" stroke-width="7" stroke-linecap="round"/>
+                        <line x1="130" y1="295" x2="130" y2="323" stroke="#6a6a6a" stroke-width="7" stroke-linecap="round"/>
+                        <line x1="75"  y1="268" x2="103" y2="268" stroke="#6a6a6a" stroke-width="7" stroke-linecap="round"/>
+                        <line x1="157" y1="268" x2="185" y2="268" stroke="#6a6a6a" stroke-width="7" stroke-linecap="round"/>
+                        <line x1="91"  y1="229" x2="110" y2="248" stroke="#5e5e5e" stroke-width="6" stroke-linecap="round"/>
+                        <line x1="150" y1="288" x2="169" y2="307" stroke="#5e5e5e" stroke-width="6" stroke-linecap="round"/>
+                        <line x1="169" y1="229" x2="150" y2="248" stroke="#5e5e5e" stroke-width="6" stroke-linecap="round"/>
+                        <line x1="91"  y1="307" x2="110" y2="288" stroke="#5e5e5e" stroke-width="6" stroke-linecap="round"/>
+                        <!-- hub -->
+                        <circle cx="130" cy="268" r="16" fill="url(#pl-hub)"/>
+                        <circle cx="130" cy="268" r="7"  fill="white"/>
+                    </g>
+
+                    <!-- ── FRONT WHEEL (smaller) ── -->
+                    <g class="pl-wheel-front">
+                        <circle cx="298" cy="278" r="40" fill="url(#pl-whl)"/>
+                        <circle cx="298" cy="278" r="31" fill="none" stroke="#2e2e2e" stroke-width="6"/>
+                        <circle cx="298" cy="278" r="40" fill="none" stroke="#1a1a1a" stroke-width="4" stroke-dasharray="14,12"/>
+                        <circle cx="298" cy="278" r="19" fill="#1e1e1e" stroke="#4a4a4a" stroke-width="2.5"/>
+                        <line x1="298" y1="240" x2="298" y2="260" stroke="#6a6a6a" stroke-width="6" stroke-linecap="round"/>
+                        <line x1="298" y1="296" x2="298" y2="316" stroke="#6a6a6a" stroke-width="6" stroke-linecap="round"/>
+                        <line x1="260" y1="278" x2="280" y2="278" stroke="#6a6a6a" stroke-width="6" stroke-linecap="round"/>
+                        <line x1="316" y1="278" x2="336" y2="278" stroke="#6a6a6a" stroke-width="6" stroke-linecap="round"/>
+                        <line x1="271" y1="249" x2="285" y2="263" stroke="#5e5e5e" stroke-width="5" stroke-linecap="round"/>
+                        <line x1="311" y1="293" x2="325" y2="307" stroke="#5e5e5e" stroke-width="5" stroke-linecap="round"/>
+                        <line x1="325" y1="249" x2="311" y2="263" stroke="#5e5e5e" stroke-width="5" stroke-linecap="round"/>
+                        <line x1="271" y1="307" x2="285" y2="293" stroke="#5e5e5e" stroke-width="5" stroke-linecap="round"/>
+                        <circle cx="298" cy="278" r="11" fill="url(#pl-hub)"/>
+                        <circle cx="298" cy="278" r="5"  fill="white"/>
+                    </g>
+
+                    <!-- ── MOWER DECK (wide lime body) ── -->
+                    <rect x="60" y="210" width="270" height="62" rx="12" fill="url(#pl-deck-side)"/>
+                    <!-- deck top face -->
+                    <rect x="60" y="210" width="270" height="26" rx="12" fill="url(#pl-deck-top)"/>
+                    <!-- specular highlight -->
+                    <rect x="80"  y="218" width="150" height="8" rx="4" fill="rgba(255,255,255,.65)"/>
+                    <rect x="240" y="216" width="60"  height="5" rx="2.5" fill="rgba(255,255,255,.35)"/>
+                    <!-- underside shadow -->
+                    <rect x="62" y="264" width="266" height="8" rx="3" fill="rgba(0,0,0,.35)"/>
+                    <!-- deck glow filter overlay -->
+                    <rect x="60" y="210" width="270" height="62" rx="12" fill="rgba(210,255,60,.04)" filter="url(#pl-glow)"/>
+
+                    <!-- ── ENGINE BLOCK ── -->
+                    <rect x="180" y="170" width="100" height="46" rx="10" fill="url(#pl-eng)"/>
+                    <rect x="180" y="170" width="100" height="18" rx="10" fill="rgba(255,255,255,.22)"/>
+                    <!-- shine -->
+                    <rect x="194" y="176" width="60"  height="7" rx="3.5" fill="rgba(255,255,255,.55)"/>
+                    <!-- cooling fins -->
+                    <line x1="198" y1="192" x2="198" y2="215" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
+                    <line x1="212" y1="192" x2="212" y2="215" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
+                    <line x1="226" y1="192" x2="226" y2="215" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
+                    <line x1="240" y1="192" x2="240" y2="215" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
+                    <line x1="254" y1="192" x2="254" y2="215" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
+                    <line x1="268" y1="192" x2="268" y2="215" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
+
+                    <!-- ── EXHAUST PIPE ── -->
+                    <rect x="248" y="136" width="22" height="40" rx="11" fill="#2a2a2a"/>
+                    <rect x="252" y="136" width="10" height="20" rx="5" fill="rgba(255,255,255,.15)"/>
+                    <!-- smoke -->
+                    <circle class="pl-smoke-1" cx="259" cy="130" r="13" fill="rgba(200,200,200,.18)"/>
+                    <circle class="pl-smoke-2" cx="252" cy="114" r="9"  fill="rgba(200,200,200,.12)"/>
+                    <circle class="pl-smoke-3" cx="264" cy="100" r="6"  fill="rgba(200,200,200,.08)"/>
+
+                    <!-- ── HANDLE BAR ── -->
+                    <line x1="94" y1="218" x2="196" y2="64" stroke="url(#pl-bar)" stroke-width="18" stroke-linecap="round"/>
+                    <!-- shine on bar -->
+                    <line x1="100" y1="218" x2="202" y2="64" stroke="rgba(255,255,255,.28)" stroke-width="7" stroke-linecap="round"/>
+
+                    <!-- ── T-BAR GRIP ── -->
+                    <rect x="146" y="48" width="130" height="30" rx="15" fill="#141414"/>
+                    <rect x="146" y="48" width="130" height="12" rx="12" fill="#2e2e2e"/>
+                    <!-- rubber grips -->
+                    <line x1="168" y1="50" x2="168" y2="76" stroke="rgba(0,0,0,.5)" stroke-width="5"/>
+                    <line x1="188" y1="50" x2="188" y2="76" stroke="rgba(0,0,0,.5)" stroke-width="5"/>
+                    <line x1="208" y1="50" x2="208" y2="76" stroke="rgba(0,0,0,.5)" stroke-width="5"/>
+                    <line x1="228" y1="50" x2="228" y2="76" stroke="rgba(0,0,0,.5)" stroke-width="5"/>
+                    <line x1="248" y1="50" x2="248" y2="76" stroke="rgba(0,0,0,.5)" stroke-width="5"/>
+                    <!-- end caps -->
+                    <rect x="142" y="54" width="10" height="18" rx="5" fill="#444"/>
+                    <rect x="270" y="54" width="10" height="18" rx="5" fill="#444"/>
+                </svg>
             </div>
-            <h1 class="preloader-title">Pay As You Mow</h1>
+
+            <!-- Title -->
+            <h1 class="preloader-title">Pay As You</h1>
+            <div class="pl-mow" aria-label="Mow">MOW</div>
             <p class="preloader-subtitle">Professional Garden Maintenance</p>
+
             <div class="progress-container">
                 <div class="progress-bar"></div>
             </div>
