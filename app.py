@@ -1,7 +1,7 @@
 import json
 from uuid import uuid4
 
-from flask import Flask, request, jsonify, render_template_string, render_template, session, redirect
+from flask import Flask, request, jsonify, render_template_string, render_template, session, redirect, Response
 from flask_cors import CORS
 from flask_compress import Compress
 import os
@@ -79,6 +79,7 @@ SMTP_CONFIG_FILE = _data_path("smtp_config.json")
 EMAIL_MAGIC_FILE = _data_path("email_magic.json")
 ADMIN_AUTH_FILE = _data_path("admin_auth.json")
 WATCHDOG_CONFIG_FILE = _data_path("watchdog_config.json")
+SEO_CONFIG_FILE = _data_path("seo_config.json")
 
 CUSTOMER_ACCESS_CODE = os.getenv("CUSTOMER_ACCESS_CODE", "GARDENCARE2024")
 
@@ -150,6 +151,30 @@ _verification_codes = {}  # Store verification codes temporarily
 _watchdog_config_lock = Lock()
 _watchdog_config = {"enabled": False, "to_number": "+447595289669", "last_sent": None}
 
+_SEO_DEFAULTS: dict = {
+    "enabled": False,
+    "business_name": "Pay As You Mow",
+    "tagline": "Professional Lawn & Garden Maintenance in Manchester, UK",
+    "meta_description": "Pay As You Mow – flexible, pay-as-you-go lawn mowing and garden maintenance in Manchester, UK. No contracts, no fuss. Book a free quote today.",
+    "keywords": "lawn mowing Manchester, garden maintenance Manchester, grass cutting Manchester, gardener Manchester, pay as you go gardening, lawn care Audenshaw, garden service Denton, Tameside gardener, mowing Salford",
+    "city": "Manchester",
+    "region": "Greater Manchester",
+    "country": "GB",
+    "postcode": "",
+    "lat": "53.479",
+    "lng": "-2.2426",
+    "service_area": "Manchester, Salford, Trafford, Tameside, Oldham, Audenshaw, Denton, Stockport",
+    "google_verification": "",
+    "bing_verification": "",
+    "schema_enabled": True,
+    "sitemap_enabled": True,
+    "robots_index": True,
+    "og_image": "",
+    "canonical_url": "",
+}
+_seo_config_lock = Lock()
+_seo_config: dict = dict(_SEO_DEFAULTS)
+
 _smtp_config_lock = Lock()
 _smtp_config = {
     "host": "",
@@ -216,6 +241,7 @@ _ensure_storage_file(WEATHER_CONFIG_FILE, default={"api_key": ""})
 _ensure_storage_file(SMSAPI_CONFIG_FILE, default={"oauth_token": "", "sender_name": ""})
 _ensure_storage_file(TELNYX_CONFIG_FILE, default={"api_key": "", "from_number": ""})
 _ensure_storage_file(WATCHDOG_CONFIG_FILE, default={"enabled": False, "to_number": "+447595289669", "last_sent": None})
+_ensure_storage_file(SEO_CONFIG_FILE, default=dict(_SEO_DEFAULTS))
 _ensure_storage_file(
     SMTP_CONFIG_FILE,
     default={
@@ -698,6 +724,36 @@ def _save_watchdog_config(config: dict | None = None) -> None:
             json.dump(snapshot, fh, indent=2)
     except OSError:
         pass
+
+
+def _load_seo_config_from_disk() -> dict:
+    defaults = dict(_SEO_DEFAULTS)
+    if not os.path.exists(SEO_CONFIG_FILE):
+        return defaults
+    try:
+        with open(SEO_CONFIG_FILE, "r", encoding="utf-8") as fh:
+            payload = json.load(fh)
+        if not isinstance(payload, dict):
+            return defaults
+        merged = dict(defaults)
+        merged.update(payload)
+        return merged
+    except (OSError, json.JSONDecodeError):
+        return defaults
+
+
+def _save_seo_config(config: dict | None = None) -> None:
+    snapshot = dict(config or _seo_config)
+    try:
+        with open(SEO_CONFIG_FILE, "w", encoding="utf-8") as fh:
+            json.dump(snapshot, fh, indent=2)
+    except OSError:
+        pass
+
+
+def _seo_snapshot() -> dict:
+    with _seo_config_lock:
+        return dict(_seo_config)
 
 
 def _start_watchdog_thread() -> None:
@@ -2274,6 +2330,11 @@ with _watchdog_config_lock:
     _watchdog_config.update(stored_watchdog)
 
 
+with _seo_config_lock:
+    stored_seo = _load_seo_config_from_disk()
+    _seo_config.update(stored_seo)
+
+
 with _customer_settings_lock:
     stored_customer_settings = _load_customer_settings_from_disk()
     if isinstance(stored_customer_settings, dict):
@@ -3337,6 +3398,80 @@ def admin_watchdog_test():
     return jsonify({"ok": False, "message": f"Failed: {detail}"}), 500
 
 
+# ---------------------------------------------------------------------------
+# SEO: sitemap.xml + robots.txt
+# ---------------------------------------------------------------------------
+
+@app.route("/sitemap.xml", methods=["GET"])
+def sitemap_xml():
+    seo = _seo_snapshot()
+    if not seo.get("sitemap_enabled", True):
+        return "", 404
+    canonical = (seo.get("canonical_url") or "").rstrip("/")
+    if not canonical:
+        canonical = request.url_root.rstrip("/")
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f'  <url>\n'
+        f'    <loc>{canonical}/</loc>\n'
+        f'    <lastmod>{today}</lastmod>\n'
+        f'    <changefreq>weekly</changefreq>\n'
+        f'    <priority>1.0</priority>\n'
+        f'  </url>\n'
+        f'</urlset>'
+    )
+    return Response(xml, mimetype="application/xml")
+
+
+@app.route("/robots.txt", methods=["GET"])
+def robots_txt():
+    seo = _seo_snapshot()
+    canonical = (seo.get("canonical_url") or "").rstrip("/")
+    if not canonical:
+        canonical = request.url_root.rstrip("/")
+    if seo.get("enabled", False) and seo.get("robots_index", True):
+        content = (
+            "User-agent: *\n"
+            "Allow: /\n"
+            "Disallow: /admin\n"
+            "Disallow: /admin/\n"
+            f"Sitemap: {canonical}/sitemap.xml\n"
+        )
+    else:
+        content = "User-agent: *\nDisallow: /\n"
+    return Response(content, mimetype="text/plain")
+
+
+# ---------------------------------------------------------------------------
+# Admin: SEO configuration
+# ---------------------------------------------------------------------------
+
+@app.route("/admin/seo/config", methods=["GET", "POST"])
+@require_admin_auth
+def admin_seo_config():
+    global _seo_config
+
+    if request.method == "GET":
+        return jsonify({"config": _seo_snapshot()})
+
+    payload = request.get_json(silent=True) or {}
+
+    with _seo_config_lock:
+        for key in _SEO_DEFAULTS:
+            if key in payload:
+                val = payload[key]
+                if isinstance(_SEO_DEFAULTS[key], bool):
+                    _seo_config[key] = bool(val)
+                else:
+                    _seo_config[key] = str(val) if val is not None else ""
+        cfg = dict(_seo_config)
+
+    _save_seo_config(cfg)
+    return jsonify({"message": "SEO settings saved.", "config": cfg})
+
+
 @app.route("/admin/email/config", methods=["GET", "POST"])
 @require_admin_auth
 def admin_email_config():
@@ -4059,7 +4194,7 @@ def _delete_customer_slot_by_id(slot_id: str):
 
 @app.route("/")
 def home():
-    return render_template('index.html', reviews=load_reviews(), availability=load_availability())
+    return render_template('index.html', reviews=load_reviews(), availability=load_availability(), seo=_seo_snapshot())
 
 
 @app.route("/customer-login")

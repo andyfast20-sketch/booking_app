@@ -3,7 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% if seo and seo.enabled %}
+    {# ── SEO: dynamically injected when enabled in admin ── #}
+    <title>{{ seo.business_name }} | {{ seo.tagline }}</title>
+    <meta name="description" content="{{ seo.meta_description }}">
+    <meta name="keywords" content="{{ seo.keywords }}">
+    <meta name="robots" content="{{ 'index, follow' if seo.robots_index else 'noindex, nofollow' }}">
+    <!-- Geo targeting: Manchester, UK -->
+    <meta name="geo.region" content="GB-MEN">
+    <meta name="geo.placename" content="{{ seo.city }}, {{ seo.region }}, UK">
+    <meta name="geo.position" content="{{ seo.lat }};{{ seo.lng }}">
+    <meta name="ICBM" content="{{ seo.lat }}, {{ seo.lng }}">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="en_GB">
+    <meta property="og:site_name" content="{{ seo.business_name }}">
+    <meta property="og:title" content="{{ seo.business_name }} | {{ seo.tagline }}">
+    <meta property="og:description" content="{{ seo.meta_description }}">
+    {% if seo.canonical_url %}<meta property="og:url" content="{{ seo.canonical_url }}">{% endif %}
+    {% if seo.og_image %}<meta property="og:image" content="{{ seo.og_image }}">{% endif %}
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ seo.business_name }} | {{ seo.tagline }}">
+    <meta name="twitter:description" content="{{ seo.meta_description }}">
+    {% if seo.og_image %}<meta name="twitter:image" content="{{ seo.og_image }}">{% endif %}
+    <!-- Canonical -->
+    {% if seo.canonical_url %}<link rel="canonical" href="{{ seo.canonical_url }}">{% endif %}
+    <!-- Search Console verification -->
+    {% if seo.google_verification %}<meta name="google-site-verification" content="{{ seo.google_verification }}">{% endif %}
+    {% if seo.bing_verification %}<meta name="msvalidate.01" content="{{ seo.bing_verification }}">{% endif %}
+    {% if seo.schema_enabled %}
+    <!-- Schema.org LocalBusiness (helps Google understand who you are) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "{{ seo.business_name }}",
+      "description": "{{ seo.meta_description }}",
+      {% if seo.canonical_url %}"url": "{{ seo.canonical_url }}",{% endif %}
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "{{ seo.city }}",
+        "addressRegion": "{{ seo.region }}",
+        {% if seo.postcode %}"postalCode": "{{ seo.postcode }}",{% endif %}
+        "addressCountry": "{{ seo.country }}"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "{{ seo.lat }}",
+        "longitude": "{{ seo.lng }}"
+      },
+      "areaServed": "{{ seo.service_area }}",
+      "priceRange": "££",
+      "currenciesAccepted": "GBP",
+      "paymentAccepted": "Cash, Card",
+      "@id": "{{ seo.canonical_url or '' }}#business"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": "Lawn Mowing &amp; Garden Maintenance",
+      "provider": {
+        "@type": "LocalBusiness",
+        "name": "{{ seo.business_name }}"
+      },
+      "areaServed": "{{ seo.service_area }}",
+      "serviceType": "Lawn Mowing, Garden Maintenance",
+      "description": "{{ seo.meta_description }}"
+    }
+    </script>
+    {% endif %}
+    {% else %}
     <title>Pay As You Mow | Professional Garden Maintenance</title>
+    {% endif %}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>

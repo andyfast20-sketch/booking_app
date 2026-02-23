@@ -1374,6 +1374,212 @@
   </header>
 
   <main class="panel-grid">
+
+    <!-- ── Google SEO & Search Rankings ─────────────────────────────────── -->
+    <section class="panel" aria-labelledby="seo-heading" data-panel data-expanded="false">
+      <div class="panel-header">
+        <div class="meta">
+          <h2 id="seo-heading">Google SEO &amp; Search Rankings</h2>
+          <p>Optimise this site to appear at the top of Google for Manchester lawn &amp; garden searches.</p>
+        </div>
+        <div class="panel-actions">
+          <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="seoPanelBody">Expand</button>
+        </div>
+      </div>
+      <div class="panel-summary">
+        <p class="panel-summary-highlight" id="seoSummaryHighlight">Help customers in Manchester find you on Google.</p>
+        <p class="panel-summary-note">Expand to enable meta tags, structured data, sitemap, verification codes and more.</p>
+      </div>
+      <div class="panel-body" id="seoPanelBody" hidden>
+        <form id="seoForm" class="grid" autocomplete="off" novalidate>
+          <div class="section">
+
+            <!-- Master enable toggle -->
+            <div style="display:flex;align-items:center;gap:14px;padding:18px 20px;background:rgba(48,195,166,0.08);border:1px solid rgba(48,195,166,0.3);border-radius:14px;margin-bottom:24px;">
+              <input type="checkbox" id="seoEnabled" style="width:20px;height:20px;cursor:pointer;accent-color:var(--accent);flex-shrink:0;">
+              <div>
+                <strong style="display:block;color:var(--text-primary);font-size:1.05rem;">Enable SEO optimisation</strong>
+                <span style="font-size:0.85rem;color:var(--text-muted);">Turns on all meta tags, structured data, sitemap and robots.txt. Turn off to remove all SEO output.</span>
+              </div>
+            </div>
+
+            <!-- ── What has been done ───────────────────────────────────── -->
+            <div style="background:var(--panel-bg);border:1px solid var(--panel-border);border-radius:14px;padding:20px;margin-bottom:24px;">
+              <p style="margin:0 0 14px 0;font-weight:700;font-size:1rem;color:var(--text-primary);">What gets activated when enabled</p>
+              <div style="display:grid;gap:8px;font-size:0.88rem;line-height:1.5;">
+                <div style="display:flex;gap:10px;align-items:baseline;"><span style="color:#30c3a6;font-size:1rem;">✅</span><span><strong>Dynamic &lt;title&gt; tag</strong> — keyword-rich page title with your business name and location</span></div>
+                <div style="display:flex;gap:10px;align-items:baseline;"><span style="color:#30c3a6;font-size:1rem;">✅</span><span><strong>Meta description</strong> — the snippet Google shows under your result</span></div>
+                <div style="display:flex;gap:10px;align-items:baseline;"><span style="color:#30c3a6;font-size:1rem;">✅</span><span><strong>Keywords meta tag</strong> — supports Bing &amp; minor engines</span></div>
+                <div style="display:flex;gap:10px;align-items:baseline;"><span style="color:#30c3a6;font-size:1rem;">✅</span><span><strong>Geo / location tags</strong> — tells Google you serve Manchester (geo.region GB-MEN, ICBM coordinates)</span></div>
+                <div style="display:flex;gap:10px;align-items:baseline;"><span style="color:#30c3a6;font-size:1rem;">✅</span><span><strong>Open Graph &amp; Twitter Card tags</strong> — rich link previews on social media</span></div>
+                <div style="display:flex;gap:10px;align-items:baseline;"><span style="color:#30c3a6;font-size:1rem;">✅</span><span><strong>JSON-LD LocalBusiness schema</strong> — structured data tells Google your name, address, service area, hours</span></div>
+                <div style="display:flex;gap:10px;align-items:baseline;"><span style="color:#30c3a6;font-size:1rem;">✅</span><span><strong>JSON-LD Service schema</strong> — reinforces you offer lawn mowing &amp; garden maintenance in Manchester</span></div>
+                <div style="display:flex;gap:10px;align-items:baseline;"><span style="color:#30c3a6;font-size:1rem;">✅</span><span><strong>XML Sitemap at <a href="/sitemap.xml" target="_blank" style="color:var(--accent);">/sitemap.xml</a></strong> — the machine-readable map Google uses to find your pages</span></div>
+                <div style="display:flex;gap:10px;align-items:baseline;"><span style="color:#30c3a6;font-size:1rem;">✅</span><span><strong>robots.txt at <a href="/robots.txt" target="_blank" style="color:var(--accent);">/robots.txt</a></strong> — allows Googlebot to crawl, blocks admin routes</span></div>
+                <div style="display:flex;gap:10px;align-items:baseline;"><span style="color:#30c3a6;font-size:1rem;">✅</span><span><strong>Canonical URL</strong> — prevents duplicate-content penalties (set below)</span></div>
+                <div style="display:flex;gap:10px;align-items:baseline;"><span style="color:#ffd166;font-size:1rem;">⚠️</span><span><strong>Google Search Console verification</strong> — paste your verification token below, then <a href="https://search.google.com/search-console" target="_blank" rel="noopener" style="color:var(--accent);">submit your sitemap in GSC</a></span></div>
+                <div style="display:flex;gap:10px;align-items:baseline;"><span style="color:#ffd166;font-size:1rem;">⚠️</span><span><strong>Bing Webmaster verification</strong> — paste your token below, then submit in <a href="https://www.bing.com/webmasters" target="_blank" rel="noopener" style="color:var(--accent);">Bing Webmaster Tools</a></span></div>
+              </div>
+            </div>
+
+            <!-- ── Timeline to appear in Google ───────────────────────── -->
+            <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:14px;padding:20px;margin-bottom:24px;">
+              <p style="margin:0 0 14px 0;font-weight:700;font-size:1rem;color:var(--text-primary);">When will this appear in Google?</p>
+              <div style="display:grid;gap:10px;font-size:0.88rem;">
+                <div style="display:flex;gap:12px;">
+                  <span style="background:rgba(59,130,246,0.2);color:#60a5fa;padding:2px 9px;border-radius:20px;font-size:0.78rem;font-weight:700;white-space:nowrap;align-self:flex-start;margin-top:2px;">0–3 days</span>
+                  <span>Enable SEO + enable &amp; save. Your <strong>sitemap.xml</strong> and <strong>robots.txt</strong> are immediately live. Google can discover them on its next crawl.</span>
+                </div>
+                <div style="display:flex;gap:12px;">
+                  <span style="background:rgba(59,130,246,0.2);color:#60a5fa;padding:2px 9px;border-radius:20px;font-size:0.78rem;font-weight:700;white-space:nowrap;align-self:flex-start;margin-top:2px;">1–2 weeks</span>
+                  <span>After submitting your sitemap to <a href="https://search.google.com/search-console" target="_blank" rel="noopener" style="color:var(--accent);">Google Search Console</a>, Google will crawl and index your site. Your first appearances in search results start here.</span>
+                </div>
+                <div style="display:flex;gap:12px;">
+                  <span style="background:rgba(249,115,22,0.2);color:#fb923c;padding:2px 9px;border-radius:20px;font-size:0.78rem;font-weight:700;white-space:nowrap;align-self:flex-start;margin-top:2px;">4–8 weeks</span>
+                  <span>For local terms like <em>"lawn mowing Manchester"</em>, expect to appear on page 2–4. Freshness of content, local citations and reviews build authority.</span>
+                </div>
+                <div style="display:flex;gap:12px;">
+                  <span style="background:rgba(34,197,94,0.2);color:#4ade80;padding:2px 9px;border-radius:20px;font-size:0.78rem;font-weight:700;white-space:nowrap;align-self:flex-start;margin-top:2px;">3–6 months</span>
+                  <span>Consistent site with reviews, a <strong>Google Business Profile</strong> and local citations can reach <strong>page 1 for Manchester searches</strong>. The structured data you're enabling now is key groundwork.</span>
+                </div>
+                <div style="border-top:1px solid rgba(59,130,246,0.2);padding-top:12px;margin-top:2px;">
+                  <strong style="color:var(--text-primary);">Biggest impact actions (beyond this panel):</strong>
+                  <ol style="margin:8px 0 0 0;padding-left:20px;line-height:1.9;color:var(--text-muted);">
+                    <li>Create a free <a href="https://business.google.com" target="_blank" rel="noopener" style="color:var(--accent);">Google Business Profile</a> — the single biggest local SEO factor</li>
+                    <li>Submit sitemap to <a href="https://search.google.com/search-console" target="_blank" rel="noopener" style="color:var(--accent);">Google Search Console</a> after adding verification code below</li>
+                    <li>Ask satisfied customers to leave a <strong>Google review</strong></li>
+                    <li>List on <a href="https://www.yell.com" target="_blank" rel="noopener" style="color:var(--accent);">Yell.com</a>, <a href="https://www.checkatrade.com" target="_blank" rel="noopener" style="color:var(--accent);">Checkatrade</a>, <a href="https://www.trustatrader.com" target="_blank" rel="noopener" style="color:var(--accent);">TrustATrader</a> (NAP consistency builds authority)</li>
+                    <li>Add regular blog posts targeting <em>"Manchester lawn care tips"</em> style long-tail keywords</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Business details ──────────────────────────────────── -->
+            <p class="eyebrow" style="margin-top:8px;">Business Details</p>
+            <h3 style="margin:0 0 16px 0;color:var(--text-primary);">Identity &amp; Location</h3>
+
+            <label for="seoBusinessName">
+              <strong style="display:block;margin-bottom:6px;color:var(--text-primary);">Business name</strong>
+              <input id="seoBusinessName" type="text" placeholder="Pay As You Mow" autocomplete="off" />
+            </label>
+
+            <label for="seoTagline">
+              <strong style="display:block;margin-bottom:6px;color:var(--text-primary);">Tagline <span style="font-size:0.8rem;color:var(--text-muted);">(shown after | in page title)</span></strong>
+              <input id="seoTagline" type="text" placeholder="Professional Lawn & Garden Maintenance in Manchester, UK" autocomplete="off" />
+            </label>
+
+            <label for="seoMetaDescription">
+              <strong style="display:block;margin-bottom:6px;color:var(--text-primary);">Meta description <span style="font-size:0.8rem;color:var(--text-muted);">(aim for 150–160 characters)</span></strong>
+              <textarea id="seoMetaDescription" rows="3" style="resize:vertical;" placeholder="Pay As You Mow – flexible, pay-as-you-go lawn mowing and garden maintenance in Manchester, UK. No contracts, no fuss. Book a free quote today."></textarea>
+              <span id="seoMetaDescCount" style="font-size:0.78rem;color:var(--text-muted);"></span>
+            </label>
+
+            <label for="seoKeywords">
+              <strong style="display:block;margin-bottom:6px;color:var(--text-primary);">Keywords <span style="font-size:0.8rem;color:var(--text-muted);">(comma-separated)</span></strong>
+              <textarea id="seoKeywords" rows="2" style="resize:vertical;" placeholder="lawn mowing Manchester, garden maintenance Manchester, grass cutting Manchester, gardener Manchester"></textarea>
+            </label>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <label for="seoCity">
+                <strong style="display:block;margin-bottom:6px;color:var(--text-primary);">City</strong>
+                <input id="seoCity" type="text" placeholder="Manchester" autocomplete="off" />
+              </label>
+              <label for="seoRegion">
+                <strong style="display:block;margin-bottom:6px;color:var(--text-primary);">Region</strong>
+                <input id="seoRegion" type="text" placeholder="Greater Manchester" autocomplete="off" />
+              </label>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <label for="seoPostcode">
+                <strong style="display:block;margin-bottom:6px;color:var(--text-primary);">Postcode <span style="font-size:0.8rem;color:var(--text-muted);">(optional)</span></strong>
+                <input id="seoPostcode" type="text" placeholder="M34 5AB" autocomplete="off" />
+              </label>
+              <label for="seoServiceArea">
+                <strong style="display:block;margin-bottom:6px;color:var(--text-primary);">Service area towns</strong>
+                <input id="seoServiceArea" type="text" placeholder="Manchester, Denton, Audenshaw, Tameside…" autocomplete="off" />
+              </label>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <label for="seoLat">
+                <strong style="display:block;margin-bottom:6px;color:var(--text-primary);">Latitude</strong>
+                <input id="seoLat" type="text" placeholder="53.479" autocomplete="off" />
+              </label>
+              <label for="seoLng">
+                <strong style="display:block;margin-bottom:6px;color:var(--text-primary);">Longitude</strong>
+                <input id="seoLng" type="text" placeholder="-2.2426" autocomplete="off" />
+              </label>
+            </div>
+
+            <label for="seoCanonicalUrl">
+              <strong style="display:block;margin-bottom:6px;color:var(--text-primary);">Canonical URL <span style="font-size:0.8rem;color:var(--text-muted);">(your full domain, e.g. https://payasyoumow.co.uk)</span></strong>
+              <input id="seoCanonicalUrl" type="url" placeholder="https://payasyoumow.co.uk" autocomplete="off" />
+            </label>
+
+            <label for="seoOgImage">
+              <strong style="display:block;margin-bottom:6px;color:var(--text-primary);">Social share image URL <span style="font-size:0.8rem;color:var(--text-muted);">(og:image, shown when shared on Facebook/WhatsApp)</span></strong>
+              <input id="seoOgImage" type="url" placeholder="https://payasyoumow.co.uk/static/images/og-share.jpg" autocomplete="off" />
+            </label>
+
+            <!-- ── Search engine verification ──────────────────────── -->
+            <p class="eyebrow" style="margin-top:20px;">Search Console Verification</p>
+            <h3 style="margin:0 0 16px 0;color:var(--text-primary);">Google &amp; Bing Verification</h3>
+
+            <div style="background:rgba(255,209,102,0.07);border:1px solid rgba(255,209,102,0.25);border-radius:12px;padding:14px 16px;margin-bottom:18px;font-size:0.87rem;line-height:1.6;">
+              <strong>How to get your Google verification code:</strong>
+              <ol style="margin:6px 0 0 0;padding-left:18px;">
+                <li>Go to <a href="https://search.google.com/search-console/welcome" target="_blank" rel="noopener" style="color:var(--accent);">Google Search Console</a> → Add Property → your domain</li>
+                <li>Choose <strong>HTML tag</strong> verification method</li>
+                <li>Copy only the <code>content="…"</code> value (not the whole tag)</li>
+                <li>Paste it below and save</li>
+                <li>Click <strong>Verify</strong> on Google — then submit your sitemap URL: <code>/sitemap.xml</code></li>
+              </ol>
+            </div>
+
+            <label for="seoGoogleVerification">
+              <strong style="display:block;margin-bottom:6px;color:var(--text-primary);">Google Search Console verification code</strong>
+              <input id="seoGoogleVerification" type="text" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false" />
+            </label>
+
+            <label for="seoBingVerification">
+              <strong style="display:block;margin-bottom:6px;color:var(--text-primary);">Bing Webmaster verification code <span style="font-size:0.8rem;color:var(--text-muted);">(optional)</span></strong>
+              <input id="seoBingVerification" type="text" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false" />
+            </label>
+
+            <!-- ── Advanced toggles ────────────────────────────────── -->
+            <p class="eyebrow" style="margin-top:20px;">Advanced Options</p>
+
+            <div style="display:grid;gap:12px;margin-bottom:16px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" id="seoSchemaEnabled" style="width:17px;height:17px;cursor:pointer;accent-color:var(--accent);">
+                <span style="color:var(--text-primary);font-weight:500;">Enable JSON-LD structured data (LocalBusiness + Service schema)</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" id="seoSitemapEnabled" style="width:17px;height:17px;cursor:pointer;accent-color:var(--accent);">
+                <span style="color:var(--text-primary);font-weight:500;">Enable XML sitemap at <code>/sitemap.xml</code></span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" id="seoRobotsIndex" style="width:17px;height:17px;cursor:pointer;accent-color:var(--accent);">
+                <span style="color:var(--text-primary);font-weight:500;">Allow Google to index this site <span style="font-size:0.82rem;color:var(--text-muted);">(uncheck to hide from all search engines)</span></span>
+              </label>
+            </div>
+
+            <p class="input-note" id="seoStatus" style="font-weight:600;font-size:0.95rem;margin-top:10px;"></p>
+          </div>
+
+          <div class="form-feedback" id="seoFeedback"></div>
+
+          <div class="panel-actions" style="flex-wrap:wrap;gap:10px;">
+            <button type="submit" class="primary">Save SEO settings</button>
+            <a href="/sitemap.xml" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid var(--panel-border);color:var(--text-primary);text-decoration:none;font-size:0.9rem;font-weight:500;">View sitemap.xml</a>
+            <a href="/robots.txt" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid var(--panel-border);color:var(--text-primary);text-decoration:none;font-size:0.9rem;font-weight:500;">View robots.txt</a>
+          </div>
+        </form>
+      </div>
+    </section>
+
     <section class="panel" aria-labelledby="bookings-heading" data-panel data-expanded="false">
       <div class="panel-header">
         <div class="meta">
@@ -4077,6 +4283,126 @@
       }
     }
 
+    // ── SEO JS ──────────────────────────────────────────────────────────────
+
+    let seoConfig = {
+      enabled: false, business_name: 'Pay As You Mow',
+      tagline: 'Professional Lawn & Garden Maintenance in Manchester, UK',
+      meta_description: '', keywords: '', city: 'Manchester', region: 'Greater Manchester',
+      country: 'GB', postcode: '', lat: '53.479', lng: '-2.2426',
+      service_area: '', google_verification: '', bing_verification: '',
+      schema_enabled: true, sitemap_enabled: true, robots_index: true,
+      og_image: '', canonical_url: '',
+    };
+
+    async function loadSeoConfig() {
+      try {
+        const res = await fetch('/admin/seo/config');
+        if (!res.ok) throw new Error('Unable to load SEO settings.');
+        const data = await res.json().catch(() => ({}));
+        const incoming = data && typeof data.config === 'object' ? data.config : {};
+        seoConfig = { ...seoConfig, ...incoming };
+        renderSeoState();
+      } catch (err) {
+        console.error('Unable to load SEO settings.', err);
+      }
+    }
+
+    function renderSeoState() {
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+      const setChk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
+
+      setChk('seoEnabled', seoConfig.enabled);
+      setVal('seoBusinessName', seoConfig.business_name);
+      setVal('seoTagline', seoConfig.tagline);
+      setVal('seoMetaDescription', seoConfig.meta_description);
+      setVal('seoKeywords', seoConfig.keywords);
+      setVal('seoCity', seoConfig.city);
+      setVal('seoRegion', seoConfig.region);
+      setVal('seoPostcode', seoConfig.postcode);
+      setVal('seoServiceArea', seoConfig.service_area);
+      setVal('seoLat', seoConfig.lat);
+      setVal('seoLng', seoConfig.lng);
+      setVal('seoCanonicalUrl', seoConfig.canonical_url);
+      setVal('seoOgImage', seoConfig.og_image);
+      setVal('seoGoogleVerification', seoConfig.google_verification);
+      setVal('seoBingVerification', seoConfig.bing_verification);
+      setChk('seoSchemaEnabled', seoConfig.schema_enabled);
+      setChk('seoSitemapEnabled', seoConfig.sitemap_enabled);
+      setChk('seoRobotsIndex', seoConfig.robots_index);
+      updateSeoDescCount();
+
+      const statusEl = document.getElementById('seoStatus');
+      const summaryEl = document.getElementById('seoSummaryHighlight');
+      if (seoConfig.enabled) {
+        if (statusEl) { statusEl.textContent = '✓ SEO is enabled — meta tags, structured data and sitemap are live.'; statusEl.style.color = '#30c3a6'; }
+        if (summaryEl) summaryEl.textContent = 'SEO active — Google can find you in Manchester searches.';
+      } else {
+        if (statusEl) { statusEl.textContent = '⚠ SEO is disabled — enable it and save to activate all optimisations.'; statusEl.style.color = '#ffd166'; }
+        if (summaryEl) summaryEl.textContent = 'SEO inactive — enable to help customers in Manchester find you on Google.';
+      }
+    }
+
+    function updateSeoDescCount() {
+      const ta = document.getElementById('seoMetaDescription');
+      const counter = document.getElementById('seoMetaDescCount');
+      if (!ta || !counter) return;
+      const len = (ta.value || '').length;
+      counter.textContent = `${len} / 160 chars`;
+      counter.style.color = len > 160 ? 'var(--danger)' : len >= 130 ? '#30c3a6' : 'var(--text-muted)';
+    }
+
+    const seoDescTextarea = document.getElementById('seoMetaDescription');
+    if (seoDescTextarea) seoDescTextarea.addEventListener('input', updateSeoDescCount);
+
+    async function persistSeoConfig(event) {
+      if (event) event.preventDefault();
+      const feedbackEl = document.getElementById('seoFeedback');
+      if (feedbackEl) { feedbackEl.classList.remove('visible', 'success'); feedbackEl.textContent = ''; }
+
+      const payload = {
+        enabled: document.getElementById('seoEnabled')?.checked || false,
+        business_name: document.getElementById('seoBusinessName')?.value.trim() || '',
+        tagline: document.getElementById('seoTagline')?.value.trim() || '',
+        meta_description: document.getElementById('seoMetaDescription')?.value.trim() || '',
+        keywords: document.getElementById('seoKeywords')?.value.trim() || '',
+        city: document.getElementById('seoCity')?.value.trim() || '',
+        region: document.getElementById('seoRegion')?.value.trim() || '',
+        postcode: document.getElementById('seoPostcode')?.value.trim() || '',
+        service_area: document.getElementById('seoServiceArea')?.value.trim() || '',
+        lat: document.getElementById('seoLat')?.value.trim() || '',
+        lng: document.getElementById('seoLng')?.value.trim() || '',
+        canonical_url: document.getElementById('seoCanonicalUrl')?.value.trim() || '',
+        og_image: document.getElementById('seoOgImage')?.value.trim() || '',
+        google_verification: document.getElementById('seoGoogleVerification')?.value.trim() || '',
+        bing_verification: document.getElementById('seoBingVerification')?.value.trim() || '',
+        schema_enabled: document.getElementById('seoSchemaEnabled')?.checked || false,
+        sitemap_enabled: document.getElementById('seoSitemapEnabled')?.checked || false,
+        robots_index: document.getElementById('seoRobotsIndex')?.checked || false,
+      };
+
+      try {
+        const res = await fetch('/admin/seo/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || 'Unable to save SEO settings.');
+        seoConfig = { ...seoConfig, ...(data.config || {}) };
+        renderSeoState();
+        if (feedbackEl) {
+          feedbackEl.textContent = '✓ SEO settings saved. Meta tags, sitemap and robots.txt are now' + (payload.enabled ? ' live.' : ' disabled.');
+          feedbackEl.classList.add('visible', 'success');
+        }
+      } catch (err) {
+        if (feedbackEl) { feedbackEl.textContent = err.message; feedbackEl.classList.add('visible'); }
+      }
+    }
+
+    const seoForm = document.getElementById('seoForm');
+    if (seoForm) seoForm.addEventListener('submit', persistSeoConfig);
+
     // ── Watchdog JS ─────────────────────────────────────────────────────────
 
     let watchdogConfig = { enabled: false, to_number: '+447595289669', last_sent: null };
@@ -6509,6 +6835,7 @@
 
     loadAutopilotConfig();
     loadWeatherConfig();
+    loadSeoConfig();
     loadTelnyxConfig();
     loadWatchdogConfig();
     loadSmsapiConfig();
