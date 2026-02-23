@@ -5017,12 +5017,12 @@
 
             <!-- Large animated lawnmower SVG -->
             <div class="preloader-logo" aria-hidden="true">
-                <svg class="pl-mower-svg" viewBox="0 0 420 310" xmlns="http://www.w3.org/2000/svg">
+                <svg class="pl-mower-svg" viewBox="0 0 520 360" xmlns="http://www.w3.org/2000/svg">
                     <defs>
-                        <radialGradient id="pl-deck-top" cx="0.5" cy="0" r="1">
-                            <stop offset="0%" stop-color="#d4f026"/>
+                        <linearGradient id="pl-deck-top" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#ccee18"/>
                             <stop offset="100%" stop-color="#6b9a00"/>
-                        </radialGradient>
+                        </linearGradient>
                         <linearGradient id="pl-deck-side" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stop-color="#9dc40a"/>
                             <stop offset="100%" stop-color="#3d6200"/>
@@ -5041,119 +5041,170 @@
                             <stop offset="100%" stop-color="#888"/>
                         </radialGradient>
                         <linearGradient id="pl-bar" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stop-color="#b8b8b8"/>
+                            <stop offset="0%" stop-color="#c0c0c0"/>
                             <stop offset="100%" stop-color="#383838"/>
                         </linearGradient>
+                        <linearGradient id="pl-shirt" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#ff9a00"/>
+                            <stop offset="100%" stop-color="#e65c00"/>
+                        </linearGradient>
                         <filter id="pl-glow">
-                            <feGaussianBlur stdDeviation="5" result="blur"/>
-                            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                            <feGaussianBlur stdDeviation="4" result="b"/>
+                            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
                         </filter>
                     </defs>
 
-                    <!-- Speed lines left -->
+                    <!-- Ground shadow -->
+                    <ellipse cx="330" cy="330" rx="200" ry="13" fill="rgba(0,0,0,.4)"/>
+
+                    <!-- Speed lines (motion, to the left) -->
                     <g class="pl-speed">
-                        <line x1="10" y1="200" x2="62" y2="200" stroke="rgba(180,255,80,.7)" stroke-width="5" stroke-linecap="round"/>
-                        <line x1="4"  y1="220" x2="52" y2="220" stroke="rgba(180,255,80,.45)" stroke-width="3.5" stroke-linecap="round"/>
-                        <line x1="14" y1="240" x2="58" y2="240" stroke="rgba(180,255,80,.28)" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="8"  y1="230" x2="56" y2="230" stroke="rgba(180,255,80,.7)"  stroke-width="5"   stroke-linecap="round"/>
+                        <line x1="4"  y1="250" x2="48" y2="250" stroke="rgba(180,255,80,.45)" stroke-width="3.5" stroke-linecap="round"/>
+                        <line x1="12" y1="270" x2="52" y2="270" stroke="rgba(180,255,80,.28)" stroke-width="2.5" stroke-linecap="round"/>
                     </g>
 
-                    <!-- Uncut grass blades (right, ahead of front wheel) -->
-                    <line x1="352" y1="285" x2="344" y2="248" stroke="#4caf50" stroke-width="7" stroke-linecap="round"/>
-                    <line x1="372" y1="285" x2="365" y2="244" stroke="#66bb6a" stroke-width="6" stroke-linecap="round"/>
-                    <line x1="390" y1="285" x2="386" y2="252" stroke="#388e3c" stroke-width="5.5" stroke-linecap="round"/>
-                    <line x1="408" y1="285" x2="404" y2="258" stroke="#4caf50" stroke-width="5" stroke-linecap="round"/>
+                    <!-- Uncut grass blades ahead (right of front wheel) -->
+                    <line x1="456" y1="318" x2="448" y2="278" stroke="#4caf50" stroke-width="7"   stroke-linecap="round"/>
+                    <line x1="474" y1="318" x2="467" y2="274" stroke="#66bb6a" stroke-width="6"   stroke-linecap="round"/>
+                    <line x1="492" y1="318" x2="488" y2="280" stroke="#388e3c" stroke-width="5.5" stroke-linecap="round"/>
+                    <line x1="510" y1="318" x2="506" y2="285" stroke="#4caf50" stroke-width="5"   stroke-linecap="round"/>
 
-                    <!-- ── REAR WHEEL (large) ── -->
+                    <!-- ── REAR WHEEL (left / large) ── -->
                     <g class="pl-wheel-rear">
-                        <circle cx="130" cy="268" r="58" fill="url(#pl-whl)"/>
-                        <!-- tyre band -->
-                        <circle cx="130" cy="268" r="46" fill="none" stroke="#2e2e2e" stroke-width="8"/>
-                        <!-- tread dashes -->
-                        <circle cx="130" cy="268" r="58" fill="none" stroke="#1a1a1a" stroke-width="5" stroke-dasharray="18,16"/>
-                        <!-- rim -->
-                        <circle cx="130" cy="268" r="28" fill="#1e1e1e" stroke="#4a4a4a" stroke-width="3"/>
+                        <circle cx="272" cy="308" r="40" fill="url(#pl-whl)"/>
+                        <circle cx="272" cy="308" r="31" fill="none" stroke="#2e2e2e" stroke-width="7"/>
+                        <circle cx="272" cy="308" r="40" fill="none" stroke="#1a1a1a" stroke-width="4.5" stroke-dasharray="16,14"/>
+                        <circle cx="272" cy="308" r="22" fill="#1e1e1e" stroke="#4a4a4a" stroke-width="2.5"/>
                         <!-- spokes -->
-                        <line x1="130" y1="213" x2="130" y2="241" stroke="#6a6a6a" stroke-width="7" stroke-linecap="round"/>
-                        <line x1="130" y1="295" x2="130" y2="323" stroke="#6a6a6a" stroke-width="7" stroke-linecap="round"/>
-                        <line x1="75"  y1="268" x2="103" y2="268" stroke="#6a6a6a" stroke-width="7" stroke-linecap="round"/>
-                        <line x1="157" y1="268" x2="185" y2="268" stroke="#6a6a6a" stroke-width="7" stroke-linecap="round"/>
-                        <line x1="91"  y1="229" x2="110" y2="248" stroke="#5e5e5e" stroke-width="6" stroke-linecap="round"/>
-                        <line x1="150" y1="288" x2="169" y2="307" stroke="#5e5e5e" stroke-width="6" stroke-linecap="round"/>
-                        <line x1="169" y1="229" x2="150" y2="248" stroke="#5e5e5e" stroke-width="6" stroke-linecap="round"/>
-                        <line x1="91"  y1="307" x2="110" y2="288" stroke="#5e5e5e" stroke-width="6" stroke-linecap="round"/>
-                        <!-- hub -->
-                        <circle cx="130" cy="268" r="16" fill="url(#pl-hub)"/>
-                        <circle cx="130" cy="268" r="7"  fill="white"/>
+                        <line x1="272" y1="270" x2="272" y2="289" stroke="#6a6a6a" stroke-width="6" stroke-linecap="round"/>
+                        <line x1="272" y1="327" x2="272" y2="346" stroke="#6a6a6a" stroke-width="6" stroke-linecap="round"/>
+                        <line x1="234" y1="308" x2="253" y2="308" stroke="#6a6a6a" stroke-width="6" stroke-linecap="round"/>
+                        <line x1="291" y1="308" x2="310" y2="308" stroke="#6a6a6a" stroke-width="6" stroke-linecap="round"/>
+                        <line x1="245" y1="281" x2="259" y2="295" stroke="#5e5e5e" stroke-width="5" stroke-linecap="round"/>
+                        <line x1="285" y1="321" x2="299" y2="335" stroke="#5e5e5e" stroke-width="5" stroke-linecap="round"/>
+                        <line x1="299" y1="281" x2="285" y2="295" stroke="#5e5e5e" stroke-width="5" stroke-linecap="round"/>
+                        <line x1="245" y1="335" x2="259" y2="321" stroke="#5e5e5e" stroke-width="5" stroke-linecap="round"/>
+                        <circle cx="272" cy="308" r="12" fill="url(#pl-hub)"/>
+                        <circle cx="272" cy="308" r="5.5" fill="white"/>
                     </g>
 
-                    <!-- ── FRONT WHEEL (smaller) ── -->
+                    <!-- ── FRONT WHEEL (right / smaller) ── -->
                     <g class="pl-wheel-front">
-                        <circle cx="298" cy="278" r="40" fill="url(#pl-whl)"/>
-                        <circle cx="298" cy="278" r="31" fill="none" stroke="#2e2e2e" stroke-width="6"/>
-                        <circle cx="298" cy="278" r="40" fill="none" stroke="#1a1a1a" stroke-width="4" stroke-dasharray="14,12"/>
-                        <circle cx="298" cy="278" r="19" fill="#1e1e1e" stroke="#4a4a4a" stroke-width="2.5"/>
-                        <line x1="298" y1="240" x2="298" y2="260" stroke="#6a6a6a" stroke-width="6" stroke-linecap="round"/>
-                        <line x1="298" y1="296" x2="298" y2="316" stroke="#6a6a6a" stroke-width="6" stroke-linecap="round"/>
-                        <line x1="260" y1="278" x2="280" y2="278" stroke="#6a6a6a" stroke-width="6" stroke-linecap="round"/>
-                        <line x1="316" y1="278" x2="336" y2="278" stroke="#6a6a6a" stroke-width="6" stroke-linecap="round"/>
-                        <line x1="271" y1="249" x2="285" y2="263" stroke="#5e5e5e" stroke-width="5" stroke-linecap="round"/>
-                        <line x1="311" y1="293" x2="325" y2="307" stroke="#5e5e5e" stroke-width="5" stroke-linecap="round"/>
-                        <line x1="325" y1="249" x2="311" y2="263" stroke="#5e5e5e" stroke-width="5" stroke-linecap="round"/>
-                        <line x1="271" y1="307" x2="285" y2="293" stroke="#5e5e5e" stroke-width="5" stroke-linecap="round"/>
-                        <circle cx="298" cy="278" r="11" fill="url(#pl-hub)"/>
-                        <circle cx="298" cy="278" r="5"  fill="white"/>
+                        <circle cx="418" cy="312" r="28" fill="url(#pl-whl)"/>
+                        <circle cx="418" cy="312" r="21" fill="none" stroke="#2e2e2e" stroke-width="5"/>
+                        <circle cx="418" cy="312" r="28" fill="none" stroke="#1a1a1a" stroke-width="3.5" stroke-dasharray="11,10"/>
+                        <circle cx="418" cy="312" r="14" fill="#1e1e1e" stroke="#4a4a4a" stroke-width="2"/>
+                        <line x1="418" y1="286" x2="418" y2="300" stroke="#6a6a6a" stroke-width="5" stroke-linecap="round"/>
+                        <line x1="418" y1="324" x2="418" y2="338" stroke="#6a6a6a" stroke-width="5" stroke-linecap="round"/>
+                        <line x1="392" y1="312" x2="406" y2="312" stroke="#6a6a6a" stroke-width="5" stroke-linecap="round"/>
+                        <line x1="430" y1="312" x2="444" y2="312" stroke="#6a6a6a" stroke-width="5" stroke-linecap="round"/>
+                        <line x1="400" y1="294" x2="410" y2="304" stroke="#5e5e5e" stroke-width="4" stroke-linecap="round"/>
+                        <line x1="426" y1="320" x2="436" y2="330" stroke="#5e5e5e" stroke-width="4" stroke-linecap="round"/>
+                        <line x1="436" y1="294" x2="426" y2="304" stroke="#5e5e5e" stroke-width="4" stroke-linecap="round"/>
+                        <line x1="400" y1="330" x2="410" y2="320" stroke="#5e5e5e" stroke-width="4" stroke-linecap="round"/>
+                        <circle cx="418" cy="312" r="8" fill="url(#pl-hub)"/>
+                        <circle cx="418" cy="312" r="3.5" fill="white"/>
                     </g>
 
-                    <!-- ── MOWER DECK (wide lime body) ── -->
-                    <rect x="60" y="210" width="270" height="62" rx="12" fill="url(#pl-deck-side)"/>
-                    <!-- deck top face -->
-                    <rect x="60" y="210" width="270" height="26" rx="12" fill="url(#pl-deck-top)"/>
-                    <!-- specular highlight -->
-                    <rect x="80"  y="218" width="150" height="8" rx="4" fill="rgba(255,255,255,.65)"/>
-                    <rect x="240" y="216" width="60"  height="5" rx="2.5" fill="rgba(255,255,255,.35)"/>
-                    <!-- underside shadow -->
-                    <rect x="62" y="264" width="266" height="8" rx="3" fill="rgba(0,0,0,.35)"/>
-                    <!-- deck glow filter overlay -->
-                    <rect x="60" y="210" width="270" height="62" rx="12" fill="rgba(210,255,60,.04)" filter="url(#pl-glow)"/>
+                    <!-- ── MOWER DECK ── -->
+                    <rect x="230" y="268" width="210" height="48" rx="10" fill="url(#pl-deck-side)"/>
+                    <rect x="230" y="268" width="210" height="22" rx="10" fill="url(#pl-deck-top)"/>
+                    <rect x="252" y="275" width="120" height="7"  rx="3.5" fill="rgba(255,255,255,.65)"/>
+                    <rect x="386" y="274" width="48"  height="5"  rx="2.5" fill="rgba(255,255,255,.35)"/>
+                    <rect x="232" y="308" width="206" height="8"  rx="3"   fill="rgba(0,0,0,.35)"/>
 
                     <!-- ── ENGINE BLOCK ── -->
-                    <rect x="180" y="170" width="100" height="46" rx="10" fill="url(#pl-eng)"/>
-                    <rect x="180" y="170" width="100" height="18" rx="10" fill="rgba(255,255,255,.22)"/>
-                    <!-- shine -->
-                    <rect x="194" y="176" width="60"  height="7" rx="3.5" fill="rgba(255,255,255,.55)"/>
+                    <rect x="282" y="228" width="90" height="44" rx="9" fill="url(#pl-eng)"/>
+                    <rect x="282" y="228" width="90" height="17" rx="9" fill="rgba(255,255,255,.22)"/>
+                    <rect x="298" y="234" width="55" height="6"  rx="3" fill="rgba(255,255,255,.55)"/>
                     <!-- cooling fins -->
-                    <line x1="198" y1="192" x2="198" y2="215" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
-                    <line x1="212" y1="192" x2="212" y2="215" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
-                    <line x1="226" y1="192" x2="226" y2="215" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
-                    <line x1="240" y1="192" x2="240" y2="215" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
-                    <line x1="254" y1="192" x2="254" y2="215" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
-                    <line x1="268" y1="192" x2="268" y2="215" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
+                    <line x1="298" y1="248" x2="298" y2="271" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
+                    <line x1="310" y1="248" x2="310" y2="271" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
+                    <line x1="322" y1="248" x2="322" y2="271" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
+                    <line x1="334" y1="248" x2="334" y2="271" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
+                    <line x1="346" y1="248" x2="346" y2="271" stroke="rgba(0,0,0,.2)" stroke-width="3"/>
 
-                    <!-- ── EXHAUST PIPE ── -->
-                    <rect x="248" y="136" width="22" height="40" rx="11" fill="#2a2a2a"/>
-                    <rect x="252" y="136" width="10" height="20" rx="5" fill="rgba(255,255,255,.15)"/>
-                    <!-- smoke -->
-                    <circle class="pl-smoke-1" cx="259" cy="130" r="13" fill="rgba(200,200,200,.18)"/>
-                    <circle class="pl-smoke-2" cx="252" cy="114" r="9"  fill="rgba(200,200,200,.12)"/>
-                    <circle class="pl-smoke-3" cx="264" cy="100" r="6"  fill="rgba(200,200,200,.08)"/>
+                    <!-- ── EXHAUST ── -->
+                    <rect x="336" y="188" width="18" height="44" rx="9" fill="#2a2a2a"/>
+                    <rect x="340" y="188" width="8"  height="22" rx="4" fill="rgba(255,255,255,.15)"/>
+                    <circle class="pl-smoke-1" cx="345" cy="182" r="12" fill="rgba(210,210,210,.18)"/>
+                    <circle class="pl-smoke-2" cx="338" cy="165" r="8.5" fill="rgba(210,210,210,.12)"/>
+                    <circle class="pl-smoke-3" cx="350" cy="150" r="6" fill="rgba(210,210,210,.08)"/>
 
-                    <!-- ── HANDLE BAR ── -->
-                    <line x1="94" y1="218" x2="196" y2="64" stroke="url(#pl-bar)" stroke-width="18" stroke-linecap="round"/>
-                    <!-- shine on bar -->
-                    <line x1="100" y1="218" x2="202" y2="64" stroke="rgba(255,255,255,.28)" stroke-width="7" stroke-linecap="round"/>
-
-                    <!-- ── T-BAR GRIP ── -->
-                    <rect x="146" y="48" width="130" height="30" rx="15" fill="#141414"/>
-                    <rect x="146" y="48" width="130" height="12" rx="12" fill="#2e2e2e"/>
-                    <!-- rubber grips -->
-                    <line x1="168" y1="50" x2="168" y2="76" stroke="rgba(0,0,0,.5)" stroke-width="5"/>
-                    <line x1="188" y1="50" x2="188" y2="76" stroke="rgba(0,0,0,.5)" stroke-width="5"/>
-                    <line x1="208" y1="50" x2="208" y2="76" stroke="rgba(0,0,0,.5)" stroke-width="5"/>
-                    <line x1="228" y1="50" x2="228" y2="76" stroke="rgba(0,0,0,.5)" stroke-width="5"/>
-                    <line x1="248" y1="50" x2="248" y2="76" stroke="rgba(0,0,0,.5)" stroke-width="5"/>
+                    <!-- ── HANDLE BAR (deck → T-grip → hands) ── -->
+                    <line x1="234" y1="274" x2="164" y2="218" stroke="url(#pl-bar)" stroke-width="13" stroke-linecap="round"/>
+                    <line x1="238" y1="274" x2="168" y2="218" stroke="rgba(255,255,255,.24)" stroke-width="5" stroke-linecap="round"/>
+                    <!-- T-grip (where hands go) -->
+                    <rect x="138" y="206" width="52" height="22" rx="11" fill="#161616"/>
+                    <rect x="138" y="206" width="52" height="10" rx="9"  fill="#303030"/>
+                    <line x1="152" y1="207" x2="152" y2="227" stroke="rgba(0,0,0,.45)" stroke-width="4"/>
+                    <line x1="164" y1="207" x2="164" y2="227" stroke="rgba(0,0,0,.45)" stroke-width="4"/>
+                    <line x1="176" y1="207" x2="176" y2="227" stroke="rgba(0,0,0,.45)" stroke-width="4"/>
                     <!-- end caps -->
-                    <rect x="142" y="54" width="10" height="18" rx="5" fill="#444"/>
-                    <rect x="270" y="54" width="10" height="18" rx="5" fill="#444"/>
+                    <rect x="134" y="211" width="8" height="14" rx="4" fill="#444"/>
+                    <rect x="186" y="211" width="8" height="14" rx="4" fill="#444"/>
+
+                    <!-- ════════════════════════════════════
+                         PERSON — side view, pushing right
+                         ════════════════════════════════════ -->
+
+                    <!-- Back leg (left / stepping back) — drawn first, behind body -->
+                    <!-- upper left leg -->
+                    <line x1="112" y1="258" x2="88"  y2="290" stroke="#1565c0" stroke-width="20" stroke-linecap="round"/>
+                    <!-- lower left leg -->
+                    <line x1="88"  y1="290" x2="66"  y2="328" stroke="#1565c0" stroke-width="17" stroke-linecap="round"/>
+                    <!-- left shoe -->
+                    <ellipse cx="57" cy="331" rx="20" ry="10" fill="#111"/>
+
+                    <!-- Back arm (left, slightly lower) -->
+                    <line x1="96"  y1="195" x2="130" y2="208" stroke="url(#pl-shirt)" stroke-width="16" stroke-linecap="round"/>
+                    <line x1="130" y1="208" x2="152" y2="218" stroke="#ffc987" stroke-width="13" stroke-linecap="round"/>
+
+                    <!-- ── TORSO ── -->
+                    <!-- body (orange shirt, leaning forward) -->
+                    <path d="M88,188 C84,215 90,252 108,260 C118,263 128,260 130,252 C136,230 128,195 120,188 Z" fill="url(#pl-shirt)"/>
+                    <!-- shirt collar -->
+                    <path d="M98,186 Q104,192 116,188" fill="none" stroke="#c85200" stroke-width="3" stroke-linecap="round"/>
+
+                    <!-- Front leg (right / stepping forward) — above torso base -->
+                    <!-- upper right leg -->
+                    <line x1="116" y1="258" x2="140" y2="290" stroke="#1565c0" stroke-width="20" stroke-linecap="round"/>
+                    <!-- lower right leg -->
+                    <line x1="140" y1="290" x2="160" y2="328" stroke="#1565c0" stroke-width="17" stroke-linecap="round"/>
+                    <!-- right shoe -->
+                    <ellipse cx="170" cy="331" rx="22" ry="11" fill="#111"/>
+
+                    <!-- Front arm (right, top arm on grip) -->
+                    <line x1="118" y1="192" x2="148" y2="206" stroke="url(#pl-shirt)" stroke-width="16" stroke-linecap="round"/>
+                    <line x1="148" y1="206" x2="160" y2="212" stroke="#ffc987" stroke-width="13" stroke-linecap="round"/>
+
+                    <!-- NECK -->
+                    <line x1="104" y1="170" x2="107" y2="187" stroke="#ffc987" stroke-width="13" stroke-linecap="round"/>
+
+                    <!-- HEAD -->
+                    <circle cx="104" cy="150" r="25" fill="#ffd19a"/>
+                    <!-- ear -->
+                    <ellipse cx="82" cy="153" rx="8" ry="10" fill="#f5b97a"/>
+                    <!-- eye (facing right) -->
+                    <circle cx="114" cy="143" r="5.5" fill="#1a1a1a"/>
+                    <circle cx="116" cy="141" r="2"   fill="white"/>
+                    <!-- eyebrow -->
+                    <path d="M108,134 Q114,128 120,131" fill="none" stroke="#5a3010" stroke-width="2.8" stroke-linecap="round"/>
+                    <!-- nose -->
+                    <path d="M119,150 Q122,154 120,158" fill="none" stroke="#c47a4a" stroke-width="2.5" stroke-linecap="round"/>
+                    <!-- smile -->
+                    <path d="M110,162 Q116,169 122,163" fill="none" stroke="#c47a4a" stroke-width="2.8" stroke-linecap="round"/>
+
+                    <!-- CAP (green, brim points right) -->
+                    <!-- dome -->
+                    <path d="M80,152 Q80,120 104,117 Q128,114 130,146 Z" fill="#1b5e20"/>
+                    <!-- gold band at cap edge -->
+                    <path d="M80,152 Q80,148 104,146 Q128,144 130,147" fill="none" stroke="#ffd740" stroke-width="5" stroke-linecap="round"/>
+                    <!-- brim pointing right -->
+                    <path d="M126,146 L152,150 L148,160 L120,155 Z" fill="#154a18"/>
+                    <!-- cap button -->
+                    <circle cx="104" cy="119" r="5" fill="#144a18"/>
                 </svg>
             </div>
 
