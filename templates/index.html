@@ -4259,20 +4259,31 @@
             }
 
             .logo-icon {
-                width: 50px;
-                height: 50px;
-                border-radius: 16px;
-                box-shadow: 0 14px 28px rgba(12, 53, 25, 0.32);
+                width: 60px;
+                height: 60px;
+                border-radius: 18px;
                 position: relative;
                 z-index: 1;
+                box-shadow:
+                    0 0 0 2.5px rgba(255, 215, 80, 0.55),
+                    0 0 0 5px rgba(255, 215, 80, 0.14),
+                    0 18px 36px rgba(5, 22, 10, 0.55),
+                    0 4px 12px rgba(255, 215, 80, 0.22);
+                background: linear-gradient(145deg, rgba(56,142,60,0.96), rgba(18,72,28,0.96));
+                animation: logoFloat 3.6s ease-in-out infinite, logoGlowPulse 3.6s ease-in-out infinite;
+            }
+
+            @keyframes logoGlowPulse {
+                0%, 100% { box-shadow: 0 0 0 2.5px rgba(255,215,80,.55), 0 0 0 5px rgba(255,215,80,.14), 0 18px 36px rgba(5,22,10,.55), 0 4px 12px rgba(255,215,80,.22); }
+                50%       { box-shadow: 0 0 0 2.5px rgba(255,215,80,.9),  0 0 0 9px rgba(255,215,80,.22), 0 22px 44px rgba(5,22,10,.65), 0 4px 20px rgba(255,215,80,.45); }
             }
 
             .logo-title {
-                font-size: 1.12em;
-                flex-direction: row;
-                align-items: center;
-                gap: 6px;
-                line-height: 1.08;
+                font-size: 1.08em;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0px;
+                line-height: 1.12;
                 padding: 0;
                 border-radius: 0;
                 background: transparent;
@@ -4309,6 +4320,11 @@
 
             .logo-title .highlight {
                 color: #ffe082;
+                display: block;
+                font-size: 1.55em;
+                line-height: 0.9;
+                letter-spacing: -0.01em;
+                margin-top: 1px;
             }
 
             .logo-eyebrow {
