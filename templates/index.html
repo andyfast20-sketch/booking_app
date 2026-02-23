@@ -4321,6 +4321,97 @@
                 letter-spacing: 3px;
             }
 
+            /* ── Mobile header: spectacular brand animations ── */
+            header:not(.scrolled) .logo-title-text {
+                background: linear-gradient(90deg,
+                    #ffffff 0%,
+                    #e8fff0 14%,
+                    #ffe082 30%,
+                    #ffffff 50%,
+                    #b6f5c8 66%,
+                    #ffe082 82%,
+                    #ffffff 100%
+                );
+                background-size: 300% auto;
+                -webkit-background-clip: text;
+                background-clip: text;
+                -webkit-text-fill-color: transparent;
+                animation: brandShimmer 5s linear infinite;
+            }
+
+            header:not(.scrolled) .logo-title .highlight {
+                background: linear-gradient(90deg,
+                    #ffd740 0%,
+                    #fffde0 28%,
+                    #ffcc02 52%,
+                    #fff8b0 74%,
+                    #ffd740 100%
+                );
+                background-size: 300% auto;
+                -webkit-background-clip: text;
+                background-clip: text;
+                -webkit-text-fill-color: transparent;
+                filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.72));
+                animation: brandShimmerFast 3.4s linear infinite;
+                animation-delay: -1.2s;
+            }
+
+            @keyframes brandShimmer {
+                0%   { background-position: 0% center; }
+                100% { background-position: 300% center; }
+            }
+            @keyframes brandShimmerFast {
+                0%   { background-position: 0% center; }
+                100% { background-position: 300% center; }
+            }
+
+            header:not(.scrolled) .logo-icon {
+                animation: logoFloat 3.6s ease-in-out infinite;
+            }
+
+            @keyframes logoFloat {
+                0%, 100% { transform: translateY(0px)  rotate(0deg);    }
+                40%       { transform: translateY(-6px) rotate(-1.8deg); }
+                65%       { transform: translateY(-4px) rotate(1.2deg);  }
+            }
+
+            header:not(.scrolled) .logo-tagline {
+                animation: taglineBreathe 4.5s ease-in-out infinite;
+            }
+
+            @keyframes taglineBreathe {
+                0%, 100% { opacity: 0.62; letter-spacing: 3px;   }
+                50%       { opacity: 1;    letter-spacing: 3.9px; }
+            }
+
+            /* Diagonal light sheen sweeps across the header every 6 s */
+            header:not(.scrolled)::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -80%;
+                width: 55%;
+                height: 100%;
+                background: linear-gradient(
+                    105deg,
+                    transparent          0%,
+                    rgba(255,215,80,.06) 38%,
+                    rgba(255,255,255,.12) 50%,
+                    rgba(255,215,80,.06) 62%,
+                    transparent          100%
+                );
+                animation: headerSheen 6s ease-in-out infinite;
+                pointer-events: none;
+                z-index: 3;
+            }
+
+            @keyframes headerSheen {
+                0%        { left: -75%; opacity: 0; }
+                4%        { opacity: 1; }
+                48%       { left: 120%; opacity: 1; }
+                49%, 100% { left: 120%; opacity: 0; }
+            }
+
             nav {
                 position: fixed;
                 left: 50%;
