@@ -752,7 +752,7 @@ def _load_telnyx_config_from_disk() -> dict:
         "from_number": str(payload.get("from_number", "") or ""),
         "messaging_profile_id": str(payload.get("messaging_profile_id", "") or ""),
         "verification_method": method,
-        "voice_connection_id": str(payload.get("voice_connection_id", "") or ""),
+        "voice_connection_id": str(payload.get("voice_connection_id", "") or "") or _TELNYX_DEFAULT_VOICE_CONNECTION_ID,
     }
 
 
@@ -771,7 +771,7 @@ def _telnyx_config_snapshot(*, include_secret: bool = False) -> dict:
         from_number = str(_telnyx_config.get("from_number", "") or "")
         messaging_profile_id = str(_telnyx_config.get("messaging_profile_id", "") or "")
         verification_method = str(_telnyx_config.get("verification_method", "call") or "call")
-        voice_connection_id = str(_telnyx_config.get("voice_connection_id", "") or "")
+        voice_connection_id = str(_telnyx_config.get("voice_connection_id", "") or "") or _TELNYX_DEFAULT_VOICE_CONNECTION_ID
 
     env_key = os.environ.get("TELNYX_API_KEY", "").strip()
     env_from = os.environ.get("TELNYX_FROM_NUMBER", "").strip()
