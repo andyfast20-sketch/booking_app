@@ -148,7 +148,7 @@ _weather_forecast_cache = {}
 _smsapi_config_lock = Lock()
 _smsapi_config = {"oauth_token": "", "sender_name": ""}
 _telnyx_config_lock = Lock()
-_telnyx_config = {"api_key": "", "from_number": "", "messaging_profile_id": ""}
+_telnyx_config = {"api_key": "", "from_number": "", "messaging_profile_id": "", "verification_method": "call", "voice_connection_id": ""}
 _verification_codes = {}  # Store verification codes temporarily
 _watchdog_config_lock = Lock()
 _watchdog_config = {"enabled": False, "to_number": "+447595289669", "last_sent": None}
@@ -728,22 +728,29 @@ def _smsapi_config_snapshot(*, include_secret: bool = False) -> dict:
 
 
 def _load_telnyx_config_from_disk() -> dict:
+    defaults = {"api_key": "", "from_number": "", "messaging_profile_id": "", "verification_method": "call", "voice_connection_id": ""}
     if not os.path.exists(TELNYX_CONFIG_FILE):
-        return {"api_key": "", "from_number": "", "messaging_profile_id": ""}
+        return dict(defaults)
 
     try:
         with open(TELNYX_CONFIG_FILE, "r", encoding="utf-8") as handle:
             payload = json.load(handle)
     except (OSError, json.JSONDecodeError):
-        return {"api_key": "", "from_number": "", "messaging_profile_id": ""}
+        return dict(defaults)
 
     if not isinstance(payload, dict):
-        return {"api_key": "", "from_number": "", "messaging_profile_id": ""}
+        return dict(defaults)
+
+    method = str(payload.get("verification_method", "call") or "call").strip().lower()
+    if method not in {"call", "sms"}:
+        method = "call"
 
     return {
         "api_key": str(payload.get("api_key", "") or ""),
         "from_number": str(payload.get("from_number", "") or ""),
         "messaging_profile_id": str(payload.get("messaging_profile_id", "") or ""),
+        "verification_method": method,
+        "voice_connection_id": str(payload.get("voice_connection_id", "") or ""),
     }
 
 
@@ -761,6 +768,8 @@ def _telnyx_config_snapshot(*, include_secret: bool = False) -> dict:
         api_key = str(_telnyx_config.get("api_key", "") or "")
         from_number = str(_telnyx_config.get("from_number", "") or "")
         messaging_profile_id = str(_telnyx_config.get("messaging_profile_id", "") or "")
+        verification_method = str(_telnyx_config.get("verification_method", "call") or "call")
+        voice_connection_id = str(_telnyx_config.get("voice_connection_id", "") or "")
 
     env_key = os.environ.get("TELNYX_API_KEY", "").strip()
     env_from = os.environ.get("TELNYX_FROM_NUMBER", "").strip()
@@ -777,6 +786,8 @@ def _telnyx_config_snapshot(*, include_secret: bool = False) -> dict:
             "api_key": effective_key,
             "from_number": effective_from,
             "messaging_profile_id": effective_profile,
+            "verification_method": verification_method,
+            "voice_connection_id": voice_connection_id,
             "has_config": has_config,
         }
 
@@ -788,6 +799,8 @@ def _telnyx_config_snapshot(*, include_secret: bool = False) -> dict:
         "api_key": masked,
         "from_number": effective_from,
         "messaging_profile_id": effective_profile,
+        "verification_method": verification_method,
+        "voice_connection_id": voice_connection_id,
         "has_config": has_config,
     }
 
@@ -1049,6 +1062,92 @@ def _send_sms_via_telnyx(to_number: str, message: str) -> tuple[bool, str]:
     except Exception as exc:
         print(f"[Telnyx] SMS exception: {exc}")
         return False, f"Unable to send SMS right now. ({type(exc).__name__})"
+
+
+def _make_verification_call(to_number: str, code: str) -> tuple[bool, str]:
+    """Place an outbound call via Telnyx Call Control and speak the verification code using TTS."""
+    config = _telnyx_config_snapshot(include_secret=True)
+    if not config.get("has_config"):
+        return False, "Telnyx is not configured in the admin panel."
+
+    api_key = str(config.get("api_key") or "").strip()
+    from_number = _normalize_phone_number(str(config.get("from_number") or "").strip())
+    to_clean = _normalize_phone_number(to_number)
+    connection_id = str(config.get("voice_connection_id") or "").strip()
+
+    if not api_key or not from_number:
+        return False, "Telnyx is missing API key or from number."
+    if not to_clean or not to_clean.startswith("+"):
+        return False, "Invalid destination number."
+
+    # Build the spoken code with pauses between digits for clarity
+    spaced_code = ". ".join(list(code))
+
+    # TeXML document that Telnyx will execute when the call connects
+    texml_body = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Pause length="1"/>
+  <Say voice="alice" language="en-GB">Hello. This is Pay As You Mow calling with your verification code.</Say>
+  <Pause length="0.5"/>
+  <Say voice="alice" language="en-GB">Your code is: {spaced_code}.</Say>
+  <Pause length="1"/>
+  <Say voice="alice" language="en-GB">I repeat, your code is: {spaced_code}.</Say>
+  <Pause length="0.5"/>
+  <Say voice="alice" language="en-GB">Thank you. Goodbye!</Say>
+  <Hangup/>
+</Response>"""
+
+    try:
+        import requests
+
+        # Use Telnyx Call Control v2 — initiate call with TeXML
+        url = "https://api.telnyx.com/v2/texml/calls/{app_id}".format(
+            app_id=connection_id
+        ) if connection_id else "https://api.telnyx.com/v2/texml/calls"
+
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
+
+        call_payload = {
+            "To": to_clean,
+            "From": from_number,
+            "Txml": texml_body,
+        }
+        if connection_id:
+            call_payload["connection_id"] = connection_id
+
+        print(f"[Telnyx-Call] Calling {to_clean} from {from_number} to deliver code")
+        response = requests.post(url, headers=headers, data=call_payload, timeout=20)
+
+        if 200 <= response.status_code < 300:
+            print(f"[Telnyx-Call] Call initiated successfully to {to_clean}")
+            return True, ""
+
+        # Parse error
+        detail = ""
+        try:
+            body = response.json() if response.content else {}
+            errors = body.get("errors")
+            if isinstance(errors, list) and errors:
+                first = errors[0] if isinstance(errors[0], dict) else {}
+                title = str(first.get("title") or "").strip()
+                err_detail = str(first.get("detail") or "").strip()
+                detail = title or err_detail
+                if title and err_detail and title != err_detail:
+                    detail = f"{title}: {err_detail}"
+        except Exception:
+            detail = ""
+
+        if detail:
+            print(f"[Telnyx-Call] Error: {detail} (HTTP {response.status_code})")
+            return False, f"Telnyx call error: {detail}"
+        print(f"[Telnyx-Call] Unexpected HTTP {response.status_code}: {response.text[:300]}")
+        return False, f"Telnyx call returned HTTP {response.status_code}."
+    except Exception as exc:
+        print(f"[Telnyx-Call] Exception: {exc}")
+        return False, f"Unable to place verification call. ({type(exc).__name__})"
 
 
 def _send_sms_for_verification(to_number: str, message: str) -> tuple[bool, str]:
@@ -3553,6 +3652,17 @@ def admin_telnyx_config():
         if profile_present:
             _telnyx_config["messaging_profile_id"] = messaging_profile_id
 
+        # Verification method: "call" or "sms"
+        if "verification_method" in payload:
+            method = str(payload.get("verification_method") or "call").strip().lower()
+            if method not in {"call", "sms"}:
+                method = "call"
+            _telnyx_config["verification_method"] = method
+
+        # Voice connection ID for Call Control / TeXML
+        if "voice_connection_id" in payload:
+            _telnyx_config["voice_connection_id"] = str(payload.get("voice_connection_id") or "").strip()
+
         snapshot = dict(_telnyx_config)
 
     _save_telnyx_config(snapshot)
@@ -3615,6 +3725,33 @@ def admin_telnyx_test():
             "message": f"Failed to send: {error_msg}",
             "diagnostics": diagnostics,
         }), 500
+
+
+@app.route("/admin/telnyx/test-call", methods=["POST"])
+@require_admin_auth
+def admin_telnyx_test_call():
+    """Place a test verification call to confirm Telnyx voice is working."""
+    payload = request.get_json(silent=True) or {}
+    test_phone = str(payload.get("phone", "") or "").strip()
+
+    if not test_phone:
+        return jsonify({"ok": False, "message": "Please enter a phone number to call."}), 400
+
+    cfg = _telnyx_config_snapshot(include_secret=True)
+    if not cfg.get("has_config"):
+        return jsonify({"ok": False, "message": "Telnyx is not configured. Save your API key and from number first."}), 400
+
+    normalized_phone = _normalize_phone_number(test_phone)
+    if not normalized_phone or not normalized_phone.startswith("+"):
+        return jsonify({"ok": False, "message": f"Invalid phone number: '{test_phone}'."}), 400
+
+    print(f"[Telnyx-Test] Placing test call to {normalized_phone}")
+    success, error_msg = _make_verification_call(normalized_phone, "1234")
+
+    if success:
+        return jsonify({"ok": True, "message": f"Test call initiated to {normalized_phone}. You should receive a call with code 1234."})
+    else:
+        return jsonify({"ok": False, "message": f"Failed: {error_msg}"}), 500
 
 
 @app.route("/admin/telnyx/diagnostics", methods=["GET"])
@@ -4132,16 +4269,28 @@ def send_verification_code():
             "expires": (datetime.utcnow() + timedelta(minutes=5)).isoformat()
         }
 
-        # Send SMS
-        message = f"Your Pay As You Mow verification code is: {code}. Valid for 5 minutes."
-        print(f"[Verify] Sending code to {phone} (raw input: {raw_phone})")
-        success, error_message = _send_sms_for_verification(phone, message)
+        # Decide whether to call or SMS based on Telnyx config
+        telnyx_cfg = _telnyx_config_snapshot(include_secret=False)
+        use_call = (
+            telnyx_cfg.get("has_config")
+            and str(telnyx_cfg.get("verification_method", "call") or "call").strip().lower() == "call"
+        )
+
+        if use_call:
+            print(f"[Verify] Calling {phone} with code (raw input: {raw_phone})")
+            success, error_message = _make_verification_call(phone, code)
+            method = "call"
+        else:
+            message = f"Your Pay As You Mow verification code is: {code}. Valid for 5 minutes."
+            print(f"[Verify] Sending SMS code to {phone} (raw input: {raw_phone})")
+            success, error_message = _send_sms_for_verification(phone, message)
+            method = "sms"
 
         if success:
-            return jsonify({"message": "Verification code sent successfully"})
+            return jsonify({"message": "Verification code sent successfully", "method": method})
         else:
-            print(f"[Verify] SMS failed for {phone}: {error_message}")
-            return jsonify({"message": error_message or "Failed to send verification code. Please check SMS settings."}), 500
+            print(f"[Verify] {method.upper()} failed for {phone}: {error_message}")
+            return jsonify({"message": error_message or "Failed to send verification code. Please check settings.", "method": method}), 500
     except Exception as exc:
         print(f"[Verify] Unexpected error: {exc}")
         return jsonify({"message": "An unexpected error occurred. Please try again."}), 500

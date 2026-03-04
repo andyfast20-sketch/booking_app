@@ -1898,27 +1898,27 @@
     <section class="panel" aria-labelledby="telnyx-heading" data-panel data-expanded="false">
       <div class="panel-header">
         <div class="meta">
-          <h2 id="telnyx-heading">SMS Verification (Telnyx)</h2>
-          <p>Use your Telnyx number to send verification codes to customers (preferred SMS provider).</p>
+          <h2 id="telnyx-heading">Phone Verification (Telnyx)</h2>
+          <p>Verify customer phone numbers via an AI voice call or SMS using your Telnyx account.</p>
         </div>
         <div class="panel-actions">
           <button type="button" class="panel-toggle" aria-expanded="false" aria-controls="telnyxPanelBody">Expand</button>
         </div>
       </div>
       <div class="panel-summary">
-        <p class="panel-summary-highlight" id="telnyxSummaryHighlight">Verify customer phone numbers via Telnyx SMS.</p>
-        <p class="panel-summary-note">Expand to add your Telnyx API key and your Telnyx phone number.</p>
+        <p class="panel-summary-highlight" id="telnyxSummaryHighlight">Verify customers via Telnyx.</p>
+        <p class="panel-summary-note">Expand to configure your Telnyx API key, phone number, and verification method.</p>
       </div>
       <div class="panel-body" id="telnyxPanelBody" hidden>
         <form id="telnyxForm" class="grid" autocomplete="off" novalidate>
           <div class="section">
             <div class="autopilot-api-header">
               <div>
-                <p class="eyebrow">SMS Configuration</p>
+                <p class="eyebrow">Telnyx Configuration</p>
                 <h3 class="autopilot-api-title">Telnyx Setup</h3>
                 <p class="autopilot-api-description">
-                  Add your Telnyx <strong>API key</strong> and the <strong>Telnyx phone number</strong> you want to send from.
-                  If Telnyx is configured, the website will use it to send verification codes.
+                  Add your Telnyx <strong>API key</strong> and <strong>phone number</strong>.
+                  Choose whether to verify customers with an <strong>AI voice call</strong> or a traditional <strong>SMS</strong>.
                 </p>
               </div>
             </div>
@@ -1927,9 +1927,30 @@
               <p style="margin: 0 0 12px 0; font-weight: 600; color: var(--accent);">📱 What you need from Telnyx:</p>
               <ol style="margin: 0; padding-left: 20px; line-height: 1.8;">
                 <li>Create an API key in your Telnyx Mission Control Portal</li>
-                <li>Make sure your Telnyx number can send SMS</li>
+                <li>Buy a Telnyx phone number that supports voice &amp; SMS</li>
+                <li>Create a <strong>TeXML Application</strong> in Mission Control (for voice calls)</li>
                 <li>Enter the number in international format (E.164), e.g. <strong>+447123456789</strong></li>
               </ol>
+            </div>
+
+            <!-- Verification Method Toggle -->
+            <div style="margin-bottom: 20px;">
+              <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">
+                Verification Method
+              </strong>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 12px 0;">
+                Choose how the 4-digit verification code is delivered to customers when they book a slot.
+              </p>
+              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <label style="display: flex; align-items: center; gap: 8px; padding: 12px 18px; border: 2px solid var(--panel-border); border-radius: 10px; cursor: pointer; transition: border-color 0.2s, background 0.2s;" id="methodCallLabel">
+                  <input type="radio" name="verification_method" id="telnyxMethodCall" value="call" checked />
+                  <span><strong>📞 AI Voice Call</strong><br><span style="font-size: 0.82rem; color: var(--text-muted);">Telnyx calls the customer and reads the code aloud</span></span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; padding: 12px 18px; border: 2px solid var(--panel-border); border-radius: 10px; cursor: pointer; transition: border-color 0.2s, background 0.2s;" id="methodSmsLabel">
+                  <input type="radio" name="verification_method" id="telnyxMethodSms" value="sms" />
+                  <span><strong>💬 SMS Text</strong><br><span style="font-size: 0.82rem; color: var(--text-muted);">Send a text message with the code</span></span>
+                </label>
+              </div>
             </div>
 
             <label for="telnyxApiKey">
@@ -1937,7 +1958,7 @@
                 1️⃣ Telnyx API Key <span style="color: var(--danger);">*</span>
               </strong>
               <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 8px 0;">
-                Stored securely and used to send verification SMS. Leave blank to keep the saved key.
+                Stored securely and used for both voice calls and SMS. Leave blank to keep the saved key.
               </p>
               <div class="autopilot-api-row">
                 <input
@@ -1971,24 +1992,49 @@
               </div>
             </label>
 
-            <label for="telnyxMessagingProfileId">
-              <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">
-                3️⃣ Messaging Profile ID <span style="font-size: 0.8rem; color: var(--text-muted);">(optional)</span>
-              </strong>
-              <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 8px 0;">
-                Found in your Telnyx Mission Control &gt; Messaging &gt; Profiles. Leave blank if you have only one profile.
-              </p>
-              <div class="autopilot-api-row">
-                <input
-                  id="telnyxMessagingProfileId"
-                  name="messaging_profile_id"
-                  type="text"
-                  autocomplete="off"
-                  spellcheck="false"
-                  placeholder="e.g. 40017e1c-…"
-                />
-              </div>
-            </label>
+            <!-- Voice Connection ID (shown when Call mode is selected) -->
+            <div id="telnyxVoiceFields">
+              <label for="telnyxVoiceConnectionId">
+                <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">
+                  3️⃣ TeXML App ID / Voice Connection ID <span style="color: var(--danger);">*</span>
+                </strong>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 8px 0;">
+                  Found in Telnyx Mission Control &gt; Voice &gt; TeXML Applications. This tells Telnyx how to handle the outbound call.
+                </p>
+                <div class="autopilot-api-row">
+                  <input
+                    id="telnyxVoiceConnectionId"
+                    name="voice_connection_id"
+                    type="text"
+                    autocomplete="off"
+                    spellcheck="false"
+                    placeholder="e.g. 1494404757575757575"
+                  />
+                </div>
+              </label>
+            </div>
+
+            <!-- SMS-only fields -->
+            <div id="telnyxSmsFields" style="display: none;">
+              <label for="telnyxMessagingProfileId">
+                <strong style="display: block; margin-bottom: 8px; color: var(--text-primary);">
+                  3️⃣ Messaging Profile ID <span style="font-size: 0.8rem; color: var(--text-muted);">(optional)</span>
+                </strong>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 8px 0;">
+                  Found in Telnyx Mission Control &gt; Messaging &gt; Profiles. Leave blank if you have only one profile.
+                </p>
+                <div class="autopilot-api-row">
+                  <input
+                    id="telnyxMessagingProfileId"
+                    name="messaging_profile_id"
+                    type="text"
+                    autocomplete="off"
+                    spellcheck="false"
+                    placeholder="e.g. 40017e1c-…"
+                  />
+                </div>
+              </label>
+            </div>
 
             <p class="input-note" id="telnyxStatus" style="font-weight: 600; font-size: 1rem; margin-top: 16px;"></p>
 
@@ -2004,11 +2050,11 @@
             <button type="button" class="primary" id="telnyxDiagnosticsBtn" style="margin-left: 8px;" onclick="runTelnyxDiagnostics()">Check Config</button>
           </div>
 
-          <!-- Test SMS section -->
+          <!-- Test section -->
           <div style="border-top: 1px solid var(--panel-border); margin-top: 24px; padding-top: 20px;">
-            <p style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">📲 Send a Test SMS</p>
+            <p style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">🧪 Test Verification</p>
             <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
-              Enter your mobile number below and click "Send Test" to verify everything is working.
+              Enter your mobile number below to test. If call mode is selected, you'll receive a phone call with a test code (1234). If SMS mode, you'll receive a text message.
             </p>
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
               <input
@@ -2018,7 +2064,8 @@
                 placeholder="e.g. 07123456789"
                 style="flex: 1; min-width: 180px;"
               />
-              <button type="button" class="primary" id="telnyxTestBtn" style="white-space: nowrap;" onclick="sendTelnyxTest()">Send Test SMS</button>
+              <button type="button" class="primary" id="telnyxTestCallBtn" style="white-space: nowrap;">📞 Test Call</button>
+              <button type="button" class="primary" id="telnyxTestSmsBtn" style="white-space: nowrap;">💬 Test SMS</button>
             </div>
             <p id="telnyxTestResult" style="margin-top: 12px; font-weight: 600; font-size: 0.95rem;"></p>
           </div>
@@ -4071,7 +4118,7 @@
     let smsapiConfig = { oauth_token: '', sender_name: '', has_config: false };
 
     // Telnyx Configuration
-    let telnyxConfig = { api_key: '', from_number: '', has_config: false };
+    let telnyxConfig = { api_key: '', from_number: '', has_config: false, verification_method: 'call', voice_connection_id: '', messaging_profile_id: '' };
 
     async function loadTelnyxConfig() {
       try {
@@ -4097,7 +4144,10 @@
       const telnyxApiKeyInput = document.getElementById('telnyxApiKey');
       const telnyxFromNumberInput = document.getElementById('telnyxFromNumber');
       const telnyxProfileInput = document.getElementById('telnyxMessagingProfileId');
+      const telnyxVoiceConnInput = document.getElementById('telnyxVoiceConnectionId');
       const telnyxStatus = document.getElementById('telnyxStatus');
+      const voiceFields = document.getElementById('telnyxVoiceFields');
+      const smsFields = document.getElementById('telnyxSmsFields');
 
       if (telnyxApiKeyInput && telnyxConfig.api_key) {
         telnyxApiKeyInput.placeholder = telnyxConfig.api_key;
@@ -4108,13 +4158,28 @@
       if (telnyxProfileInput) {
         telnyxProfileInput.value = telnyxConfig.messaging_profile_id || '';
       }
+      if (telnyxVoiceConnInput) {
+        telnyxVoiceConnInput.value = telnyxConfig.voice_connection_id || '';
+      }
+
+      // Set radio button
+      const method = telnyxConfig.verification_method || 'call';
+      const radioCall = document.querySelector('input[name="verification_method"][value="call"]');
+      const radioSms = document.querySelector('input[name="verification_method"][value="sms"]');
+      if (radioCall) radioCall.checked = (method === 'call');
+      if (radioSms) radioSms.checked = (method === 'sms');
+
+      // Toggle field visibility
+      if (voiceFields) voiceFields.style.display = (method === 'call') ? 'block' : 'none';
+      if (smsFields) smsFields.style.display = (method === 'sms') ? 'block' : 'none';
 
       if (telnyxStatus) {
         if (telnyxConfig.has_config) {
-          telnyxStatus.textContent = '✓ Telnyx SMS verification is configured and ready to use.';
+          const modeLabel = method === 'call' ? 'AI Voice Call' : 'SMS';
+          telnyxStatus.textContent = `✓ Telnyx verification is configured (${modeLabel} mode).`;
           telnyxStatus.style.color = '#30c3a6';
         } else {
-          telnyxStatus.textContent = '⚠ Telnyx not configured. The site will use SMSAPI.com if configured, otherwise phone verification will be skipped.';
+          telnyxStatus.textContent = '⚠ Telnyx not configured. Phone verification will be skipped.';
           telnyxStatus.style.color = '#ffd166';
         }
       }
@@ -4135,6 +4200,9 @@
       const fromNumber = document.getElementById('telnyxFromNumber')?.value.trim() || '';
       const profileId = document.getElementById('telnyxMessagingProfileId')?.value.trim() || '';
 
+      const verificationMethod = document.querySelector('input[name="verification_method"]:checked')?.value || 'call';
+      const voiceConnectionId = document.getElementById('telnyxVoiceConnectionId')?.value.trim() || '';
+
       const payload = {};
       // Only send fields when the admin provided a value, so we don't clear saved secrets.
       if (apiKey) {
@@ -4144,6 +4212,8 @@
         payload.from_number = fromNumber;
       }
       payload.messaging_profile_id = profileId;
+      payload.verification_method = verificationMethod;
+      payload.voice_connection_id = voiceConnectionId;
 
       try {
         const res = await fetch('/admin/telnyx/config', {
@@ -4218,10 +4288,10 @@
       }
     }
 
-    async function sendTelnyxTest() {
+    async function sendTelnyxTestSms() {
       const phoneInput = document.getElementById('telnyxTestPhone');
       const resultEl = document.getElementById('telnyxTestResult');
-      const btn = document.getElementById('telnyxTestBtn');
+      const btn = document.getElementById('telnyxTestSmsBtn');
       if (!phoneInput || !resultEl) return;
 
       const phone = phoneInput.value.trim();
@@ -4251,19 +4321,54 @@
           resultEl.textContent = '❌ ' + (data.message || 'Test failed.');
           resultEl.style.color = 'var(--danger)';
         }
+      } catch (err) {
+        resultEl.textContent = '❌ Network error: ' + err.message;
+        resultEl.style.color = 'var(--danger)';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '💬 Test SMS';
+      }
+    }
 
-        // Show diagnostics if returned
-        if (data.diagnostics) {
-          const diagInfo = data.diagnostics;
-          const extra = `\nAPI key set: ${diagInfo.api_key_set} (${diagInfo.api_key_length} chars) | From: ${diagInfo.from_number || 'empty'} | Profile: ${diagInfo.messaging_profile_id || 'none'}`;
-          resultEl.textContent += extra;
+    async function sendTelnyxTestCall() {
+      const phoneInput = document.getElementById('telnyxTestPhone');
+      const resultEl = document.getElementById('telnyxTestResult');
+      const btn = document.getElementById('telnyxTestCallBtn');
+      if (!phoneInput || !resultEl) return;
+
+      const phone = phoneInput.value.trim();
+      if (!phone) {
+        resultEl.textContent = '⚠ Please enter a phone number first.';
+        resultEl.style.color = 'var(--warning)';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Calling…';
+      resultEl.textContent = '📞 Placing test call…';
+      resultEl.style.color = 'var(--text-muted)';
+
+      try {
+        const res = await fetch('/admin/telnyx/test-call', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone }),
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (data.ok) {
+          resultEl.textContent = '✅ ' + (data.message || 'Test call initiated! Your phone should ring shortly.');
+          resultEl.style.color = 'var(--accent)';
+        } else {
+          resultEl.textContent = '❌ ' + (data.message || 'Test call failed.');
+          resultEl.style.color = 'var(--danger)';
         }
       } catch (err) {
         resultEl.textContent = '❌ Network error: ' + err.message;
         resultEl.style.color = 'var(--danger)';
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Send Test SMS';
+        btn.textContent = '📞 Test Call';
       }
     }
 
@@ -6896,6 +7001,23 @@
     if (telnyxForm) {
       telnyxForm.addEventListener('submit', persistTelnyxConfig);
     }
+
+    // Telnyx verification method toggle
+    document.querySelectorAll('input[name="verification_method"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const method = radio.value;
+        const voiceFields = document.getElementById('telnyxVoiceFields');
+        const smsFields = document.getElementById('telnyxSmsFields');
+        if (voiceFields) voiceFields.style.display = (method === 'call') ? 'block' : 'none';
+        if (smsFields) smsFields.style.display = (method === 'sms') ? 'block' : 'none';
+      });
+    });
+
+    // Telnyx test buttons
+    const telnyxTestCallBtn = document.getElementById('telnyxTestCallBtn');
+    if (telnyxTestCallBtn) telnyxTestCallBtn.addEventListener('click', sendTelnyxTestCall);
+    const telnyxTestSmsBtn = document.getElementById('telnyxTestSmsBtn');
+    if (telnyxTestSmsBtn) telnyxTestSmsBtn.addEventListener('click', sendTelnyxTestSms);
 
     const emailConfigForm = document.getElementById('emailConfigForm');
     if (emailConfigForm) {

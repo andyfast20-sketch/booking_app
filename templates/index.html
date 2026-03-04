@@ -8528,11 +8528,12 @@
         async function sendSmsVerification(selectedSlot, selectedArea, serviceType, name, email, phone) {
             const sendingHTML = `
                 <div class="auto-quote-text">
-                    <p><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Sending a verification code to <strong>${phone}</strong>…</p>
+                    <p><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Verifying <strong>${phone}</strong>…</p>
                 </div>
             `;
             transitionContent(sendingHTML, 'Verify Mobile');
 
+            let verificationMethod = 'sms';
             try {
                 const sendRes = await fetchWithTimeout(API_BASE + '/api/send-verification', {
                     method: 'POST',
@@ -8540,9 +8541,10 @@
                     body: JSON.stringify({ phone })
                 });
                 const sendData = await sendRes.json().catch(() => ({}));
-                if (!sendRes.ok) throw new Error(sendData.message || 'Unable to send SMS code.');
+                if (!sendRes.ok) throw new Error(sendData.message || 'Unable to send verification code.');
+                verificationMethod = sendData.method || 'sms';
             } catch (err) {
-                // SMS not configured – submit without verification
+                // Verification not configured – submit without verification
                 const friendlyMsg = (err.message || 'Unable to send verification code.').replace(/</g, '&lt;');
                 const errorHTML = `
                     <div class="auto-quote-text">
@@ -8562,10 +8564,21 @@
                 return;
             }
 
+            const isCall = verificationMethod === 'call';
+            const promptMsg = isCall
+                ? `We're <strong>calling ${phone}</strong> now with your <strong>4-digit code</strong>. Please answer the call.`
+                : `We've sent a <strong>4-digit code</strong> to <strong>${phone}</strong>.`;
+            const hintMsg = isCall
+                ? `Listen carefully — the code will be read out twice.`
+                : `Enter it below to verify it's you.`;
+            const retryMsg = isCall
+                ? `Didn't get a call? Close this and try again in a minute.`
+                : `Didn't get a code? Close this and try again in a minute.`;
+
             const codeHTML = `
                 <div class="auto-quote-text">
-                    <p style="margin-bottom: 12px;">We've sent a <strong>4-digit code</strong> to <strong>${phone}</strong>.</p>
-                    <p style="font-size: 0.9rem; color: var(--text-light);">Enter it below to verify it's you.</p>
+                    <p style="margin-bottom: 12px;">${promptMsg}</p>
+                    <p style="font-size: 0.9rem; color: var(--text-light);">${hintMsg}</p>
                 </div>
                 <div class="auto-quote-form">
                     <div class="auto-quote-form-group">
@@ -8573,7 +8586,7 @@
                         <input type="text" id="smsVerifyCode" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" autocomplete="one-time-code" required placeholder="Enter 4-digit code" style="text-align:center; font-size:1.6rem; letter-spacing:0.5em; font-weight:700;" />
                     </div>
                     <button type="button" id="smsVerifyBtn" class="auto-quote-submit">Verify</button>
-                    <p style="font-size: 0.85rem; color: var(--text-light); margin: 10px 0 0; text-align: center;">Didn't get a code? Close this and try again in a minute.</p>
+                    <p style="font-size: 0.85rem; color: var(--text-light); margin: 10px 0 0; text-align: center;">${retryMsg}</p>
                     <div class="auto-quote-feedback" id="smsVerifyFeedback" style="margin-top: 14px;"></div>
                 </div>
             `;
