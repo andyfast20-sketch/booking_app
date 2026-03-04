@@ -151,7 +151,36 @@ _telnyx_config_lock = Lock()
 _TELNYX_DEFAULT_VOICE_CONNECTION_ID = "2906857825307198675"  # Gardens Voice API app
 _telnyx_config = {"api_key": "", "from_number": "", "messaging_profile_id": "", "verification_method": "call", "voice_connection_id": _TELNYX_DEFAULT_VOICE_CONNECTION_ID}
 _verification_codes = {}  # Store verification codes temporarily
+_verification_codes_lock = Lock()
 _telnyx_webhook_log = []  # Store recent webhook events for debugging (max 20)
+
+
+def _save_verification_codes():
+    """Persist verification codes to disk so they survive server restarts."""
+    try:
+        with open("verification_codes.json", "w") as f:
+            json.dump(_verification_codes, f)
+    except Exception as exc:
+        print(f"[Verify] Failed to save codes to disk: {exc}")
+
+
+def _load_verification_codes():
+    """Load verification codes from disk on startup."""
+    global _verification_codes
+    try:
+        if os.path.exists("verification_codes.json"):
+            with open("verification_codes.json", "r") as f:
+                _verification_codes = json.load(f)
+            # Purge expired codes
+            now = datetime.utcnow()
+            expired = [k for k, v in _verification_codes.items()
+                       if datetime.fromisoformat(v.get("expires", "2000-01-01")) < now]
+            for k in expired:
+                del _verification_codes[k]
+            print(f"[Verify] Loaded {len(_verification_codes)} active verification codes from disk")
+    except Exception as exc:
+        print(f"[Verify] Failed to load codes from disk: {exc}")
+        _verification_codes = {}
 _watchdog_config_lock = Lock()
 _watchdog_config = {"enabled": False, "to_number": "+447595289669", "last_sent": None}
 
@@ -2489,6 +2518,7 @@ with _telnyx_config_lock:
     stored_telnyx = _load_telnyx_config_from_disk()
     _telnyx_config.update(stored_telnyx)
 
+_load_verification_codes()
 
 with _watchdog_config_lock:
     stored_watchdog = _load_watchdog_config_from_disk()
@@ -4428,10 +4458,13 @@ def send_verification_code():
         code = str(random.randint(1000, 9999))
 
         # Store code with expiry (5 minutes)
-        _verification_codes[phone] = {
-            "code": code,
-            "expires": (datetime.utcnow() + timedelta(minutes=5)).isoformat()
-        }
+        with _verification_codes_lock:
+            _verification_codes[phone] = {
+                "code": code,
+                "expires": (datetime.utcnow() + timedelta(minutes=5)).isoformat()
+            }
+            _save_verification_codes()
+        print(f"[Verify] Stored code for {phone}: {code}")
 
         # Decide whether to call or SMS based on Telnyx config
         telnyx_cfg = _telnyx_config_snapshot(include_secret=False)
@@ -4491,27 +4524,36 @@ def verify_code():
     data = request.get_json(silent=True) or {}
     phone = _normalize_phone_number(data.get("phone", ""))
     code = data.get("code", "").strip()
-    
+
+    print(f"[Verify] Attempt: phone={phone!r}, code_entered={code!r}, stored_keys={list(_verification_codes.keys())}")
+
     if not phone or not code:
         return jsonify({"message": "Phone and code are required"}), 400
-    
-    stored = _verification_codes.get(phone)
-    
-    if not stored:
-        return jsonify({"message": "No verification code found for this number"}), 400
-    
-    # Check if expired
-    expires = datetime.fromisoformat(stored["expires"])
-    if datetime.utcnow() > expires:
+
+    with _verification_codes_lock:
+        stored = _verification_codes.get(phone)
+
+        if not stored:
+            print(f"[Verify] FAIL: No code found for {phone}. Active codes: {list(_verification_codes.keys())}")
+            return jsonify({"message": "No verification code found for this number. Please request a new code."}), 400
+
+        # Check if expired
+        expires = datetime.fromisoformat(stored["expires"])
+        if datetime.utcnow() > expires:
+            del _verification_codes[phone]
+            _save_verification_codes()
+            print(f"[Verify] FAIL: Code for {phone} expired at {stored['expires']}")
+            return jsonify({"message": "Verification code has expired. Please request a new code."}), 400
+
+        # Check if code matches
+        if stored["code"] != code:
+            print(f"[Verify] FAIL: Code mismatch for {phone}: expected={stored['code']!r}, got={code!r}")
+            return jsonify({"message": "Invalid verification code. Please try again."}), 400
+
+        # Code is valid, remove it
         del _verification_codes[phone]
-        return jsonify({"message": "Verification code has expired"}), 400
-    
-    # Check if code matches
-    if stored["code"] != code:
-        return jsonify({"message": "Invalid verification code"}), 400
-    
-    # Code is valid, remove it
-    del _verification_codes[phone]
+        _save_verification_codes()
+    print(f"[Verify] SUCCESS: {phone} verified")
     return jsonify({"message": "Phone number verified successfully"})
 
 
