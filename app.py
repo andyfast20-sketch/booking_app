@@ -19,6 +19,7 @@ from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 from urllib.parse import quote, urljoin, urlparse
 from werkzeug.utils import secure_filename
+import requests as http_requests
 
 # Import admin security
 from admin_auth import (
@@ -2864,8 +2865,6 @@ def _request_autopilot_reply(messages, *, provider: str, model: str, temperature
     provider = (provider or DEFAULT_AUTOPILOT_PROVIDER).strip().lower()
     resolved_model = (model or DEFAULT_AUTOPILOT_MODEL).strip() or DEFAULT_AUTOPILOT_MODEL
     if provider == "openrouter" and "/" not in resolved_model:
-        # OpenRouter model identifiers are typically namespaced (e.g. deepseek/deepseek-chat).
-        # Keep backwards compatibility with existing DeepSeek defaults.
         if resolved_model == "deepseek-chat":
             resolved_model = "deepseek/deepseek-chat"
 
@@ -2881,6 +2880,7 @@ def _request_autopilot_reply(messages, *, provider: str, model: str, temperature
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}",
+            "X-Title": "Booking App Autopilot",
         }
         try:
             referer = str(request.host_url or "").strip()
@@ -2888,7 +2888,6 @@ def _request_autopilot_reply(messages, *, provider: str, model: str, temperature
             referer = ""
         if referer:
             headers["HTTP-Referer"] = referer
-        headers["X-Title"] = "Booking App Autopilot"
     else:
         url = "https://api.deepseek.com/chat/completions"
         headers = {
@@ -2896,56 +2895,52 @@ def _request_autopilot_reply(messages, *, provider: str, model: str, temperature
             "Authorization": f"Bearer {api_key}",
         }
 
-    api_request = Request(
-        url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers=headers,
-    )
-
-    raw = ""
     last_error = None
-    for attempt in range(2):
+    raw_text = ""
+    for attempt in range(3):
         try:
-            with urlopen(api_request, timeout=30) as response:
-                if getattr(response, "status", 200) != 200:
-                    print(f"[Autopilot] API returned status {getattr(response, 'status', '?')}")
-                    return ""
-                raw = response.read().decode("utf-8")
-                last_error = None
-                break
-        except HTTPError as exc:
-            error_body = ""
-            try:
-                error_body = exc.read().decode("utf-8", errors="replace")[:500]
-            except Exception:
-                pass
-            print(f"[Autopilot] HTTP error {exc.code} (attempt {attempt + 1}): {error_body}")
-            last_error = exc
-            if exc.code in {429, 500, 502, 503, 504}:
-                continue
-            break
-        except (URLError, TimeoutError, ValueError, OSError) as exc:
-            print(f"[Autopilot] Request failed (attempt {attempt + 1}): {type(exc).__name__}: {exc}")
-            last_error = exc
-            # Rebuild the request object for retry (urlopen consumes it)
-            api_request = Request(
+            print(f"[Autopilot] API call attempt {attempt + 1} to {url}")
+            resp = http_requests.post(
                 url,
-                data=json.dumps(payload).encode("utf-8"),
+                json=payload,
                 headers=headers,
+                timeout=45,
             )
+            if resp.status_code != 200:
+                print(f"[Autopilot] API returned {resp.status_code} (attempt {attempt + 1}): {resp.text[:500]}")
+                last_error = f"HTTP {resp.status_code}"
+                if resp.status_code in {429, 500, 502, 503, 504}:
+                    continue
+                break
+            raw_text = resp.text
+            last_error = None
+            break
+        except http_requests.exceptions.Timeout:
+            print(f"[Autopilot] Timeout (attempt {attempt + 1})")
+            last_error = "Timeout"
             continue
+        except http_requests.exceptions.ConnectionError as exc:
+            print(f"[Autopilot] Connection error (attempt {attempt + 1}): {exc}")
+            last_error = str(exc)
+            continue
+        except Exception as exc:
+            print(f"[Autopilot] Unexpected error (attempt {attempt + 1}): {type(exc).__name__}: {exc}")
+            last_error = str(exc)
+            break
 
     if last_error is not None:
         print(f"[Autopilot] All attempts failed: {last_error}")
         return ""
 
     try:
-        parsed = json.loads(raw)
+        parsed = json.loads(raw_text)
     except json.JSONDecodeError:
+        print(f"[Autopilot] Invalid JSON response: {raw_text[:300]}")
         return ""
 
     choices = parsed.get("choices")
     if not isinstance(choices, list) or not choices:
+        print(f"[Autopilot] No choices in response: {raw_text[:300]}")
         return ""
 
     message_payload = choices[0].get("message") if isinstance(choices[0], dict) else {}
@@ -3248,6 +3243,44 @@ def admin_autopilot_config():
 
     _save_autopilot_config(snapshot)
     return jsonify({"message": "Autopilot settings updated.", "config": _autopilot_config_snapshot()})
+
+
+@app.route("/admin/autopilot/test", methods=["POST"])
+@require_admin_auth
+def admin_autopilot_test():
+    """Diagnostic endpoint: sends a test message to the AI provider and returns the result or error."""
+    payload = request.get_json(silent=True) or {}
+    test_message = (payload.get("message") or "Hello, can you reply?").strip()
+
+    config = _autopilot_config_snapshot(include_secret=True)
+    if not config.get("enabled"):
+        return jsonify({"success": False, "error": "Autopilot is disabled."}), 400
+
+    provider = str(config.get("provider", DEFAULT_AUTOPILOT_PROVIDER) or DEFAULT_AUTOPILOT_PROVIDER)
+    api_key = _resolve_autopilot_api_key(provider, config)
+    if not api_key:
+        return jsonify({"success": False, "error": f"No API key found for provider '{provider}'."}), 400
+
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant. Reply briefly."},
+        {"role": "user", "content": test_message},
+    ]
+
+    import time as _time
+    start = _time.time()
+    reply_text = _request_autopilot_reply(
+        messages,
+        provider=provider,
+        model=config.get("model", DEFAULT_AUTOPILOT_MODEL),
+        temperature=config.get("temperature", DEFAULT_AUTOPILOT_TEMPERATURE),
+        api_key=api_key,
+    )
+    elapsed = round(_time.time() - start, 2)
+
+    if reply_text:
+        return jsonify({"success": True, "reply": reply_text, "elapsed_seconds": elapsed, "provider": provider})
+    else:
+        return jsonify({"success": False, "error": "AI provider returned empty reply. Check server logs for details.", "elapsed_seconds": elapsed, "provider": provider}), 502
 
 
 @app.route("/admin/autopilot/scrape", methods=["POST"])
