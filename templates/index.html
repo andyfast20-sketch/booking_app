@@ -1400,6 +1400,20 @@
             box-shadow: 0 0 0 6px rgba(255, 107, 107, 0.2);
         }
 
+        .live-chat-toggle.is-autopilot {
+            background: linear-gradient(135deg, #f9a825 0%, #f57f17 100%);
+            box-shadow: 0 14px 28px rgba(245, 127, 23, 0.35);
+        }
+
+        .live-chat-toggle.is-autopilot:hover {
+            box-shadow: 0 18px 34px rgba(245, 127, 23, 0.45);
+        }
+
+        .live-chat-toggle.is-autopilot .live-chat-indicator {
+            background: #ffee58;
+            box-shadow: 0 0 0 4px rgba(255, 238, 88, 0.3);
+        }
+
         .live-chat-toggle.has-unread::after {
             content: '';
             position: absolute;
@@ -5953,6 +5967,7 @@
                     <ul class="footer-links">
                         <li><i class="fas fa-map-marker-alt"></i> <a href="https://maps.google.com/?q=Leech+Brook+Close,+Audenshaw,+Manchester" target="_blank" rel="noopener">Leech Brook Close, Audenshaw. Manchester</a></li>
                         <li><i class="fas fa-phone"></i> <a href="tel:07595289669">07595 289 669</a></li>
+                        <li><i class="fas fa-user"></i> Andrew Roberts</li>
                     </ul>
                 </div>
             </div>
@@ -6392,6 +6407,7 @@
             let liveChatLastMessageId = 0;
             let liveChatPollingTimer = null;
             let liveChatOnline = true;
+            let liveChatAutopilotActive = false;
             let liveChatWindowOpen = false;
             let liveChatInitialized = false;
             let liveChatHasUnread = false;
@@ -6604,34 +6620,40 @@
                 }
             }
 
-            function setChatOnlineState(isOnline) {
+            function setChatOnlineState(isOnline, isAutopilotActive) {
                 liveChatOnline = Boolean(isOnline);
+                if (typeof isAutopilotActive === 'boolean') {
+                    liveChatAutopilotActive = isAutopilotActive;
+                }
+                const canChat = liveChatOnline || liveChatAutopilotActive;
+                const isAutopilotOnly = !liveChatOnline && liveChatAutopilotActive;
                 if (liveChatToggle) {
-                    liveChatToggle.classList.toggle('is-offline', !liveChatOnline);
+                    liveChatToggle.classList.toggle('is-offline', !canChat);
+                    liveChatToggle.classList.toggle('is-autopilot', isAutopilotOnly);
                 }
                 if (liveChatStatusBanner) {
                     liveChatStatusBanner.classList.remove('error');
-                    liveChatStatusBanner.classList.toggle('offline', !liveChatOnline);
-                    liveChatStatusBanner.classList.toggle('online', liveChatOnline);
+                    liveChatStatusBanner.classList.toggle('offline', !canChat);
+                    liveChatStatusBanner.classList.toggle('online', canChat);
                     liveChatStatusBanner.classList.add('visible');
-                    liveChatStatusBanner.textContent = liveChatOnline
+                    liveChatStatusBanner.textContent = canChat
                         ? 'Typically replies within a few minutes.'
                         : 'We\'re offline right now. Please reach out via the contact form or WhatsApp.';
                 }
                 if (liveChatForm) {
-                    liveChatForm.classList.toggle('is-disabled', !liveChatOnline);
+                    liveChatForm.classList.toggle('is-disabled', !canChat);
                 }
                 if (liveChatInput) {
-                    liveChatInput.disabled = !liveChatOnline;
-                    liveChatInput.placeholder = liveChatOnline
+                    liveChatInput.disabled = !canChat;
+                    liveChatInput.placeholder = canChat
                         ? 'Type your message…'
                         : 'Live chat is offline right now';
                 }
                 if (liveChatSubmit) {
-                    liveChatSubmit.disabled = !liveChatOnline;
+                    liveChatSubmit.disabled = !canChat;
                 }
                 if (liveChatWhatsAppButton) {
-                    liveChatWhatsAppButton.classList.toggle('is-highlighted', !liveChatOnline);
+                    liveChatWhatsAppButton.classList.toggle('is-highlighted', !canChat);
                 }
             }
 
@@ -6645,9 +6667,10 @@
 
             function clearChatBanner() {
                 if (!liveChatStatusBanner) return;
+                const canChat = liveChatOnline || liveChatAutopilotActive;
                 liveChatStatusBanner.classList.remove('error');
-                liveChatStatusBanner.classList.add(liveChatOnline ? 'online' : 'offline');
-                liveChatStatusBanner.textContent = liveChatOnline
+                liveChatStatusBanner.classList.add(canChat ? 'online' : 'offline');
+                liveChatStatusBanner.textContent = canChat
                     ? 'Typically replies within a few minutes.'
                     : 'We\'re offline right now. Please reach out via the contact form or WhatsApp.';
             }
@@ -6782,7 +6805,7 @@
                     }
                     const data = await res.json();
                     if (typeof data.online === 'boolean') {
-                        setChatOnlineState(data.online);
+                        setChatOnlineState(data.online, typeof data.autopilot_active === 'boolean' ? data.autopilot_active : undefined);
                     }
                     if (Array.isArray(data.messages)) {
                         let hasAdminMessage = false;
@@ -6825,7 +6848,10 @@
                         liveChatSessionId = data.session_id;
                         storeChatSessionId(liveChatSessionId);
                     }
-                    setChatOnlineState(typeof data.online === 'boolean' ? data.online : true);
+                    setChatOnlineState(
+                        typeof data.online === 'boolean' ? data.online : true,
+                        typeof data.autopilot_active === 'boolean' ? data.autopilot_active : undefined
+                    );
                     resetLiveChatMessages(Array.isArray(data.messages) ? data.messages : []);
                     startLiveChatPolling();
                 } catch (error) {
@@ -6838,7 +6864,8 @@
             async function sendLiveChatMessage(event) {
                 event.preventDefault();
                 if (!liveChatForm || !liveChatInput || !liveChatSubmit) return;
-                if (!liveChatOnline || !liveChatSessionId) {
+                const canSend = liveChatOnline || liveChatAutopilotActive;
+                if (!canSend || !liveChatSessionId) {
                     return;
                 }
 
@@ -6881,7 +6908,7 @@
                 } catch (error) {
                     showChatError(error.message || 'Unable to send your message.');
                 } finally {
-                    liveChatSubmit.disabled = !liveChatOnline;
+                    liveChatSubmit.disabled = !(liveChatOnline || liveChatAutopilotActive);
                 }
             }
 
@@ -9521,10 +9548,20 @@
                     }
                 }
 
-                if (typeof data.online === 'boolean' && !data.online) {
+                const autopilotOn = typeof data.autopilot_active === 'boolean' ? data.autopilot_active : false;
+                const canChat = data.online || autopilotOn;
+                if (!canChat) {
                     showBanner("We're offline right now. Please use WhatsApp or the contact form.", 'offline');
+                    if (input) { input.disabled = true; input.placeholder = 'Live chat is offline right now'; }
+                    if (submit) submit.disabled = true;
                 } else {
                     showBanner('Typically replies within a few minutes.', 'online');
+                    if (input) { input.disabled = false; input.placeholder = 'Type your message…'; }
+                    if (submit) submit.disabled = false;
+                }
+                if (toggle) {
+                    toggle.classList.toggle('is-offline', !canChat);
+                    toggle.classList.toggle('is-autopilot', !data.online && autopilotOn);
                 }
 
                 if (Array.isArray(data.messages) && messagesEl) {
@@ -9545,7 +9582,8 @@
                 const res = await fetch(`${ENDPOINTS.messages}?${params.toString()}`);
                 const data = await res.json();
                 if (!res.ok) return;
-                if (typeof data.online === 'boolean' && !data.online) {
+                const autopilotOn = typeof data.autopilot_active === 'boolean' ? data.autopilot_active : false;
+                if (typeof data.online === 'boolean' && !data.online && !autopilotOn) {
                     showBanner("We're offline right now. Please use WhatsApp or the contact form.", 'offline');
                 }
                 if (Array.isArray(data.messages)) {

@@ -2342,13 +2342,17 @@ def _load_chat_state_from_disk():
                         continue
 
                     timestamp = raw_message.get("timestamp") or datetime.utcnow().isoformat()
-                    sender = "admin" if raw_message.get("sender") == "admin" else "visitor"
+                    raw_sender = str(raw_message.get("sender") or "visitor").strip()
+                    sender = raw_sender if raw_sender in {"admin", "autopilot", "visitor"} else "visitor"
+                    raw_type = str(raw_message.get("type") or "message").strip()
+                    message_type = raw_type if raw_type in {"message", "autopilot", "invite"} else "message"
                     messages.append(
                         {
                             "id": message_id,
                             "sender": sender,
                             "text": str(text),
                             "timestamp": timestamp,
+                            "type": message_type,
                         }
                     )
 
@@ -2892,18 +2896,47 @@ def _request_autopilot_reply(messages, *, provider: str, model: str, temperature
             "Authorization": f"Bearer {api_key}",
         }
 
-    request = Request(
+    api_request = Request(
         url,
         data=json.dumps(payload).encode("utf-8"),
         headers=headers,
     )
 
-    try:
-        with urlopen(request, timeout=15) as response:
-            if getattr(response, "status", 200) != 200:
-                return ""
-            raw = response.read().decode("utf-8")
-    except (HTTPError, URLError, TimeoutError, ValueError, OSError):
+    raw = ""
+    last_error = None
+    for attempt in range(2):
+        try:
+            with urlopen(api_request, timeout=30) as response:
+                if getattr(response, "status", 200) != 200:
+                    print(f"[Autopilot] API returned status {getattr(response, 'status', '?')}")
+                    return ""
+                raw = response.read().decode("utf-8")
+                last_error = None
+                break
+        except HTTPError as exc:
+            error_body = ""
+            try:
+                error_body = exc.read().decode("utf-8", errors="replace")[:500]
+            except Exception:
+                pass
+            print(f"[Autopilot] HTTP error {exc.code} (attempt {attempt + 1}): {error_body}")
+            last_error = exc
+            if exc.code in {429, 500, 502, 503, 504}:
+                continue
+            break
+        except (URLError, TimeoutError, ValueError, OSError) as exc:
+            print(f"[Autopilot] Request failed (attempt {attempt + 1}): {type(exc).__name__}: {exc}")
+            last_error = exc
+            # Rebuild the request object for retry (urlopen consumes it)
+            api_request = Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers=headers,
+            )
+            continue
+
+    if last_error is not None:
+        print(f"[Autopilot] All attempts failed: {last_error}")
         return ""
 
     try:
@@ -2959,17 +2992,21 @@ def _resolve_autopilot_api_key(provider: str, config: dict) -> str:
 def _maybe_send_autopilot_reply(session_id: str, conversation=None):
     config = _autopilot_config_snapshot(include_secret=True)
     if not config.get("enabled"):
+        print("[Autopilot] Autopilot is disabled.")
         return None
 
     provider = str(config.get("provider", DEFAULT_AUTOPILOT_PROVIDER) or DEFAULT_AUTOPILOT_PROVIDER)
     api_key = _resolve_autopilot_api_key(provider, config)
     if not api_key:
+        print(f"[Autopilot] No API key found for provider '{provider}'.")
         return None
 
     messages = _build_autopilot_messages(conversation or [], config)
     if len(messages) <= 1:
+        print("[Autopilot] Not enough messages to generate a reply.")
         return None
 
+    print(f"[Autopilot] Requesting reply from {provider} ({config.get('model', DEFAULT_AUTOPILOT_MODEL)})...")
     reply_text = _request_autopilot_reply(
         messages,
         provider=provider,
@@ -2980,7 +3017,10 @@ def _maybe_send_autopilot_reply(session_id: str, conversation=None):
 
     clean_reply = (reply_text or "").strip()
     if not clean_reply:
+        print("[Autopilot] Got empty reply from AI provider.")
         return None
+
+    print(f"[Autopilot] Got reply ({len(clean_reply)} chars), saving to session.")
 
     with _chat_state_lock:
         session = _chat_state.get("sessions", {}).get(session_id)
@@ -3002,7 +3042,8 @@ def _maybe_send_autopilot_reply(session_id: str, conversation=None):
 def chat_status():
     with _chat_state_lock:
         online = bool(_chat_state.get("online", True))
-    return jsonify({"online": online})
+    autopilot_active = bool(_autopilot_config_snapshot().get("enabled", False))
+    return jsonify({"online": online, "autopilot_active": autopilot_active})
 
 
 @app.route("/chat/session", methods=["POST"])
@@ -3036,8 +3077,9 @@ def chat_session():
             session["last_visitor_read"] = max(session.get("last_visitor_read", 0), messages[-1]["id"])
         online = bool(_chat_state.get("online", True))
 
+    autopilot_active = bool(_autopilot_config_snapshot().get("enabled", False))
     _save_chat_state()
-    return jsonify({"session_id": session_id, "online": online, "messages": messages[-50:]})
+    return jsonify({"session_id": session_id, "online": online, "autopilot_active": autopilot_active, "messages": messages[-50:]})
 
 
 @app.route("/chat/messages", methods=["GET"])
@@ -3064,7 +3106,7 @@ def chat_messages():
         user_agent=user_agent,
     )
 
-    response_payload = {"session_id": session_id, "messages": [], "online": True}
+    response_payload = {"session_id": session_id, "messages": [], "online": True, "autopilot_active": False}
 
     with _chat_state_lock:
         session = _chat_state.get("sessions", {}).get(session_id)
@@ -3079,6 +3121,7 @@ def chat_messages():
             session["last_visitor_read"] = max(session.get("last_visitor_read", 0), messages[-1]["id"])
         session["last_seen"] = datetime.utcnow().isoformat()
 
+    response_payload["autopilot_active"] = bool(_autopilot_config_snapshot().get("enabled", False))
     _save_chat_state()
     return jsonify(response_payload)
 
@@ -3100,7 +3143,8 @@ def chat_send():
 
     with _chat_state_lock:
         online = bool(_chat_state.get("online", True))
-    if not online:
+    autopilot_active = bool(_autopilot_config_snapshot().get("enabled", False))
+    if not online and not autopilot_active:
         return jsonify({"message": "Live chat is currently offline."}), 503
 
     with _chat_state_lock:
