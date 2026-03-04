@@ -2,22 +2,25 @@
   {
     "id": "1c7d80f1-08e0-4a84-bc8c-78e7d6c61234",
     "quote": "Pay As You Mow transformed my neglected garden into a beautiful oasis. Their flexible payment model meant I could get the help I needed without breaking the bank. Highly recommended!",
-    "author": "Sarah Johnson",
-    "location": "Northwood",
-    "created_at": "2024-01-01T00:00:00Z"
+    "author": "May Thompson",
+    "location": "Denton",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2026-03-04T12:15:56.829121"
   },
   {
     "id": "6f5f8f1d-39e5-4d4c-9f5b-2267c2f2a8b1",
-    "quote": "As someone who travels frequently, I love that I can schedule garden maintenance only when I need it. The team is professional, reliable, and does an amazing job every time.",
-    "author": "Michael Chen",
-    "location": "Westfield",
-    "created_at": "2024-01-01T00:00:00Z"
+    "quote": "Andy is a Top guy, polite and friendly and I always have a quick chat with him. The garden looks great when he's done.",
+    "author": "Peter",
+    "location": "Audenshaw",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2026-03-04T12:17:15.158010"
   },
   {
     "id": "d3e8c859-ec4f-4877-ae58-4f0a235c1c6e",
-    "quote": "The quality of work is exceptional. My hedges have never looked better, and the lawn is always perfectly manicured. The pay-as-you-go model is perfect for my budget.",
-    "author": "Emma Davis",
-    "location": "Riverside",
-    "created_at": "2024-01-01T00:00:00Z"
+    "quote": "Thanks for doing my garden, it always looks great and your prices are too low for the amount of work you do.",
+    "author": "Barbara",
+    "location": "Denton",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2026-03-04T12:18:31.080192"
   }
 ]

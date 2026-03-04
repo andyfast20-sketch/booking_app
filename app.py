@@ -88,7 +88,7 @@ CUSTOMER_ACCESS_CODE = os.getenv("CUSTOMER_ACCESS_CODE", "GARDENCARE2024")
 
 DEFAULT_AUTOPILOT_MODEL = "deepseek-chat"
 DEFAULT_AUTOPILOT_TEMPERATURE = 0.3
-DEFAULT_AUTOPILOT_PROVIDER = "deepseek"  # "deepseek" or "openrouter"
+DEFAULT_AUTOPILOT_PROVIDER = "deepseek"
 AUTOPILOT_PROFILE_LIMIT = 4000
 AUTOPILOT_WEBSITE_KNOWLEDGE_LIMIT = 16000
 AUTOPILOT_WEBSITE_FETCH_BYTES_LIMIT = 1_500_000
@@ -134,8 +134,7 @@ _autopilot_config = {
     "temperature": DEFAULT_AUTOPILOT_TEMPERATURE,
     "api_key": "",
     "api_keys": [],
-    "openrouter_api_key": "",
-    "openrouter_api_keys": [],
+
 }
 _visitor_log_lock = Lock()
 _visitor_log = {}
@@ -1690,20 +1689,17 @@ def _merge_api_key(value: str, existing=None):
 def _coerce_autopilot_config(payload: dict, *, base=None) -> dict:
     reference = dict(base or _autopilot_config)
     api_keys = _normalize_api_keys(reference.get("api_keys", []))
-    openrouter_api_keys = _normalize_api_keys(reference.get("openrouter_api_keys", []))
     result = {
         "enabled": bool(reference.get("enabled", False)),
         "business_profile": str(reference.get("business_profile", "") or ""),
         "business_website_url": str(reference.get("business_website_url", "") or ""),
         "business_website_knowledge": str(reference.get("business_website_knowledge", "") or ""),
         "business_website_last_scraped": str(reference.get("business_website_last_scraped", "") or ""),
-        "provider": str(reference.get("provider", DEFAULT_AUTOPILOT_PROVIDER) or DEFAULT_AUTOPILOT_PROVIDER),
+        "provider": "deepseek",
         "model": str(reference.get("model", DEFAULT_AUTOPILOT_MODEL) or DEFAULT_AUTOPILOT_MODEL),
         "temperature": float(reference.get("temperature", DEFAULT_AUTOPILOT_TEMPERATURE)),
         "api_key": str(reference.get("api_key", "") or ""),
         "api_keys": api_keys,
-        "openrouter_api_key": str(reference.get("openrouter_api_key", "") or ""),
-        "openrouter_api_keys": openrouter_api_keys,
     }
 
     if payload is None:
@@ -1730,11 +1726,8 @@ def _coerce_autopilot_config(payload: dict, *, base=None) -> dict:
         result["business_website_knowledge"] = ""
         result["business_website_last_scraped"] = ""
 
-    if "provider" in payload:
-        provider = str(payload.get("provider") or "").strip().lower()
-        if provider not in {"deepseek", "openrouter"}:
-            provider = DEFAULT_AUTOPILOT_PROVIDER
-        result["provider"] = provider
+    # Provider is always DeepSeek — ignore any incoming provider value.
+    result["provider"] = "deepseek"
 
     if "model" in payload:
         model = str(payload.get("model") or "").strip() or DEFAULT_AUTOPILOT_MODEL
@@ -1762,20 +1755,6 @@ def _coerce_autopilot_config(payload: dict, *, base=None) -> dict:
         elif "api_keys" not in payload:
             result["api_key"] = ""
             result["api_keys"] = []
-
-    if "openrouter_api_keys" in payload:
-        incoming_keys = _normalize_api_keys(payload.get("openrouter_api_keys") or [])
-        if incoming_keys:
-            result["openrouter_api_keys"] = incoming_keys
-
-    if "openrouter_api_key" in payload:
-        incoming_key = str(payload.get("openrouter_api_key") or "").strip()
-        if incoming_key:
-            result["openrouter_api_key"] = incoming_key
-            result["openrouter_api_keys"] = _merge_api_key(incoming_key, openrouter_api_keys)
-        elif "openrouter_api_keys" not in payload:
-            result["openrouter_api_key"] = ""
-            result["openrouter_api_keys"] = []
 
     return result
 
@@ -1812,13 +1791,11 @@ def _autopilot_config_snapshot(*, include_secret: bool = False) -> dict:
             "business_profile": str(_autopilot_config.get("business_profile", "") or ""),
             "business_website_url": str(_autopilot_config.get("business_website_url", "") or ""),
             "business_website_last_scraped": str(_autopilot_config.get("business_website_last_scraped", "") or ""),
-            "provider": str(_autopilot_config.get("provider", DEFAULT_AUTOPILOT_PROVIDER) or DEFAULT_AUTOPILOT_PROVIDER),
+            "provider": "deepseek",
             "model": str(_autopilot_config.get("model", DEFAULT_AUTOPILOT_MODEL) or DEFAULT_AUTOPILOT_MODEL),
             "temperature": float(_autopilot_config.get("temperature", DEFAULT_AUTOPILOT_TEMPERATURE)),
             "api_key": str(_autopilot_config.get("api_key", "") or ""),
             "api_keys": list(_autopilot_config.get("api_keys", [])),
-            "openrouter_api_key": str(_autopilot_config.get("openrouter_api_key", "") or ""),
-            "openrouter_api_keys": list(_autopilot_config.get("openrouter_api_keys", [])),
         }
 
         website_knowledge = str(_autopilot_config.get("business_website_knowledge", "") or "")
@@ -1836,7 +1813,6 @@ def _autopilot_config_snapshot(*, include_secret: bool = False) -> dict:
             or ""
         ).strip()
     )
-    env_openrouter_present = bool((os.environ.get("OPENROUTER_API_KEY") or "").strip())
 
     deepseek_keys_payload = snapshot.get("api_keys", [])
     if not isinstance(deepseek_keys_payload, list):
@@ -1856,37 +1832,11 @@ def _autopilot_config_snapshot(*, include_secret: bool = False) -> dict:
             }
         )
 
-    openrouter_keys_payload = snapshot.get("openrouter_api_keys", [])
-    if not isinstance(openrouter_keys_payload, list):
-        openrouter_keys_payload = []
-
-    openrouter_visible_keys = []
-    for entry in openrouter_keys_payload:
-        value = str(entry.get("value") or "").strip()
-        if not value:
-            continue
-        openrouter_visible_keys.append(
-            {
-                "id": entry.get("id"),
-                "label": f"Key ending {value[-4:]}" if len(value) >= 4 else "Saved API key",
-                "created_at": entry.get("created_at", ""),
-                "last4": value[-4:] if len(value) >= 4 else value,
-            }
-        )
-
     has_api_key = bool(snapshot.get("api_key")) or bool(deepseek_visible_keys) or env_deepseek_present
-    has_openrouter_api_key = (
-        bool(snapshot.get("openrouter_api_key"))
-        or bool(openrouter_visible_keys)
-        or env_openrouter_present
-    )
 
     snapshot.pop("api_key", None)
-    snapshot.pop("openrouter_api_key", None)
     snapshot["api_keys"] = deepseek_visible_keys
-    snapshot["openrouter_api_keys"] = openrouter_visible_keys
     snapshot["has_api_key"] = has_api_key
-    snapshot["has_openrouter_api_key"] = has_openrouter_api_key
     snapshot["has_business_website_knowledge"] = website_chars > 0
     snapshot["business_website_knowledge_chars"] = website_chars
     snapshot["business_website_knowledge_preview"] = website_knowledge_preview
@@ -2862,11 +2812,7 @@ def _request_autopilot_reply(messages, *, provider: str, model: str, temperature
     if not api_key or not messages:
         return ""
 
-    provider = (provider or DEFAULT_AUTOPILOT_PROVIDER).strip().lower()
     resolved_model = (model or DEFAULT_AUTOPILOT_MODEL).strip() or DEFAULT_AUTOPILOT_MODEL
-    if provider == "openrouter" and "/" not in resolved_model:
-        if resolved_model == "deepseek-chat":
-            resolved_model = "deepseek/deepseek-chat"
 
     payload = {
         "model": resolved_model,
@@ -2875,25 +2821,11 @@ def _request_autopilot_reply(messages, *, provider: str, model: str, temperature
         "max_tokens": 350,
     }
 
-    if provider == "openrouter":
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}",
-            "X-Title": "Booking App Autopilot",
-        }
-        try:
-            referer = str(request.host_url or "").strip()
-        except Exception:
-            referer = ""
-        if referer:
-            headers["HTTP-Referer"] = referer
-    else:
-        url = "https://api.deepseek.com/chat/completions"
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}",
-        }
+    url = "https://api.deepseek.com/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
 
     last_error = None
     raw_text = ""
@@ -2965,15 +2897,7 @@ def _resolve_primary_api_key_from_list(keys_payload) -> str:
 
 
 def _resolve_autopilot_api_key(provider: str, config: dict) -> str:
-    provider = (provider or DEFAULT_AUTOPILOT_PROVIDER).strip().lower()
-    if provider == "openrouter":
-        env_key = (os.environ.get("OPENROUTER_API_KEY") or "").strip()
-        stored_key = (
-            _resolve_primary_api_key_from_list(config.get("openrouter_api_keys"))
-            or str(config.get("openrouter_api_key") or "").strip()
-        )
-        return stored_key or env_key
-
+    """Always resolve DeepSeek API key (OpenRouter removed)."""
     env_key = (os.environ.get("DEEPSEEK_API_KEY") or "").strip() or (
         os.environ.get("OPENAI_API_KEY") or ""
     ).strip()
@@ -2990,7 +2914,7 @@ def _maybe_send_autopilot_reply(session_id: str, conversation=None):
         print("[Autopilot] Autopilot is disabled.")
         return None
 
-    provider = str(config.get("provider", DEFAULT_AUTOPILOT_PROVIDER) or DEFAULT_AUTOPILOT_PROVIDER)
+    provider = "deepseek"
     api_key = _resolve_autopilot_api_key(provider, config)
     if not api_key:
         print(f"[Autopilot] No API key found for provider '{provider}'.")
@@ -3194,7 +3118,7 @@ def chat_send():
 def chat_debug_autopilot():
     """Temporary diagnostic endpoint — returns autopilot state without needing admin auth."""
     config = _autopilot_config_snapshot(include_secret=False)
-    provider = str(config.get("provider", DEFAULT_AUTOPILOT_PROVIDER) or DEFAULT_AUTOPILOT_PROVIDER)
+    provider = "deepseek"
 
     # Check if API key exists (show masked version)
     full_config = _autopilot_config_snapshot(include_secret=True)
@@ -3301,7 +3225,7 @@ def admin_autopilot_test():
     if not config.get("enabled"):
         return jsonify({"success": False, "error": "Autopilot is disabled."}), 400
 
-    provider = str(config.get("provider", DEFAULT_AUTOPILOT_PROVIDER) or DEFAULT_AUTOPILOT_PROVIDER)
+    provider = "deepseek"
     api_key = _resolve_autopilot_api_key(provider, config)
     if not api_key:
         return jsonify({"success": False, "error": f"No API key found for provider '{provider}'."}), 400

@@ -1765,30 +1765,12 @@
             </div>
           </div>
 
-          <div class="autopilot-api-card" role="group" aria-labelledby="autopilotProviderHeading">
-            <div class="autopilot-api-header">
-              <div>
-                <p class="eyebrow">Default provider</p>
-                <h3 id="autopilotProviderHeading" class="autopilot-api-title">Autopilot reply source</h3>
-                <p class="autopilot-api-description">Choose which provider should generate automatic live chat replies.</p>
-              </div>
-            </div>
-            <label for="autopilotProvider">
-              <div class="autopilot-provider-row">
-                <select id="autopilotProvider" name="provider">
-                  <option value="deepseek">DeepSeek (direct)</option>
-                  <option value="openrouter">OpenRouter</option>
-                </select>
-              </div>
-            </label>
-            <p class="input-note">You can save keys for both providers below, then switch the default at any time.</p>
-          </div>
           <div class="autopilot-api-card" role="group" aria-labelledby="autopilotApiKeyHeading">
             <div class="autopilot-api-header">
               <div>
                 <p class="eyebrow">AI access</p>
                 <h3 id="autopilotApiKeyHeading" class="autopilot-api-title">DeepSeek API key</h3>
-                <p class="autopilot-api-description">Used when the default provider is set to DeepSeek (direct).</p>
+                <p class="autopilot-api-description">Required for autopilot to generate live chat replies.</p>
               </div>
               <span class="status-pill offline" id="autopilotApiKeyStatus">No key saved</span>
             </div>
@@ -1818,39 +1800,6 @@
             </div>
           </div>
 
-          <div class="autopilot-api-card" role="group" aria-labelledby="openrouterApiKeyHeading">
-            <div class="autopilot-api-header">
-              <div>
-                <p class="eyebrow">AI access</p>
-                <h3 id="openrouterApiKeyHeading" class="autopilot-api-title">OpenRouter API key</h3>
-                <p class="autopilot-api-description">Used when the default provider is set to OpenRouter.</p>
-              </div>
-              <span class="status-pill offline" id="openrouterApiKeyStatus">No key saved</span>
-            </div>
-            <label for="openrouterApiKey">
-              <div class="autopilot-api-row">
-                <input
-                  id="openrouterApiKey"
-                  name="openrouter_api_key"
-                  type="password"
-                  inputmode="text"
-                  autocomplete="off"
-                  spellcheck="false"
-                  placeholder="or-..."
-                />
-                <button type="button" id="clearOpenrouterApiKey" class="secondary">Remove key</button>
-              </div>
-            </label>
-            <p class="input-note" id="openrouterApiKeyNote">
-              Saved securely on the server for autopilot replies. Leave blank to keep your existing key or use the
-              remove button above. The <code>OPENROUTER_API_KEY</code> environment variable will be used as a fallback.
-            </p>
-            <div class="saved-keys">
-              <p class="eyebrow">Saved API keys</p>
-              <ul id="openrouterApiKeyList" class="api-key-list"></ul>
-              <p class="input-note" id="openrouterApiKeyListEmpty">No API keys saved yet.</p>
-            </div>
-          </div>
           <div class="form-feedback" id="autopilotFeedback"></div>
           <div class="panel-actions">
             <button type="submit" class="primary">Save autopilot settings</button>
@@ -2813,12 +2762,6 @@
     const autopilotApiKeyStatus = document.getElementById('autopilotApiKeyStatus');
     const autopilotApiKeyList = document.getElementById('autopilotApiKeyList');
     const autopilotApiKeyListEmpty = document.getElementById('autopilotApiKeyListEmpty');
-    const openrouterApiKeyInput = document.getElementById('openrouterApiKey');
-    const clearOpenrouterApiKeyBtn = document.getElementById('clearOpenrouterApiKey');
-    const openrouterApiKeyNote = document.getElementById('openrouterApiKeyNote');
-    const openrouterApiKeyStatus = document.getElementById('openrouterApiKeyStatus');
-    const openrouterApiKeyList = document.getElementById('openrouterApiKeyList');
-    const openrouterApiKeyListEmpty = document.getElementById('openrouterApiKeyListEmpty');
     const autopilotWebsiteUrlInput = document.getElementById('autopilotWebsiteUrl');
     const autopilotWebsiteScrapeBtn = document.getElementById('autopilotWebsiteScrape');
     const autopilotWebsiteClearBtn = document.getElementById('autopilotWebsiteClear');
@@ -2869,8 +2812,6 @@
       temperature: 0.3,
       has_api_key: false,
       api_keys: [],
-      has_openrouter_api_key: false,
-      openrouter_api_keys: [],
     };
     const WEATHER_DEFAULTS = { has_api_key: false, api_keys: [] };
     let autopilotConfig = { ...AUTOPILOT_DEFAULTS };
@@ -3785,17 +3726,7 @@
         !deepseekKeyTyped;
       const hasDeepseekKey = (!deepseekKeyPendingRemoval && Boolean(autopilotConfig.has_api_key)) || Boolean(deepseekKeyTyped);
 
-      const openrouterKeyTyped =
-        openrouterApiKeyInput && openrouterApiKeyInput.value && openrouterApiKeyInput.value.trim().length > 0;
-      const openrouterKeyPendingRemoval =
-        openrouterApiKeyInput &&
-        openrouterApiKeyInput.dataset.dirty === 'true' &&
-        openrouterApiKeyInput.dataset.hasExisting === 'false' &&
-        !openrouterKeyTyped;
-      const hasOpenrouterKey =
-        (!openrouterKeyPendingRemoval && Boolean(autopilotConfig.has_openrouter_api_key)) || Boolean(openrouterKeyTyped);
-
-      const hasKey = provider === 'openrouter' ? hasOpenrouterKey : hasDeepseekKey;
+      const hasKey = hasDeepseekKey;
 
       if (enabled && hasKnowledge && hasKey) {
         setSummaryText(
@@ -3807,9 +3738,7 @@
       } else if (enabled && !hasKey) {
         setSummaryText(
           autopilotSummaryHighlight,
-          provider === 'openrouter'
-            ? 'Autopilot is on, but add an OpenRouter API key so replies can be generated.'
-            : 'Autopilot is on, but add a DeepSeek API key so replies can be generated.'
+          'Autopilot is on, but add a DeepSeek API key so replies can be generated.'
         );
       } else if (enabled) {
         setSummaryText(
@@ -3881,12 +3810,8 @@
     function applyApiKeyToPayload(payload) {
       if (!payload || typeof payload !== 'object') return payload;
 
-      if (autopilotProviderSelect) {
-        const value = String(autopilotProviderSelect.value || '').trim();
-        if (value === 'openrouter' || value === 'deepseek') {
-          payload.provider = value;
-        }
-      }
+      // Provider is always deepseek
+      payload.provider = 'deepseek';
 
       const apiKeyValue = autopilotApiKeyInput ? autopilotApiKeyInput.value.trim() : '';
       const apiKeyDirty = autopilotApiKeyInput && autopilotApiKeyInput.dataset.dirty === 'true';
@@ -3896,14 +3821,6 @@
       // the input never fired an `input` event to set the dirty flag.
       if (apiKeyDirty || (apiKeyValue.length > 0 && !hasExistingKey)) {
         payload.api_key = apiKeyValue;
-      }
-
-      const openrouterApiKeyValue = openrouterApiKeyInput ? openrouterApiKeyInput.value.trim() : '';
-      const openrouterApiKeyDirty = openrouterApiKeyInput && openrouterApiKeyInput.dataset.dirty === 'true';
-      const openrouterHasExistingKey = openrouterApiKeyInput && openrouterApiKeyInput.dataset.hasExisting === 'true';
-
-      if (openrouterApiKeyDirty || (openrouterApiKeyValue.length > 0 && !openrouterHasExistingKey)) {
-        payload.openrouter_api_key = openrouterApiKeyValue;
       }
 
       return payload;
@@ -3955,49 +3872,12 @@
       });
     }
 
-    function renderOpenrouterSavedKeys() {
-      if (!openrouterApiKeyList || !openrouterApiKeyListEmpty) return;
-
-      const keys = Array.isArray(autopilotConfig.openrouter_api_keys) ? autopilotConfig.openrouter_api_keys : [];
-      openrouterApiKeyList.innerHTML = '';
-
-      if (!keys.length) {
-        openrouterApiKeyList.hidden = true;
-        openrouterApiKeyListEmpty.hidden = false;
-        return;
-      }
-
-      openrouterApiKeyList.hidden = false;
-      openrouterApiKeyListEmpty.hidden = true;
-
-      keys.forEach((entry) => {
-        const item = document.createElement('li');
-        item.className = 'api-key-pill';
-
-        const name = document.createElement('strong');
-        name.textContent = entry && entry.label ? entry.label : 'Saved API key';
-
-        const meta = document.createElement('small');
-        const createdAt = entry && entry.created_at ? formatDate(entry.created_at) : '';
-        const last4 = entry && entry.last4 ? `ending ${entry.last4}` : '';
-        const details = [last4, createdAt].filter(Boolean).join(' · ');
-        meta.textContent = details || 'Ready to use for autopilot replies';
-
-        item.appendChild(name);
-        item.appendChild(meta);
-        openrouterApiKeyList.appendChild(item);
-      });
-    }
-
     function renderAutopilotState() {
       const enabled = Boolean(autopilotConfig.enabled);
       const hasApiKey = Boolean(autopilotConfig.has_api_key);
       const apiKeys = Array.isArray(autopilotConfig.api_keys) ? autopilotConfig.api_keys : [];
       const savedKeyCount = apiKeys.length;
-      const provider = typeof autopilotConfig.provider === 'string' ? autopilotConfig.provider : 'deepseek';
-      const hasOpenrouterApiKey = Boolean(autopilotConfig.has_openrouter_api_key);
-      const openrouterKeys = Array.isArray(autopilotConfig.openrouter_api_keys) ? autopilotConfig.openrouter_api_keys : [];
-      const openrouterSavedCount = openrouterKeys.length;
+      const provider = 'deepseek';
       if (autopilotStatusBadge) {
         autopilotStatusBadge.textContent = enabled ? 'Autopilot active' : 'Autopilot paused';
         autopilotStatusBadge.classList.toggle('active', enabled);
@@ -4046,9 +3926,6 @@
           : '';
       }
 
-      if (autopilotProviderSelect) {
-        autopilotProviderSelect.value = provider === 'openrouter' ? 'openrouter' : 'deepseek';
-      }
       if (autopilotApiKeyStatus) {
         if (hasApiKey && savedKeyCount > 0) {
           autopilotApiKeyStatus.textContent =
@@ -4081,42 +3958,7 @@
         autopilotApiKeyNote.classList.toggle('warning', !hasApiKey);
       }
 
-      if (openrouterApiKeyStatus) {
-        if (hasOpenrouterApiKey && openrouterSavedCount > 0) {
-          openrouterApiKeyStatus.textContent =
-            openrouterSavedCount === 1 ? '1 saved API key' : `${openrouterSavedCount} saved API keys`;
-        } else if (hasOpenrouterApiKey) {
-          openrouterApiKeyStatus.textContent = 'Key available for autopilot replies';
-        } else {
-          openrouterApiKeyStatus.textContent = 'No key saved';
-        }
-        openrouterApiKeyStatus.classList.toggle('active', hasOpenrouterApiKey);
-        openrouterApiKeyStatus.classList.toggle('offline', !hasOpenrouterApiKey);
-      }
-
-      if (openrouterApiKeyInput) {
-        const keepTypedValue =
-          openrouterApiKeyInput.dataset.dirty === 'true' &&
-          openrouterApiKeyInput.value &&
-          openrouterApiKeyInput.value.trim().length > 0;
-
-        if (!keepTypedValue) {
-          openrouterApiKeyInput.value = '';
-        }
-
-        openrouterApiKeyInput.dataset.dirty = keepTypedValue ? 'true' : 'false';
-        openrouterApiKeyInput.dataset.hasExisting = hasOpenrouterApiKey ? 'true' : 'false';
-      }
-
-      if (openrouterApiKeyNote) {
-        openrouterApiKeyNote.textContent = hasOpenrouterApiKey
-          ? 'API key saved securely for future autopilot replies. Leave the box untouched to keep it. The OPENROUTER_API_KEY environment variable will also be used if set.'
-          : 'Add your OpenRouter API key so autopilot can reply to visitors.';
-        openrouterApiKeyNote.classList.toggle('warning', !hasOpenrouterApiKey);
-      }
-
       renderAutopilotSavedKeys();
-      renderOpenrouterSavedKeys();
     }
 
     async function scrapeAutopilotWebsite(url) {
@@ -5069,10 +4911,6 @@
         autopilotApiKeyInput && autopilotApiKeyInput.dataset.dirty === 'true'
           ? autopilotApiKeyInput.value.trim()
           : '';
-      const submittedOpenrouterApiKey =
-        openrouterApiKeyInput && openrouterApiKeyInput.dataset.dirty === 'true'
-          ? openrouterApiKeyInput.value.trim()
-          : '';
 
       if (autopilotFeedback) {
         autopilotFeedback.classList.remove('visible', 'success');
@@ -5098,23 +4936,11 @@
           autopilotApiKeyInput.dataset.dirty = 'false';
           autopilotApiKeyInput.dataset.hasExisting = 'true';
         }
-        if (submittedOpenrouterApiKey && openrouterApiKeyInput) {
-          openrouterApiKeyInput.value = submittedOpenrouterApiKey;
-          openrouterApiKeyInput.dataset.dirty = 'false';
-          openrouterApiKeyInput.dataset.hasExisting = 'true';
-        }
         updateAutopilotSummary();
-        const selectedProvider = typeof autopilotConfig.provider === 'string' ? autopilotConfig.provider : 'deepseek';
-        const missingKey = autopilotConfig.enabled && (
-          selectedProvider === 'openrouter'
-            ? !autopilotConfig.has_openrouter_api_key
-            : !autopilotConfig.has_api_key
-        );
+        const missingKey = autopilotConfig.enabled && !autopilotConfig.has_api_key;
         if (autopilotFeedback) {
           if (missingKey) {
-            autopilotFeedback.textContent = selectedProvider === 'openrouter'
-              ? 'Add your OpenRouter API key so autopilot can respond to visitors.'
-              : 'Add your DeepSeek API key so autopilot can respond to visitors.';
+            autopilotFeedback.textContent = 'Add your DeepSeek API key so autopilot can respond to visitors.';
             autopilotFeedback.classList.remove('success');
             autopilotFeedback.classList.add('visible');
           } else if (showSuccess) {
@@ -6925,39 +6751,6 @@
       });
     }
 
-    if (openrouterApiKeyInput) {
-      openrouterApiKeyInput.addEventListener('input', () => {
-        openrouterApiKeyInput.dataset.dirty = 'true';
-        const hasValue = openrouterApiKeyInput.value.trim().length > 0;
-        const hasExisting = openrouterApiKeyInput.dataset.hasExisting === 'true';
-        if (openrouterApiKeyNote) {
-          if (hasValue) {
-            openrouterApiKeyNote.textContent = 'This key will be saved securely and used for autopilot replies.';
-            openrouterApiKeyNote.classList.remove('warning');
-          } else if (hasExisting) {
-            openrouterApiKeyNote.textContent = 'Leave blank to keep your existing key.';
-            openrouterApiKeyNote.classList.remove('warning');
-          } else {
-            openrouterApiKeyNote.textContent = 'Add your OpenRouter API key so autopilot can reply to visitors.';
-            openrouterApiKeyNote.classList.add('warning');
-          }
-        }
-        if (openrouterApiKeyStatus) {
-          if (hasValue) {
-            openrouterApiKeyStatus.textContent = 'Key ready to save';
-            openrouterApiKeyStatus.classList.add('active');
-            openrouterApiKeyStatus.classList.remove('offline');
-          } else {
-            openrouterApiKeyStatus.textContent = hasExisting
-              ? 'Key saved for autopilot replies'
-              : 'No key saved';
-            openrouterApiKeyStatus.classList.toggle('active', hasExisting);
-            openrouterApiKeyStatus.classList.toggle('offline', !hasExisting);
-          }
-        }
-      });
-    }
-
     if (weatherApiKeyInput) {
       weatherApiKeyInput.addEventListener('input', () => {
         weatherApiKeyInput.dataset.dirty = 'true';
@@ -6979,31 +6772,6 @@
           autopilotApiKeyStatus.classList.add('offline');
         }
         autopilotApiKeyInput.focus();
-      });
-    }
-
-    if (clearOpenrouterApiKeyBtn && openrouterApiKeyInput) {
-      clearOpenrouterApiKeyBtn.addEventListener('click', () => {
-        openrouterApiKeyInput.value = '';
-        openrouterApiKeyInput.dataset.dirty = 'true';
-        openrouterApiKeyInput.dataset.hasExisting = 'false';
-        if (openrouterApiKeyNote) {
-          openrouterApiKeyNote.textContent = 'Existing API key will be removed after saving.';
-          openrouterApiKeyNote.classList.add('warning');
-        }
-        if (openrouterApiKeyStatus) {
-          openrouterApiKeyStatus.textContent = 'Key will be removed on save';
-          openrouterApiKeyStatus.classList.remove('active');
-          openrouterApiKeyStatus.classList.add('offline');
-        }
-        openrouterApiKeyInput.focus();
-      });
-    }
-
-    if (autopilotProviderSelect) {
-      autopilotProviderSelect.addEventListener('change', () => {
-        autopilotConfig.provider = autopilotProviderSelect.value === 'openrouter' ? 'openrouter' : 'deepseek';
-        updateAutopilotSummary();
       });
     }
 
