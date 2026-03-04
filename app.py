@@ -4453,18 +4453,33 @@ def send_verification_code():
         if not phone.startswith("+"):
             return jsonify({"message": "Please enter a valid mobile number (e.g. 07123 456789)."}), 400
 
-        # Generate 4-digit code
+        # Debounce: if a valid code already exists for this phone, reuse it
         import random
-        code = str(random.randint(1000, 9999))
-
-        # Store code with expiry (5 minutes)
         with _verification_codes_lock:
-            _verification_codes[phone] = {
-                "code": code,
-                "expires": (datetime.utcnow() + timedelta(minutes=5)).isoformat()
-            }
-            _save_verification_codes()
-        print(f"[Verify] Stored code for {phone}: {code}")
+            existing = _verification_codes.get(phone)
+            if existing:
+                expires = datetime.fromisoformat(existing["expires"])
+                if datetime.utcnow() < expires:
+                    code = existing["code"]
+                    print(f"[Verify] Reusing existing code for {phone}: {code} (expires {existing['expires']})")
+                else:
+                    # Expired, generate new
+                    code = str(random.randint(1000, 9999))
+                    _verification_codes[phone] = {
+                        "code": code,
+                        "expires": (datetime.utcnow() + timedelta(minutes=5)).isoformat()
+                    }
+                    _save_verification_codes()
+                    print(f"[Verify] Old code expired, new code for {phone}: {code}")
+            else:
+                # Generate new 4-digit code
+                code = str(random.randint(1000, 9999))
+                _verification_codes[phone] = {
+                    "code": code,
+                    "expires": (datetime.utcnow() + timedelta(minutes=5)).isoformat()
+                }
+                _save_verification_codes()
+                print(f"[Verify] Stored new code for {phone}: {code}")
 
         # Decide whether to call or SMS based on Telnyx config
         telnyx_cfg = _telnyx_config_snapshot(include_secret=False)

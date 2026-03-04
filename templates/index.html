@@ -8496,12 +8496,18 @@
                     detailsForm.addEventListener('submit', async function(e) {
                         e.preventDefault();
                         
+                        // Prevent double-submit
+                        const submitBtn = detailsForm.querySelector('button[type="submit"]');
+                        if (submitBtn && submitBtn.disabled) return;
+                        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending…'; }
+                        
                         const name = document.getElementById('autoQuoteName').value.trim();
                         const email = document.getElementById('autoQuoteEmail').value.trim();
                         const phone = document.getElementById('autoQuotePhone').value.trim();
                         
                         if (!name || !email || !phone) {
                             alert('Please fill in all required fields');
+                            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Get My Free Quote'; }
                             return;
                         }
                         
