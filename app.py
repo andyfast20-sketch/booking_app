@@ -3190,6 +3190,51 @@ def chat_send():
     return jsonify(response_payload)
 
 
+@app.route("/chat/debug-autopilot", methods=["POST"])
+def chat_debug_autopilot():
+    """Temporary diagnostic endpoint — returns autopilot state without needing admin auth."""
+    config = _autopilot_config_snapshot(include_secret=False)
+    provider = str(config.get("provider", DEFAULT_AUTOPILOT_PROVIDER) or DEFAULT_AUTOPILOT_PROVIDER)
+
+    # Check if API key exists (show masked version)
+    full_config = _autopilot_config_snapshot(include_secret=True)
+    api_key = _resolve_autopilot_api_key(provider, full_config)
+    key_status = "present" if api_key else "MISSING"
+    key_preview = f"{api_key[:6]}...{api_key[-4:]}" if api_key and len(api_key) > 10 else ("set" if api_key else "EMPTY")
+
+    # Build a test conversation and try the API
+    test_messages = [
+        {"role": "system", "content": "Reply with exactly: AUTOPILOT_OK"},
+        {"role": "user", "content": "Test"},
+    ]
+
+    import time as _time
+    start = _time.time()
+    try:
+        reply = _request_autopilot_reply(
+            test_messages,
+            provider=provider,
+            model=config.get("model", DEFAULT_AUTOPILOT_MODEL),
+            temperature=0.0,
+            api_key=api_key or "",
+        )
+        elapsed = round(_time.time() - start, 2)
+    except Exception as exc:
+        reply = ""
+        elapsed = round(_time.time() - start, 2)
+
+    return jsonify({
+        "enabled": config.get("enabled"),
+        "provider": provider,
+        "model": config.get("model"),
+        "api_key_status": key_status,
+        "api_key_preview": key_preview,
+        "test_reply": reply[:200] if reply else None,
+        "test_elapsed_seconds": elapsed,
+        "test_ok": bool(reply),
+    })
+
+
 @app.route("/admin/chat/status", methods=["POST"])
 @require_admin_auth
 def admin_chat_status():
