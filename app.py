@@ -775,10 +775,16 @@ def _telnyx_config_snapshot(*, include_secret: bool = False) -> dict:
     env_key = os.environ.get("TELNYX_API_KEY", "").strip()
     env_from = os.environ.get("TELNYX_FROM_NUMBER", "").strip()
     env_profile = os.environ.get("TELNYX_MESSAGING_PROFILE_ID", "").strip()
+    env_voice_conn = os.environ.get("TELNYX_VOICE_CONNECTION_ID", "").strip()
+    env_method = os.environ.get("TELNYX_VERIFICATION_METHOD", "").strip().lower()
 
     effective_key = api_key or env_key
     effective_from = from_number or env_from
     effective_profile = messaging_profile_id or env_profile
+    effective_voice_conn = voice_connection_id or env_voice_conn
+    effective_method = verification_method if verification_method != "call" or voice_connection_id else (env_method or verification_method)
+    if effective_method not in ("call", "sms"):
+        effective_method = "call"
 
     has_config = bool(effective_key and effective_from)
 
@@ -787,8 +793,8 @@ def _telnyx_config_snapshot(*, include_secret: bool = False) -> dict:
             "api_key": effective_key,
             "from_number": effective_from,
             "messaging_profile_id": effective_profile,
-            "verification_method": verification_method,
-            "voice_connection_id": voice_connection_id,
+            "verification_method": effective_method,
+            "voice_connection_id": effective_voice_conn,
             "has_config": has_config,
         }
 
@@ -800,8 +806,8 @@ def _telnyx_config_snapshot(*, include_secret: bool = False) -> dict:
         "api_key": masked,
         "from_number": effective_from,
         "messaging_profile_id": effective_profile,
-        "verification_method": verification_method,
-        "voice_connection_id": voice_connection_id,
+        "verification_method": effective_method,
+        "voice_connection_id": effective_voice_conn,
         "has_config": has_config,
     }
 
