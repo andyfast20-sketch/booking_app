@@ -3904,8 +3904,18 @@ def telnyx_call_webhook():
 
 @app.route("/telnyx/call-debug", methods=["GET"])
 def telnyx_call_debug():
-    """Public debug endpoint showing recent Telnyx webhook events."""
-    return jsonify({"recent_events": list(_telnyx_webhook_log), "count": len(_telnyx_webhook_log)})
+    """Public debug endpoint showing recent Telnyx webhook events and config status."""
+    cfg = _telnyx_config_snapshot(include_secret=False)
+    return jsonify({
+        "version": "v6",
+        "default_conn_id": _TELNYX_DEFAULT_VOICE_CONNECTION_ID,
+        "effective_voice_connection_id": cfg.get("voice_connection_id", ""),
+        "effective_method": cfg.get("verification_method", ""),
+        "has_config": cfg.get("has_config", False),
+        "from_number": cfg.get("from_number", ""),
+        "recent_events": list(_telnyx_webhook_log),
+        "count": len(_telnyx_webhook_log),
+    })
 
 
 @app.route("/admin/telnyx/diagnostics", methods=["GET"])
