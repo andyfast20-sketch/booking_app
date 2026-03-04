@@ -150,6 +150,7 @@ _smsapi_config = {"oauth_token": "", "sender_name": ""}
 _telnyx_config_lock = Lock()
 _telnyx_config = {"api_key": "", "from_number": "", "messaging_profile_id": "", "verification_method": "call", "voice_connection_id": ""}
 _verification_codes = {}  # Store verification codes temporarily
+_telnyx_webhook_log = []  # Store recent webhook events for debugging (max 20)
 _watchdog_config_lock = Lock()
 _watchdog_config = {"enabled": False, "to_number": "+447595289669", "last_sent": None}
 
@@ -3769,19 +3770,36 @@ def telnyx_call_webhook():
       4. call.hangup → log completion
     """
     import base64, requests as _req
+    from datetime import datetime
 
+    raw_body = request.get_data(as_text=True)
     body = request.get_json(silent=True) or {}
     data = body.get("data", {})
     event_type = data.get("event_type", "")
     payload = data.get("payload", {})
     call_control_id = payload.get("call_control_id", "")
+    call_leg_id = payload.get("call_leg_id", "")
     client_state_b64 = payload.get("client_state", "")
 
-    print(f"[Telnyx-Webhook] Event: {event_type}  call_control_id={call_control_id}")
+    log_entry = {
+        "time": datetime.utcnow().isoformat(),
+        "event": event_type,
+        "call_control_id": call_control_id[:20] if call_control_id else "",
+        "call_leg_id": call_leg_id[:20] if call_leg_id else "",
+        "client_state": client_state_b64[:20] if client_state_b64 else "",
+        "has_api_key": False,
+        "action": "",
+        "action_status": "",
+        "action_error": "",
+    }
+
+    print(f"[Telnyx-Webhook] Event: {event_type}  call_control_id={call_control_id}  call_leg_id={call_leg_id}  client_state={client_state_b64[:20]}")
+    print(f"[Telnyx-Webhook] Raw keys in body: {list(body.keys())}  data keys: {list(data.keys())}  payload keys: {list(payload.keys())}")
 
     # Retrieve API key for issuing commands
     cfg = _telnyx_config_snapshot(include_secret=True)
     api_key = str(cfg.get("api_key") or "").strip()
+    log_entry["has_api_key"] = bool(api_key)
 
     if event_type == "call.answered":
         # Decode the verification code from client_state
@@ -3789,8 +3807,11 @@ def telnyx_call_webhook():
         if client_state_b64:
             try:
                 code = base64.b64decode(client_state_b64).decode()
-            except Exception:
-                pass
+                print(f"[Telnyx-Webhook] Decoded code: {code}")
+            except Exception as dec_err:
+                print(f"[Telnyx-Webhook] Failed to decode client_state: {dec_err}")
+        else:
+            print(f"[Telnyx-Webhook] WARNING: No client_state in payload!")
 
         # Build the spoken text with pauses between digits
         spaced = ", ".join(list(code))
@@ -3801,45 +3822,76 @@ def telnyx_call_webhook():
             f"Thank you. Goodbye!"
         )
 
+        log_entry["action"] = "speak"
+
         # Issue a speak command on the active call
         if api_key and call_control_id:
             try:
                 speak_url = f"https://api.telnyx.com/v2/calls/{call_control_id}/actions/speak"
-                _req.post(
+                speak_payload = {
+                    "payload": speak_text,
+                    "voice": "female",
+                    "language": "en-GB",
+                    "client_state": client_state_b64,
+                }
+                print(f"[Telnyx-Webhook] Sending speak to {speak_url}")
+                resp = _req.post(
                     speak_url,
                     headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                    json={
-                        "payload": speak_text,
-                        "voice": "female",
-                        "language": "en-GB",
-                        "client_state": client_state_b64,
-                    },
+                    json=speak_payload,
                     timeout=10,
                 )
-                print(f"[Telnyx-Webhook] Speak command sent for call {call_control_id}")
+                print(f"[Telnyx-Webhook] Speak response: HTTP {resp.status_code} — {resp.text[:300]}")
+                log_entry["action_status"] = f"HTTP {resp.status_code}"
+                if resp.status_code >= 400:
+                    log_entry["action_error"] = resp.text[:200]
             except Exception as exc:
                 print(f"[Telnyx-Webhook] Failed to send speak command: {exc}")
+                log_entry["action_status"] = "exception"
+                log_entry["action_error"] = str(exc)[:200]
+        else:
+            msg = f"Missing api_key={bool(api_key)} call_control_id={bool(call_control_id)}"
+            print(f"[Telnyx-Webhook] Cannot speak: {msg}")
+            log_entry["action_error"] = msg
 
     elif event_type == "call.speak.ended":
-        # Speaking is done — hang up
+        log_entry["action"] = "hangup"
         if api_key and call_control_id:
             try:
                 hangup_url = f"https://api.telnyx.com/v2/calls/{call_control_id}/actions/hangup"
-                _req.post(
+                resp = _req.post(
                     hangup_url,
                     headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
                     json={},
                     timeout=10,
                 )
-                print(f"[Telnyx-Webhook] Hangup sent for call {call_control_id}")
+                print(f"[Telnyx-Webhook] Hangup response: HTTP {resp.status_code}")
+                log_entry["action_status"] = f"HTTP {resp.status_code}"
             except Exception as exc:
                 print(f"[Telnyx-Webhook] Failed to send hangup: {exc}")
+                log_entry["action_error"] = str(exc)[:200]
 
     elif event_type == "call.hangup":
         print(f"[Telnyx-Webhook] Call ended for {call_control_id}")
+        log_entry["action"] = "logged_hangup"
+
+    else:
+        print(f"[Telnyx-Webhook] Unhandled event: {event_type}")
+        log_entry["action"] = "ignored"
+
+    # Store in debug log (keep last 20)
+    _telnyx_webhook_log.append(log_entry)
+    if len(_telnyx_webhook_log) > 20:
+        _telnyx_webhook_log.pop(0)
 
     # Always return 200 so Telnyx does not retry
     return "", 200
+
+
+@app.route("/telnyx/call-debug", methods=["GET"])
+def telnyx_call_debug():
+    """Public debug endpoint showing recent Telnyx webhook events."""
+    return jsonify({"recent_events": list(_telnyx_webhook_log), "count": len(_telnyx_webhook_log)})
 
 
 @app.route("/admin/telnyx/diagnostics", methods=["GET"])
