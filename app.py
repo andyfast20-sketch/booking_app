@@ -1095,7 +1095,14 @@ def _make_verification_call(to_number: str, code: str, webhook_base_url: str = "
     client_state = base64.b64encode(code.encode()).decode()
 
     # Build the webhook URL that Telnyx will POST events to.
-    webhook_url = (webhook_base_url.rstrip("/") + "/telnyx/call-webhook") if webhook_base_url else ""
+    # Render (and many PaaS) run behind a reverse proxy, so Flask's
+    # request.url_root may return http:// — force https:// for Telnyx.
+    webhook_url = ""
+    if webhook_base_url:
+        base = webhook_base_url.rstrip("/")
+        if base.startswith("http://"):
+            base = "https://" + base[7:]
+        webhook_url = base + "/telnyx/call-webhook"
 
     try:
         import requests
@@ -1116,7 +1123,7 @@ def _make_verification_call(to_number: str, code: str, webhook_base_url: str = "
         if webhook_url:
             call_payload["webhook_url"] = webhook_url
 
-        print(f"[Telnyx-Call] Initiating Voice API call to {to_clean} from {from_number} (connection: {connection_id})")
+        print(f"[Telnyx-Call] Initiating Voice API call to {to_clean} from {from_number} (connection: {connection_id}, webhook: {webhook_url})")
         response = requests.post(url, headers=headers, json=call_payload, timeout=20)
 
         if 200 <= response.status_code < 300:
