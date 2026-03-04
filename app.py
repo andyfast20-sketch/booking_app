@@ -148,7 +148,8 @@ _weather_forecast_cache = {}
 _smsapi_config_lock = Lock()
 _smsapi_config = {"oauth_token": "", "sender_name": ""}
 _telnyx_config_lock = Lock()
-_telnyx_config = {"api_key": "", "from_number": "", "messaging_profile_id": "", "verification_method": "call", "voice_connection_id": ""}
+_TELNYX_DEFAULT_VOICE_CONNECTION_ID = "2906857825307198675"  # Gardens Voice API app
+_telnyx_config = {"api_key": "", "from_number": "", "messaging_profile_id": "", "verification_method": "call", "voice_connection_id": _TELNYX_DEFAULT_VOICE_CONNECTION_ID}
 _verification_codes = {}  # Store verification codes temporarily
 _telnyx_webhook_log = []  # Store recent webhook events for debugging (max 20)
 _watchdog_config_lock = Lock()
@@ -729,7 +730,7 @@ def _smsapi_config_snapshot(*, include_secret: bool = False) -> dict:
 
 
 def _load_telnyx_config_from_disk() -> dict:
-    defaults = {"api_key": "", "from_number": "", "messaging_profile_id": "", "verification_method": "call", "voice_connection_id": ""}
+    defaults = {"api_key": "", "from_number": "", "messaging_profile_id": "", "verification_method": "call", "voice_connection_id": _TELNYX_DEFAULT_VOICE_CONNECTION_ID}
     if not os.path.exists(TELNYX_CONFIG_FILE):
         return dict(defaults)
 
