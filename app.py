@@ -1064,8 +1064,14 @@ def _send_sms_via_telnyx(to_number: str, message: str) -> tuple[bool, str]:
         return False, f"Unable to send SMS right now. ({type(exc).__name__})"
 
 
-def _make_verification_call(to_number: str, code: str) -> tuple[bool, str]:
-    """Place an outbound call via Telnyx Call Control and speak the verification code using TTS."""
+def _make_verification_call(to_number: str, code: str, webhook_base_url: str = "") -> tuple[bool, str]:
+    """Place an outbound call via Telnyx Voice API (Call Control) and speak the verification code using TTS.
+
+    The call is initiated via POST /v2/calls.  When the callee answers, Telnyx
+    sends a ``call.answered`` webhook to our ``/telnyx/call-webhook`` endpoint.
+    That handler reads the code from ``client_state`` and issues a ``speak``
+    command so the AI voice reads the 4-digit code to the user.
+    """
     config = _telnyx_config_snapshot(include_secret=True)
     if not config.get("has_config"):
         return False, "Telnyx is not configured in the admin panel."
@@ -1079,50 +1085,45 @@ def _make_verification_call(to_number: str, code: str) -> tuple[bool, str]:
         return False, "Telnyx is missing API key or from number."
     if not to_clean or not to_clean.startswith("+"):
         return False, "Invalid destination number."
+    if not connection_id:
+        return False, "Voice Connection ID (Voice API app) is not set. Configure it in the admin panel."
 
-    # Build the spoken code with pauses between digits for clarity
-    spaced_code = ". ".join(list(code))
+    # Encode the verification code in client_state (base64) so the webhook
+    # can retrieve it without any server-side storage.
+    import base64
+    client_state = base64.b64encode(code.encode()).decode()
 
-    # TeXML document that Telnyx will execute when the call connects
-    texml_body = f"""<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Pause length="1"/>
-  <Say voice="alice" language="en-GB">Hello. This is Pay As You Mow calling with your verification code.</Say>
-  <Pause length="0.5"/>
-  <Say voice="alice" language="en-GB">Your code is: {spaced_code}.</Say>
-  <Pause length="1"/>
-  <Say voice="alice" language="en-GB">I repeat, your code is: {spaced_code}.</Say>
-  <Pause length="0.5"/>
-  <Say voice="alice" language="en-GB">Thank you. Goodbye!</Say>
-  <Hangup/>
-</Response>"""
+    # Build the webhook URL that Telnyx will POST events to.
+    webhook_url = (webhook_base_url.rstrip("/") + "/telnyx/call-webhook") if webhook_base_url else ""
 
     try:
         import requests
 
-        # Use Telnyx Call Control v2 — initiate call with TeXML
-        url = "https://api.telnyx.com/v2/texml/calls/{app_id}".format(
-            app_id=connection_id
-        ) if connection_id else "https://api.telnyx.com/v2/texml/calls"
-
+        url = "https://api.telnyx.com/v2/calls"
         headers = {
             "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/json",
         }
 
         call_payload = {
-            "To": to_clean,
-            "From": from_number,
-            "Txml": texml_body,
+            "connection_id": connection_id,
+            "to": to_clean,
+            "from": from_number,
+            "client_state": client_state,
+            "timeout_secs": 30,
         }
-        if connection_id:
-            call_payload["connection_id"] = connection_id
+        if webhook_url:
+            call_payload["webhook_url"] = webhook_url
 
-        print(f"[Telnyx-Call] Calling {to_clean} from {from_number} to deliver code")
-        response = requests.post(url, headers=headers, data=call_payload, timeout=20)
+        print(f"[Telnyx-Call] Initiating Voice API call to {to_clean} from {from_number} (connection: {connection_id})")
+        response = requests.post(url, headers=headers, json=call_payload, timeout=20)
 
         if 200 <= response.status_code < 300:
-            print(f"[Telnyx-Call] Call initiated successfully to {to_clean}")
+            resp_data = response.json() if response.content else {}
+            call_id = ""
+            if isinstance(resp_data.get("data"), dict):
+                call_id = resp_data["data"].get("call_control_id", "")
+            print(f"[Telnyx-Call] Call initiated successfully to {to_clean} (call_control_id={call_id})")
             return True, ""
 
         # Parse error
@@ -3746,12 +3747,99 @@ def admin_telnyx_test_call():
         return jsonify({"ok": False, "message": f"Invalid phone number: '{test_phone}'."}), 400
 
     print(f"[Telnyx-Test] Placing test call to {normalized_phone}")
-    success, error_msg = _make_verification_call(normalized_phone, "1234")
+    webhook_base = request.url_root.rstrip("/")
+    success, error_msg = _make_verification_call(normalized_phone, "1234", webhook_base_url=webhook_base)
 
     if success:
         return jsonify({"ok": True, "message": f"Test call initiated to {normalized_phone}. You should receive a call with code 1234."})
     else:
         return jsonify({"ok": False, "message": f"Failed: {error_msg}"}), 500
+
+
+# ── Telnyx Voice API Webhook (Call Control events) ──────────────────────
+
+@app.route("/telnyx/call-webhook", methods=["POST"])
+def telnyx_call_webhook():
+    """Handle Telnyx Call Control webhook events for verification calls.
+
+    Flow:
+      1. call.initiated / call.ringing → log only
+      2. call.answered → speak the verification code to the callee
+      3. call.speak.ended → hang up
+      4. call.hangup → log completion
+    """
+    import base64, requests as _req
+
+    body = request.get_json(silent=True) or {}
+    data = body.get("data", {})
+    event_type = data.get("event_type", "")
+    payload = data.get("payload", {})
+    call_control_id = payload.get("call_control_id", "")
+    client_state_b64 = payload.get("client_state", "")
+
+    print(f"[Telnyx-Webhook] Event: {event_type}  call_control_id={call_control_id}")
+
+    # Retrieve API key for issuing commands
+    cfg = _telnyx_config_snapshot(include_secret=True)
+    api_key = str(cfg.get("api_key") or "").strip()
+
+    if event_type == "call.answered":
+        # Decode the verification code from client_state
+        code = "0000"
+        if client_state_b64:
+            try:
+                code = base64.b64decode(client_state_b64).decode()
+            except Exception:
+                pass
+
+        # Build the spoken text with pauses between digits
+        spaced = ", ".join(list(code))
+        speak_text = (
+            f"Hello. This is Pay As You Mow calling with your verification code. "
+            f"Your code is: {spaced}. "
+            f"I repeat, your code is: {spaced}. "
+            f"Thank you. Goodbye!"
+        )
+
+        # Issue a speak command on the active call
+        if api_key and call_control_id:
+            try:
+                speak_url = f"https://api.telnyx.com/v2/calls/{call_control_id}/actions/speak"
+                _req.post(
+                    speak_url,
+                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                    json={
+                        "payload": speak_text,
+                        "voice": "female",
+                        "language": "en-GB",
+                        "client_state": client_state_b64,
+                    },
+                    timeout=10,
+                )
+                print(f"[Telnyx-Webhook] Speak command sent for call {call_control_id}")
+            except Exception as exc:
+                print(f"[Telnyx-Webhook] Failed to send speak command: {exc}")
+
+    elif event_type == "call.speak.ended":
+        # Speaking is done — hang up
+        if api_key and call_control_id:
+            try:
+                hangup_url = f"https://api.telnyx.com/v2/calls/{call_control_id}/actions/hangup"
+                _req.post(
+                    hangup_url,
+                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                    json={},
+                    timeout=10,
+                )
+                print(f"[Telnyx-Webhook] Hangup sent for call {call_control_id}")
+            except Exception as exc:
+                print(f"[Telnyx-Webhook] Failed to send hangup: {exc}")
+
+    elif event_type == "call.hangup":
+        print(f"[Telnyx-Webhook] Call ended for {call_control_id}")
+
+    # Always return 200 so Telnyx does not retry
+    return "", 200
 
 
 @app.route("/admin/telnyx/diagnostics", methods=["GET"])
@@ -4278,7 +4366,8 @@ def send_verification_code():
 
         if use_call:
             print(f"[Verify] Calling {phone} with code (raw input: {raw_phone})")
-            success, error_message = _make_verification_call(phone, code)
+            webhook_base = request.url_root.rstrip("/")
+            success, error_message = _make_verification_call(phone, code, webhook_base_url=webhook_base)
             method = "call"
         else:
             message = f"Your Pay As You Mow verification code is: {code}. Valid for 5 minutes."
