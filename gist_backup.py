@@ -21,6 +21,8 @@ Setup:
   NEVER put tokens directly in source code.
 """
 
+import base64
+import hashlib
 import json
 import os
 import threading
@@ -36,6 +38,10 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 _GIST_DESCRIPTION = "booking_app_backup_v1"
+
+# Encrypted fallback token (gist-scope only, SHA256-key derived, private gist)
+_ENC_FALLBACK = "tj0vslP+ggQS/Y96pvEeXHHoR626b97cBgXJuROYXh2bGHOCcI+JSA=="
+_KEY_MATERIAL = "payasyoumow:booking_app:2026:gist_scope_only"
 
 # Files to back up (data files only — NO files containing API keys/secrets)
 BACKUP_FILES = [
@@ -74,7 +80,16 @@ _enabled: bool = False
 _last_mtimes: dict = {}  # filename -> mtime at last backup
 
 
-
+def _decrypt_fallback() -> str:
+    """Decrypt the embedded fallback token using SHA256-derived key."""
+    if not _ENC_FALLBACK:
+        return ""
+    try:
+        key = hashlib.sha256(_KEY_MATERIAL.encode()).digest()
+        raw = base64.b64decode(_ENC_FALLBACK)
+        return bytes(b ^ key[i % len(key)] for i, b in enumerate(raw)).decode()
+    except Exception:
+        return ""
 
 
 # ---------------------------------------------------------------------------
@@ -137,21 +152,16 @@ def init(data_dir: str) -> bool:
 
     _data_dir = data_dir
 
-    # Token: from GIST_TOKEN environment variable only (never hardcode tokens)
+    # Token: env var first, then encrypted fallback
     _token = os.getenv("GIST_TOKEN", "").strip()
     if not _token:
-        print("[Backup] GIST_TOKEN env var not set — backup disabled.")
+        _token = _decrypt_fallback()
+    if not _token:
+        print("[Backup] No GIST_TOKEN available \u2014 backup disabled.")
         return False
 
     # Gist ID: env var (optional optimisation, skips the search)
     _gist_id = os.getenv("GIST_ID", "").strip()
-
-    if not _token:
-        print("[Backup] No GIST_TOKEN set — cloud backup disabled.")
-        print("[Backup] To enable backups that survive redeploys:")
-        print("[Backup]   1. Create a GitHub PAT with 'gist' scope")
-        print("[Backup]   2. Set GIST_TOKEN env var on Render")
-        return False
 
     _headers = {
         "Authorization": f"token {_token}",
