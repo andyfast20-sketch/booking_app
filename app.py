@@ -27,6 +27,10 @@ from admin_auth import (
     hash_password, verify_password,
     is_ip_locked, record_failed_login
 )
+try:
+    import gist_backup
+except ImportError:
+    gist_backup = None
 
 app = Flask(__name__)
 Compress(app)  # Enable gzip compression for all responses
@@ -365,6 +369,11 @@ def _default_reviews_payload():
         },
     ]
 
+
+# --- Cloud Backup: restore data from GitHub Gist before creating defaults ---
+if gist_backup:
+    gist_backup.init(_DATA_DIR)
+    gist_backup.restore()
 
 _ensure_storage_file(VISITOR_LOG_FILE, default={})
 _ensure_storage_file(REVIEWS_FILE, default=_default_reviews_payload())
@@ -2546,6 +2555,10 @@ with _seo_config_lock:
     stored_seo = _load_seo_config_from_disk()
     _seo_config.update(stored_seo)
 
+# --- Start periodic cloud backup (syncs changed files every 60s) ---
+if gist_backup:
+    gist_backup.start_periodic_sync(60)
+
 
 def _load_facebook_config_from_disk() -> dict:
     defaults = dict(_FACEBOOK_CONFIG_DEFAULTS)
@@ -4453,6 +4466,7 @@ def api_health():
             "utc": datetime.utcnow().isoformat() + "Z",
             "render_git_commit": os.getenv("RENDER_GIT_COMMIT", ""),
             "email_magic_enabled": True,
+            "backup": gist_backup.status() if gist_backup else {"enabled": False},
         }
     )
 
@@ -4837,6 +4851,8 @@ def load_bookings():
 def save_bookings(bookings):
     with open(BOOKINGS_FILE, "w", encoding="utf-8") as file:
         json.dump(bookings, file, indent=2)
+    if gist_backup:
+        gist_backup.save("bookings.txt")
 
 
 def load_contacts():
@@ -4910,6 +4926,8 @@ def load_customer_slots():
 def save_customer_slots(slots):
     with open(CUSTOMER_SLOTS_FILE, "w", encoding="utf-8") as handle:
         json.dump(slots, handle, indent=2)
+    if gist_backup:
+        gist_backup.save("customer_slots.json")
 
 
 def _customer_slot_label(date_value: str, time_value: str) -> str:
@@ -4938,6 +4956,8 @@ def load_availability():
 def save_availability(slots):
     with open(AVAIL_FILE, "w", encoding="utf-8") as file:
         file.write("\n".join(slots) + ("\n" if slots else ""))
+    if gist_backup:
+        gist_backup.save("availability.txt")
 
 
 def remove_availability_slot(slot):
