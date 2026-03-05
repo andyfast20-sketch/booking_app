@@ -5054,7 +5054,13 @@ def _delete_customer_slot_by_id(slot_id: str):
 
 @app.route("/")
 def home():
-    return render_template('index.html', reviews=load_reviews(), availability=load_availability(), seo=_seo_snapshot())
+    resp = app.make_response(
+        render_template('index.html', reviews=load_reviews(), availability=load_availability(), seo=_seo_snapshot())
+    )
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 @app.route("/customer-login")
@@ -5286,7 +5292,9 @@ def book():
 # --- Get available times for dropdown ---
 @app.route("/availability")
 def get_availability():
-    return jsonify(load_availability())
+    resp = jsonify(load_availability())
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return resp
 
 
 @app.route("/weather/slots", methods=["POST"])
