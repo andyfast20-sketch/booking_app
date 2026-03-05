@@ -27,3 +27,11 @@ verification_codes.json
 
 # Virtualenvs
 .venv/
+
+# Encrypted key vault (Windows DPAPI)
+*.vault
+secrets.vault
+
+# Environment files
+.env
+.env.*
