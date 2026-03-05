@@ -11,6 +11,19 @@ weather_config.json
 customer_settings.json
 customer_slots.json
 admin_auth.json
+watchdog_config.json
+seo_config.json
+facebook_config.json
+facebook_alerts.json
+
+# Booking data files (must NOT be in git — ephemeral deploy filesystem overwrites them)
+bookings.txt
+availability.txt
+contacts.json
+reviews.json
+visitor_log.json
+autopilot.json
+verification_codes.json
 
 # Virtualenvs
 .venv/

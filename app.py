@@ -60,8 +60,17 @@ CORS(
 # Use absolute paths so data persists regardless of the current working directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# Persistent data directory: set DATA_DIR env var on Render (e.g. /opt/render/project/data)
+# to survive redeploys. Falls back to the app directory.
+_DATA_DIR = os.getenv("DATA_DIR", "").strip()
+if _DATA_DIR:
+    os.makedirs(_DATA_DIR, exist_ok=True)
+    print(f"[Data] Using persistent data directory: {_DATA_DIR}")
+else:
+    _DATA_DIR = BASE_DIR
+
 def _data_path(filename: str) -> str:
-    return os.path.join(BASE_DIR, filename)
+    return os.path.join(_DATA_DIR, filename)
 
 BOOKINGS_FILE = _data_path("bookings.txt")
 AVAIL_FILE = _data_path("availability.txt")
@@ -381,6 +390,14 @@ _ensure_storage_file(
     },
 )
 _ensure_storage_file(EMAIL_MAGIC_FILE, default={"tokens": {}, "verified": {}})
+_ensure_storage_file(BOOKINGS_FILE, default=[])
+# Ensure availability.txt exists (plain text, one slot per line)
+if not os.path.exists(AVAIL_FILE):
+    try:
+        with open(AVAIL_FILE, "w", encoding="utf-8") as _f:
+            _f.write("")
+    except OSError:
+        pass
 
 
 def _load_smtp_config_from_disk() -> dict:
