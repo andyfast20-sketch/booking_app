@@ -15,13 +15,12 @@ Setup:
      - Select ONLY the 'gist' scope
      - Copy the token (starts with ghp_)
 
-  2. Either:
-     a) Set GIST_TOKEN env var on Render, OR
-     b) Run:  python gist_backup.py encode <your_token>
-        and paste the result into _ENCODED_TOKEN below.
+  2. Set the GIST_TOKEN environment variable on Render:
+     GIST_TOKEN=ghp_your_token_here
+
+  NEVER put tokens directly in source code.
 """
 
-import base64
 import json
 import os
 import threading
@@ -36,11 +35,7 @@ except ImportError:
 # Configuration
 # ---------------------------------------------------------------------------
 
-_OBF_KEY = "payasyoumow2026"
 _GIST_DESCRIPTION = "booking_app_backup_v1"
-
-# Paste encoded token here (run: python gist_backup.py encode <token>)
-_ENCODED_TOKEN = "FwkWPiVLBUEaJ0d5AQVACTAjFiE3GQweLD9xSH1bI1IzLEAWGjYMFw=="
 
 # Files to back up (all data files the app uses)
 BACKUP_FILES = [
@@ -79,25 +74,7 @@ _enabled: bool = False
 _last_mtimes: dict = {}  # filename -> mtime at last backup
 
 
-# ---------------------------------------------------------------------------
-# Token encoding helpers (bypasses GitHub push-protection scanner)
-# ---------------------------------------------------------------------------
 
-def _encode_token(plain: str) -> str:
-    key = _OBF_KEY.encode()
-    raw = bytes(ord(c) ^ key[i % len(key)] for i, c in enumerate(plain))
-    return base64.b64encode(raw).decode()
-
-
-def _decode_token(encoded: str) -> str:
-    if not encoded:
-        return ""
-    try:
-        key = _OBF_KEY.encode()
-        raw = base64.b64decode(encoded)
-        return bytes(b ^ key[i % len(key)] for i, b in enumerate(raw)).decode()
-    except Exception:
-        return ""
 
 
 # ---------------------------------------------------------------------------
@@ -160,10 +137,11 @@ def init(data_dir: str) -> bool:
 
     _data_dir = data_dir
 
-    # Token: env var first, then encoded fallback
+    # Token: from GIST_TOKEN environment variable only (never hardcode tokens)
     _token = os.getenv("GIST_TOKEN", "").strip()
-    if not _token and _ENCODED_TOKEN:
-        _token = _decode_token(_ENCODED_TOKEN)
+    if not _token:
+        print("[Backup] GIST_TOKEN env var not set — backup disabled.")
+        return False
 
     # Gist ID: env var (optional optimisation, skips the search)
     _gist_id = os.getenv("GIST_ID", "").strip()
@@ -403,26 +381,12 @@ def status() -> dict:
 
 
 # ---------------------------------------------------------------------------
-# CLI helper — run this to encode a GitHub PAT for safe embedding in code
+# CLI helper
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) >= 3 and sys.argv[1] == "encode":
-        token = sys.argv[2]
-        encoded = _encode_token(token)
-        print(f"\nEncoded token (paste into _ENCODED_TOKEN in gist_backup.py):\n")
-        print(f'_ENCODED_TOKEN = "{encoded}"')
-        print()
-        # Verify round-trip
-        assert _decode_token(encoded) == token, "Round-trip check failed!"
-        print("Round-trip verified OK.")
-
-    elif len(sys.argv) >= 3 and sys.argv[1] == "decode":
-        print(_decode_token(sys.argv[2]))
-
-    else:
-        print("Usage:")
-        print("  python gist_backup.py encode <github_pat_token>")
-        print("  python gist_backup.py decode <encoded_string>")
+    print("gist_backup — cloud backup module for booking app")
+    print()
+    print("Set these environment variables on Render:")
+    print("  GIST_TOKEN=ghp_your_github_personal_access_token")
+    print("  GIST_ID=your_gist_id  (optional, auto-detected)")
