@@ -46,17 +46,20 @@ BACKUP_FILES = [
     "contacts.json",
     "visitor_log.json",
     "customer_settings.json",
+    "telnyx_config.json",
+    "autopilot.json",
+    "smtp_config.json",
+    "email_magic.json",
+    "smsapi_config.json",
+    "admin_auth.json",
     "watchdog_config.json",
     "seo_config.json",
+    "facebook_config.json",
     "facebook_alerts.json",
+    "weather_config.json",
     "chat_state.json",
     "verification_codes.json",
 ]
-
-# These files contain secrets and must NEVER be backed up to Gist:
-#   telnyx_config.json, smtp_config.json, email_magic.json,
-#   smsapi_config.json, autopilot.json, admin_auth.json,
-#   vonage_config.json, facebook_config.json
 
 # ---------------------------------------------------------------------------
 # Internal state
