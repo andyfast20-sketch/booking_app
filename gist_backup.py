@@ -40,7 +40,7 @@ _OBF_KEY = "payasyoumow2026"
 _GIST_DESCRIPTION = "booking_app_backup_v1"
 
 # Paste encoded token here (run: python gist_backup.py encode <token>)
-_ENCODED_TOKEN = ""
+_ENCODED_TOKEN = "FwkWPiVLBUEaJ0d5AQVACTAjFiE3GQweLD9xSH1bI1IzLEAWGjYMFw=="
 
 # Files to back up (all data files the app uses)
 BACKUP_FILES = [
