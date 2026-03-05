@@ -8272,10 +8272,6 @@
                 } else {
                     dateOptionsHTML = '<option value="">Please select a date and time</option>';
 
-                    if (preselected && !slots.includes(preselected)) {
-                        dateOptionsHTML += `<option value="${preselected}" selected>${formatSlotLabel(preselected)}</option>`;
-                    }
-
                     slots.forEach((slot) => {
                         const formattedSlot = formatSlotLabel(slot);
                         const selectedAttr = preselected && slot === preselected ? ' selected' : '';

@@ -5270,8 +5270,16 @@ def book():
 
     # Remove the booked slot from available times
     if time:
+        avail_before = load_availability()
+        print(f"[Book] Trying to remove slot '{time}' from availability: {avail_before}")
         remove_availability_slot(time)
+        avail_after = load_availability()
+        if avail_before == avail_after:
+            print(f"[Book] WARNING: Slot '{time}' was NOT found in availability — nothing removed!")
+        else:
+            print(f"[Book] Slot removed. Availability now: {avail_after}")
 
+    print(f"[Book] Booking created: id={booking_entry['id']}, name={name}, time={time}, verified={verified}")
     return jsonify({"message": f"✅ Booking confirmed for {name} at {time}!"})
 
 
