@@ -4471,6 +4471,18 @@ def api_health():
     )
 
 
+@app.route("/api/backup-sync", methods=["POST"])
+def api_backup_sync():
+    """Manually trigger a full cloud backup (save all data files now)."""
+    if not gist_backup or not gist_backup.is_enabled():
+        return jsonify({"message": "Backup not enabled"}), 400
+    try:
+        gist_backup.save_all()
+        return jsonify({"message": "Backup sync triggered", "status": gist_backup.status()})
+    except Exception as e:
+        return jsonify({"message": f"Backup error: {e}"}), 500
+
+
 @app.route("/api/send-verification", methods=["POST"])
 def send_verification_code():
     try:
