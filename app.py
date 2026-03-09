@@ -980,8 +980,18 @@ def _start_watchdog_thread() -> None:
 
                         if can_send:
                             to_number = cfg.get("to_number") or "+447595289669"
-                            msg = "ALERT: Pay As You Mow server may be down. Please check your server."
-                            ok, _detail = _send_sms_via_telnyx(to_number, msg)
+                            msg = (
+                                "Alert from Pay As You Mow. Your server is not responding. "
+                                "Please check it immediately. I repeat, your server is not responding."
+                            )
+                            # Build webhook base from Render env var or local port
+                            webhook_base = (
+                                os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/")
+                                or f"https://127.0.0.1:{os.environ.get('PORT', 5015)}"
+                            )
+                            ok, _detail = _make_watchdog_alert_call(to_number, msg, webhook_base_url=webhook_base)
+                            if not ok:
+                                print(f"[Watchdog] Alert call failed: {_detail}")
                             if ok:
                                 new_last = now.isoformat()
                                 with _watchdog_config_lock:
@@ -1147,6 +1157,69 @@ def _send_sms_via_telnyx(to_number: str, message: str) -> tuple[bool, str]:
     except Exception as exc:
         print(f"[Telnyx] SMS exception: {exc}")
         return False, f"Unable to send SMS right now. ({type(exc).__name__})"
+
+
+def _make_watchdog_alert_call(to_number: str, message: str, webhook_base_url: str = "") -> tuple[bool, str]:
+    """Place an outbound Telnyx voice call to deliver a watchdog alert message via TTS."""
+    import base64
+    config = _telnyx_config_snapshot(include_secret=True)
+    if not config.get("has_config"):
+        return False, "Telnyx is not configured in the admin panel."
+
+    api_key = str(config.get("api_key") or "").strip()
+    from_number = _normalize_phone_number(str(config.get("from_number") or "").strip())
+    to_clean = _normalize_phone_number(to_number)
+    connection_id = str(config.get("voice_connection_id") or "").strip()
+
+    if not api_key or not from_number:
+        return False, "Telnyx is missing API key or from number."
+    if not to_clean or not to_clean.startswith("+"):
+        return False, "Invalid destination number."
+    if not connection_id:
+        return False, "Voice Connection ID is not configured in the admin panel."
+
+    # Prefix ALERT: so the webhook speaks the message verbatim instead of treating it as digits
+    client_state = base64.b64encode(f"ALERT:{message}".encode()).decode()
+
+    webhook_url = ""
+    if webhook_base_url:
+        base = webhook_base_url.rstrip("/")
+        if base.startswith("http://"):
+            base = "https://" + base[7:]
+        webhook_url = base + "/telnyx/call-webhook"
+
+    try:
+        import requests
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        call_payload = {
+            "connection_id": connection_id,
+            "to": to_clean,
+            "from": from_number,
+            "client_state": client_state,
+            "timeout_secs": 30,
+        }
+        if webhook_url:
+            call_payload["webhook_url"] = webhook_url
+
+        print(f"[Watchdog-Call] Calling {to_clean} from {from_number} (connection: {connection_id})")
+        response = requests.post("https://api.telnyx.com/v2/calls",
+                                 headers=headers, json=call_payload, timeout=20)
+        if 200 <= response.status_code < 300:
+            return True, ""
+
+        detail = ""
+        try:
+            errs = (response.json() if response.content else {}).get("errors")
+            if isinstance(errs, list) and errs:
+                first = errs[0] if isinstance(errs[0], dict) else {}
+                t = str(first.get("title") or "").strip()
+                d = str(first.get("detail") or "").strip()
+                detail = f"{t}: {d}" if (t and d and t != d) else (t or d)
+        except Exception:
+            detail = ""
+        return False, f"Telnyx error: {detail}" if detail else f"Telnyx returned HTTP {response.status_code}."
+    except Exception as exc:
+        return False, f"Unable to place call. ({type(exc).__name__})"
 
 
 def _make_verification_call(to_number: str, code: str, webhook_base_url: str = "") -> tuple[bool, str]:
@@ -3898,25 +3971,30 @@ def telnyx_call_webhook():
     log_entry["has_api_key"] = bool(api_key)
 
     if event_type == "call.answered":
-        # Decode the verification code from client_state
-        code = "0000"
+        # Decode client_state — may be a 4-digit verification code or an ALERT: message
+        decoded_state = ""
         if client_state_b64:
             try:
-                code = base64.b64decode(client_state_b64).decode()
-                print(f"[Telnyx-Webhook] Decoded code: {code}")
+                decoded_state = base64.b64decode(client_state_b64).decode()
+                print(f"[Telnyx-Webhook] Decoded client_state: {decoded_state[:60]}")
             except Exception as dec_err:
                 print(f"[Telnyx-Webhook] Failed to decode client_state: {dec_err}")
         else:
             print(f"[Telnyx-Webhook] WARNING: No client_state in payload!")
 
-        # Build the spoken text with pauses between digits
-        spaced = ", ".join(list(code))
-        speak_text = (
-            f"Hello. This is Pay As You Mow calling with your verification code. "
-            f"Your code is: {spaced}. "
-            f"I repeat, your code is: {spaced}. "
-            f"Thank you. Goodbye!"
-        )
+        if decoded_state.startswith("ALERT:"):
+            # Watchdog / system alert call — speak the message verbatim
+            speak_text = decoded_state[6:]  # strip the ALERT: prefix
+        else:
+            # Verification code call — speak digits with pauses
+            code = decoded_state or "0000"
+            spaced = ", ".join(list(code))
+            speak_text = (
+                f"Hello. This is Pay As You Mow calling with your verification code. "
+                f"Your code is: {spaced}. "
+                f"I repeat, your code is: {spaced}. "
+                f"Thank you. Goodbye!"
+            )
 
         log_entry["action"] = "speak"
 
@@ -4126,10 +4204,14 @@ def admin_watchdog_test():
         cfg = dict(_watchdog_config)
 
     to_number = cfg.get("to_number") or "+447595289669"
-    msg = "TEST ALERT: Pay As You Mow server-down watchdog test. If you see this, it's working!"
-    ok, detail = _send_sms_via_telnyx(to_number, msg)
+    msg = (
+        "Test alert from Pay As You Mow. Your watchdog is working correctly. "
+        "This is only a test. Your server is running fine."
+    )
+    webhook_base = request.url_root.rstrip("/")
+    ok, detail = _make_watchdog_alert_call(to_number, msg, webhook_base_url=webhook_base)
     if ok:
-        return jsonify({"ok": True, "message": f"Test alert sent to {to_number}."})
+        return jsonify({"ok": True, "message": f"Test call initiated to {to_number}. You should receive a voice call shortly."})
     return jsonify({"ok": False, "message": f"Failed: {detail}"}), 500
 
 
