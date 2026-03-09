@@ -2147,6 +2147,38 @@
             </div>
 
             <p class="input-note" id="watchdogStatus" style="font-weight: 600; font-size: 1rem; margin-top: 16px;"></p>
+
+            <!-- ── Random-interval check ───────────────────────────────── -->
+            <div style="margin-top: 24px; padding: 16px 18px; background: rgba(48,195,166,0.06); border: 1px solid rgba(48,195,166,0.2); border-radius: 12px;">
+              <p class="eyebrow" style="margin: 0 0 6px;">Random-Interval Auto-Check</p>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 14px;">
+                Instead of a fixed 60-second heartbeat, fire checks at unpredictable random intervals.
+                Useful for avoiding predictable load patterns. Works independently of the SMS alert above.
+              </p>
+
+              <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 16px;">
+                <input type="checkbox" id="watchdogRandomEnabled" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);" />
+                <span style="font-weight: 600; color: var(--text-primary);">Enable random-interval checks</span>
+              </label>
+
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span style="font-size: 0.9rem; color: var(--text-primary);">Check every</span>
+                <input
+                  id="watchdogRandomMin"
+                  type="number" min="1" max="60" step="1" value="3"
+                  style="width: 64px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--panel-border); background: var(--panel-bg); color: var(--text-primary); font-size: 0.9rem;"
+                />
+                <span style="font-size: 0.9rem; color: var(--text-muted);">to</span>
+                <input
+                  id="watchdogRandomMax"
+                  type="number" min="1" max="120" step="1" value="9"
+                  style="width: 64px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--panel-border); background: var(--panel-bg); color: var(--text-primary); font-size: 0.9rem;"
+                />
+                <span style="font-size: 0.9rem; color: var(--text-muted);">minutes (random)</span>
+              </div>
+
+              <p id="watchdogRandomStatus" style="margin: 10px 0 0; font-size: 0.85rem; font-weight: 600;"></p>
+            </div>
           </div>
 
           <div class="form-feedback" id="watchdogFeedback"></div>
@@ -4519,6 +4551,23 @@
       if (enabledBox) enabledBox.checked = !!watchdogConfig.enabled;
       if (numberInput && watchdogConfig.to_number) numberInput.value = watchdogConfig.to_number;
 
+      const randomBox    = document.getElementById('watchdogRandomEnabled');
+      const randomMinEl  = document.getElementById('watchdogRandomMin');
+      const randomMaxEl  = document.getElementById('watchdogRandomMax');
+      const randomStatus = document.getElementById('watchdogRandomStatus');
+      if (randomBox)   randomBox.checked = !!watchdogConfig.random_check_enabled;
+      if (randomMinEl) randomMinEl.value  = watchdogConfig.random_check_min_mins ?? 3;
+      if (randomMaxEl) randomMaxEl.value  = watchdogConfig.random_check_max_mins ?? 9;
+      if (randomStatus) {
+        if (watchdogConfig.random_check_enabled) {
+          randomStatus.textContent = `✓ Random checks active — firing every ${watchdogConfig.random_check_min_mins ?? 3}–${watchdogConfig.random_check_max_mins ?? 9} mins at random.`;
+          randomStatus.style.color = '#30c3a6';
+        } else {
+          randomStatus.textContent = 'Random checks off — using fixed 60-second heartbeat.';
+          randomStatus.style.color = 'var(--text-muted)';
+        }
+      }
+
       if (statusEl) {
         if (watchdogConfig.enabled) {
           statusEl.textContent = '✓ Watchdog enabled — you will receive an SMS if the server goes offline.';
@@ -4546,14 +4595,23 @@
       const feedbackEl = document.getElementById('watchdogFeedback');
       if (feedbackEl) { feedbackEl.classList.remove('visible', 'success'); feedbackEl.textContent = ''; }
 
-      const enabled = document.getElementById('watchdogEnabled')?.checked || false;
+      const enabled  = document.getElementById('watchdogEnabled')?.checked || false;
       const toNumber = document.getElementById('watchdogToNumber')?.value.trim() || '+447595289669';
+      const randomCheckEnabled  = document.getElementById('watchdogRandomEnabled')?.checked || false;
+      const randomCheckMinMins  = parseInt(document.getElementById('watchdogRandomMin')?.value  || '3',  10);
+      const randomCheckMaxMins  = parseInt(document.getElementById('watchdogRandomMax')?.value  || '9',  10);
 
       try {
         const res = await fetch('/admin/watchdog/config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ enabled, to_number: toNumber }),
+          body: JSON.stringify({
+            enabled,
+            to_number: toNumber,
+            random_check_enabled:   randomCheckEnabled,
+            random_check_min_mins:  randomCheckMinMins,
+            random_check_max_mins:  randomCheckMaxMins,
+          }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || 'Unable to save watchdog settings.');

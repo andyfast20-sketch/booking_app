@@ -195,7 +195,14 @@ def _load_verification_codes():
         print(f"[Verify] Failed to load codes from disk: {exc}")
         _verification_codes = {}
 _watchdog_config_lock = Lock()
-_watchdog_config = {"enabled": False, "to_number": "+447595289669", "last_sent": None}
+_watchdog_config = {
+    "enabled": False,
+    "to_number": "+447595289669",
+    "last_sent": None,
+    "random_check_enabled": False,
+    "random_check_min_mins": 3,
+    "random_check_max_mins": 9,
+}
 
 _SEO_DEFAULTS: dict = {
     "enabled": False,
@@ -873,7 +880,14 @@ def _telnyx_config_snapshot(*, include_secret: bool = False) -> dict:
 # ---------------------------------------------------------------------------
 
 def _load_watchdog_config_from_disk() -> dict:
-    defaults = {"enabled": False, "to_number": "+447595289669", "last_sent": None}
+    defaults = {
+        "enabled": False,
+        "to_number": "+447595289669",
+        "last_sent": None,
+        "random_check_enabled": False,
+        "random_check_min_mins": 3,
+        "random_check_max_mins": 9,
+    }
     if not os.path.exists(WATCHDOG_CONFIG_FILE):
         return dict(defaults)
     try:
@@ -934,7 +948,7 @@ def _start_watchdog_thread() -> None:
 
     def _watchdog_loop():
         # Short initial delay so the server is ready before the first ping
-        import time
+        import time, random
         time.sleep(15)
         while True:
             try:
@@ -977,8 +991,16 @@ def _start_watchdog_thread() -> None:
             except Exception:
                 pass  # Never let the watchdog thread die
 
-            import time
-            time.sleep(60)  # Check every 60 seconds
+            import time, random
+            with _watchdog_config_lock:
+                use_random = bool(_watchdog_config.get("random_check_enabled"))
+                lo = max(1, int(_watchdog_config.get("random_check_min_mins") or 3)) * 60
+                hi = max(lo + 60, int(_watchdog_config.get("random_check_max_mins") or 9)) * 60
+            if use_random:
+                sleep_secs = random.randint(lo, hi)
+            else:
+                sleep_secs = 60  # fixed 60-second default
+            time.sleep(sleep_secs)
 
     t = threading.Thread(target=_watchdog_loop, name="server-watchdog", daemon=True)
     t.start()
@@ -4062,10 +4084,22 @@ def admin_watchdog_config():
     enabled = bool(payload.get("enabled", False))
     to_number_raw = str(payload.get("to_number", "") or "").strip() or "+447595289669"
     to_number = _normalize_phone_number(to_number_raw) or to_number_raw
+    random_check_enabled = bool(payload.get("random_check_enabled", False))
+    try:
+        random_check_min_mins = max(1, int(payload.get("random_check_min_mins") or 3))
+    except (TypeError, ValueError):
+        random_check_min_mins = 3
+    try:
+        random_check_max_mins = max(random_check_min_mins + 1, int(payload.get("random_check_max_mins") or 9))
+    except (TypeError, ValueError):
+        random_check_max_mins = 9
 
     with _watchdog_config_lock:
         _watchdog_config["enabled"] = enabled
         _watchdog_config["to_number"] = to_number
+        _watchdog_config["random_check_enabled"] = random_check_enabled
+        _watchdog_config["random_check_min_mins"] = random_check_min_mins
+        _watchdog_config["random_check_max_mins"] = random_check_max_mins
         cfg = dict(_watchdog_config)
 
     _save_watchdog_config(cfg)
