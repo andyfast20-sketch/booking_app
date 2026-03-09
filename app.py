@@ -202,6 +202,7 @@ _watchdog_config = {
     "random_check_enabled": False,
     "random_check_min_mins": 3,
     "random_check_max_mins": 9,
+    "voice_alert_enabled": True,
 }
 
 _SEO_DEFAULTS: dict = {
@@ -887,6 +888,7 @@ def _load_watchdog_config_from_disk() -> dict:
         "random_check_enabled": False,
         "random_check_min_mins": 3,
         "random_check_max_mins": 9,
+        "voice_alert_enabled": True,
     }
     if not os.path.exists(WATCHDOG_CONFIG_FILE):
         return dict(defaults)
@@ -980,18 +982,21 @@ def _start_watchdog_thread() -> None:
 
                         if can_send:
                             to_number = cfg.get("to_number") or "+447595289669"
-                            msg = (
-                                "Alert from Pay As You Mow. Your server is not responding. "
-                                "Please check it immediately. I repeat, your server is not responding."
-                            )
-                            # Build webhook base from Render env var or local port
-                            webhook_base = (
-                                os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/")
-                                or f"https://127.0.0.1:{os.environ.get('PORT', 5015)}"
-                            )
-                            ok, _detail = _make_watchdog_alert_call(to_number, msg, webhook_base_url=webhook_base)
-                            if not ok:
-                                print(f"[Watchdog] Alert call failed: {_detail}")
+                            if cfg.get("voice_alert_enabled", True):
+                                msg = (
+                                    "Alert from Pay As You Mow. Your server is not responding. "
+                                    "Please check it immediately. I repeat, your server is not responding."
+                                )
+                                webhook_base = (
+                                    os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/")
+                                    or f"https://127.0.0.1:{os.environ.get('PORT', 5015)}"
+                                )
+                                ok, _detail = _make_watchdog_alert_call(to_number, msg, webhook_base_url=webhook_base)
+                                if not ok:
+                                    print(f"[Watchdog] Alert call failed: {_detail}")
+                            else:
+                                ok = True  # voice disabled — skip alert but still record timestamp
+                                print(f"[Watchdog] Voice alert disabled — server down detected but no call placed.")
                             if ok:
                                 new_last = now.isoformat()
                                 with _watchdog_config_lock:
@@ -4171,6 +4176,7 @@ def admin_watchdog_config():
         random_check_max_mins = max(random_check_min_mins + 1, int(payload.get("random_check_max_mins") or 9))
     except (TypeError, ValueError):
         random_check_max_mins = 9
+    voice_alert_enabled = bool(payload.get("voice_alert_enabled", True))
 
     with _watchdog_config_lock:
         _watchdog_config["enabled"] = enabled
@@ -4178,6 +4184,7 @@ def admin_watchdog_config():
         _watchdog_config["random_check_enabled"] = random_check_enabled
         _watchdog_config["random_check_min_mins"] = random_check_min_mins
         _watchdog_config["random_check_max_mins"] = random_check_max_mins
+        _watchdog_config["voice_alert_enabled"] = voice_alert_enabled
         cfg = dict(_watchdog_config)
 
     _save_watchdog_config(cfg)

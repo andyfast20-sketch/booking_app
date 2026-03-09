@@ -2110,9 +2110,15 @@
             </div>
 
             <!-- Enable toggle -->
-            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 20px;">
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 12px;">
               <input type="checkbox" id="watchdogEnabled" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);" />
               <span style="font-weight: 600; color: var(--text-primary);">Enable server-down watchdog</span>
+            </label>
+
+            <!-- Voice alert toggle -->
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 20px;">
+              <input type="checkbox" id="watchdogVoiceEnabled" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);" checked />
+              <span style="font-weight: 600; color: var(--text-primary);">Enable voice call alert <span style="font-weight: 400; color: var(--text-muted);">(uncheck to silently log only)</span></span>
             </label>
 
             <!-- Alert phone number -->
@@ -4551,6 +4557,9 @@
       if (enabledBox) enabledBox.checked = !!watchdogConfig.enabled;
       if (numberInput && watchdogConfig.to_number) numberInput.value = watchdogConfig.to_number;
 
+      const voiceBox = document.getElementById('watchdogVoiceEnabled');
+      if (voiceBox) voiceBox.checked = watchdogConfig.voice_alert_enabled !== false;
+
       const randomBox    = document.getElementById('watchdogRandomEnabled');
       const randomMinEl  = document.getElementById('watchdogRandomMin');
       const randomMaxEl  = document.getElementById('watchdogRandomMax');
@@ -4597,6 +4606,7 @@
 
       const enabled  = document.getElementById('watchdogEnabled')?.checked || false;
       const toNumber = document.getElementById('watchdogToNumber')?.value.trim() || '+447595289669';
+      const voiceAlertEnabled   = document.getElementById('watchdogVoiceEnabled')?.checked !== false;
       const randomCheckEnabled  = document.getElementById('watchdogRandomEnabled')?.checked || false;
       const randomCheckMinMins  = parseInt(document.getElementById('watchdogRandomMin')?.value  || '3',  10);
       const randomCheckMaxMins  = parseInt(document.getElementById('watchdogRandomMax')?.value  || '9',  10);
@@ -4608,6 +4618,7 @@
           body: JSON.stringify({
             enabled,
             to_number: toNumber,
+            voice_alert_enabled:    voiceAlertEnabled,
             random_check_enabled:   randomCheckEnabled,
             random_check_min_mins:  randomCheckMinMins,
             random_check_max_mins:  randomCheckMaxMins,
