@@ -9343,6 +9343,11 @@
                     `;
                     transition(success, 'Success!');
 
+                    // Refresh the availability grid so the booked slot disappears immediately
+                    if (typeof window.loadAvailability === 'function') {
+                        window.loadAvailability().catch(() => {});
+                    }
+
                     window.setTimeout(() => {
                         document.getElementById('autoQuoteDone')?.addEventListener('click', close);
                     }, 450);
