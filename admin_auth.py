@@ -6,6 +6,12 @@ from datetime import datetime, timedelta
 from functools import wraps
 from flask import session, request, jsonify, redirect
 
+try:
+    import bcrypt as _bcrypt
+    _BCRYPT_AVAILABLE = True
+except ImportError:
+    _BCRYPT_AVAILABLE = False
+
 # Import or create security config
 try:
     from admin_security import (
@@ -24,13 +30,26 @@ except ImportError:
 _login_attempts = {}  # {ip: [timestamp1, timestamp2, ...]}
 _locked_ips = {}  # {ip: lockout_until_timestamp}
 
-def hash_password(password):
-    """Create a secure hash of the password"""
-    return hashlib.sha256(password.encode('utf-8')).hexdigest()
+def hash_password(password: str) -> str:
+    """Create a bcrypt hash of the password (bcrypt preferred, SHA-256 fallback)."""
+    if _BCRYPT_AVAILABLE:
+        return _bcrypt.hashpw(password.encode("utf-8"), _bcrypt.gensalt(rounds=12)).decode("utf-8")
+    # Fallback — should not reach here in production
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
-def verify_password(password, password_hash):
-    """Verify a password against its hash"""
-    return hash_password(password) == password_hash
+
+def verify_password(password: str, password_hash: str) -> bool:
+    """Verify a password against a bcrypt *or* legacy SHA-256 hash."""
+    if not password or not password_hash:
+        return False
+    # bcrypt hashes start with $2b$ (or $2a$ / $2y$)
+    if _BCRYPT_AVAILABLE and password_hash.startswith(("$2b$", "$2a$", "$2y$")):
+        try:
+            return _bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+        except Exception:
+            return False
+    # Legacy SHA-256 path (temporary migration support)
+    return hashlib.sha256(password.encode("utf-8")).hexdigest() == password_hash
 
 def is_ip_locked(ip):
     """Check if an IP is currently locked out"""

@@ -57,7 +57,7 @@ BACKUP_FILES = [
     "smtp_config.json",
     "email_magic.json",
     "smsapi_config.json",
-    "admin_auth.json",
+    # admin_auth.json intentionally excluded — contains password hash
     "watchdog_config.json",
     "seo_config.json",
     "facebook_config.json",
