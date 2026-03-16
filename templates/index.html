@@ -8773,10 +8773,10 @@
     <!-- Auto Quote Popup: resilient flow (runs even if earlier script errors) -->
     <script>
         (() => {
-            const DEFAULT_API_BASE = "https://booking-app-1-gh2v.onrender.com";
+            const DEFAULT_API_BASE = "https://payasyoumow.org";
             const APP_API_BASE = typeof window.APP_API_BASE === 'string' ? window.APP_API_BASE.trim() : '';
             const PAGE_ORIGIN = window.location?.origin || '';
-            const ORIGIN_LOOKS_LIKE_BACKEND = /(localhost|127\.0\.0\.1|onrender\.com)/i.test(PAGE_ORIGIN);
+            const ORIGIN_LOOKS_LIKE_BACKEND = /(localhost|127\.0\.0\.1)/i.test(PAGE_ORIGIN);
             const API_BASE = APP_API_BASE || (ORIGIN_LOOKS_LIKE_BACKEND ? PAGE_ORIGIN : DEFAULT_API_BASE);
 
             const popup = document.getElementById('autoQuotePopup');
@@ -9387,7 +9387,7 @@
         (() => {
             if (window.__payAsYouMowLiveChatInitOk) return;
 
-            const API_BASE = window.APP_API_BASE || window.location.origin || "https://booking-app-1-gh2v.onrender.com";
+            const API_BASE = window.APP_API_BASE || window.location.origin || "https://payasyoumow.org";
             const ENDPOINTS = {
                 session: `${API_BASE}/chat/session`,
                 send: `${API_BASE}/chat/send`,
