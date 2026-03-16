@@ -821,6 +821,7 @@ def _load_telnyx_config_from_disk() -> dict:
 
 def _save_telnyx_config(config=None) -> None:
     snapshot = dict(config or _telnyx_config)
+    # telnyx_config.json is in .gitignore — safe to persist the key locally.
     try:
         with open(TELNYX_CONFIG_FILE, "w", encoding="utf-8") as handle:
             json.dump(snapshot, handle, indent=2)
@@ -1156,12 +1157,12 @@ def _send_sms_via_telnyx(to_number: str, message: str) -> tuple[bool, str]:
 
         if detail:
             print(f"[Telnyx] Error: {detail} (HTTP {response.status_code})")
-            return False, f"Telnyx error: {detail}"
+            return False, "Unable to send SMS right now. Please check Telnyx settings."
         print(f"[Telnyx] Unexpected HTTP {response.status_code}: {response.text[:300]}")
-        return False, f"Telnyx returned HTTP {response.status_code}."
+        return False, "Unable to send SMS right now. Please check Telnyx settings."
     except Exception as exc:
         print(f"[Telnyx] SMS exception: {exc}")
-        return False, f"Unable to send SMS right now. ({type(exc).__name__})"
+        return False, "Unable to send SMS right now. Please try again later."
 
 
 def _make_watchdog_alert_call(to_number: str, message: str, webhook_base_url: str = "") -> tuple[bool, str]:
@@ -1313,12 +1314,12 @@ def _make_verification_call(to_number: str, code: str, webhook_base_url: str = "
 
         if detail:
             print(f"[Telnyx-Call] Error: {detail} (HTTP {response.status_code})")
-            return False, f"Telnyx call error: {detail}"
+            return False, "Unable to place verification call. Please check Telnyx settings."
         print(f"[Telnyx-Call] Unexpected HTTP {response.status_code}: {response.text[:300]}")
-        return False, f"Telnyx call returned HTTP {response.status_code}."
+        return False, "Unable to place verification call. Please check Telnyx settings."
     except Exception as exc:
         print(f"[Telnyx-Call] Exception: {exc}")
-        return False, f"Unable to place verification call. ({type(exc).__name__})"
+        return False, "Unable to place verification call. Please try again later."
 
 
 def _send_sms_for_verification(to_number: str, message: str) -> tuple[bool, str]:
@@ -3809,15 +3810,10 @@ def admin_telnyx_config():
         from_number = _normalize_phone_number(from_number)
 
     with _telnyx_config_lock:
-        # Only overwrite stored values if the caller provided a value.
-        # This prevents the UI from accidentally clearing secrets when the admin
-        # clicks save without re-typing them.
-        if api_key_present:
-            if api_key:
-                _telnyx_config["api_key"] = api_key
-            elif api_key_present:
-                # Explicit clear.
-                _telnyx_config["api_key"] = ""
+        # Accept the API key from the admin form and hold it in memory only.
+        # It is NEVER persisted to disk (_save_telnyx_config strips it).
+        if api_key_present and api_key:
+            _telnyx_config["api_key"] = api_key
 
         if from_present:
             if from_number:
@@ -3922,7 +3918,7 @@ def admin_telnyx_test_call():
         return jsonify({"ok": False, "message": f"Invalid phone number: '{test_phone}'."}), 400
 
     print(f"[Telnyx-Test] Placing test call to {normalized_phone}")
-    webhook_base = request.url_root.rstrip("/")
+    webhook_base = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/") or request.url_root.rstrip("/")
     success, error_msg = _make_verification_call(normalized_phone, "1234", webhook_base_url=webhook_base)
 
     if success:
@@ -4068,8 +4064,9 @@ def telnyx_call_webhook():
 
 
 @app.route("/telnyx/call-debug", methods=["GET"])
+@require_admin_auth
 def telnyx_call_debug():
-    """Public debug endpoint showing recent Telnyx webhook events and config status."""
+    """Admin-only debug endpoint showing recent Telnyx webhook events and config status."""
     cfg = _telnyx_config_snapshot(include_secret=False)
     return jsonify({
         "version": "v6",
@@ -4656,7 +4653,7 @@ def send_verification_code():
 
         if use_call:
             print(f"[Verify] Calling {phone} with code (raw input: {raw_phone})")
-            webhook_base = request.url_root.rstrip("/")
+            webhook_base = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/") or request.url_root.rstrip("/")
             success, error_message = _make_verification_call(phone, code, webhook_base_url=webhook_base)
             method = "call"
         else:
@@ -4669,7 +4666,8 @@ def send_verification_code():
             return jsonify({"message": "Verification code sent successfully", "method": method})
         else:
             print(f"[Verify] {method.upper()} failed for {phone}: {error_message}")
-            return jsonify({"message": error_message or "Failed to send verification code. Please check settings.", "method": method}), 500
+            # Never expose raw Telnyx API errors (may contain key IDs) to customers.
+            return jsonify({"message": "Phone verification is temporarily unavailable. Please try again shortly.", "method": method}), 500
     except Exception as exc:
         print(f"[Verify] Unexpected error: {exc}")
         return jsonify({"message": "An unexpected error occurred. Please try again."}), 500
