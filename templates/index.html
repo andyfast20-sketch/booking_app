@@ -6070,12 +6070,11 @@
         // - If you host this page on a static site (GitHub Pages/Neocities/etc.),
         //   window.location.origin is NOT your Flask server. In that case, fall back
         //   to the Render backend unless window.APP_API_BASE is explicitly set.
-        const DEFAULT_API_BASE = "https://booking-app-1-gh2v.onrender.com";
+        const DEFAULT_API_BASE = "https://payasyoumow.org";
         const APP_API_BASE = typeof window.APP_API_BASE === 'string' ? window.APP_API_BASE.trim() : '';
         const PAGE_ORIGIN = window.location?.origin || '';
         // Only treat local dev and known backend hosts as same-origin API.
-        // Note: payasyoumow.org / callansweringandy.uk may be front-end hosts, so don't assume they serve API routes.
-        const ORIGIN_LOOKS_LIKE_BACKEND = /(localhost|127\.0\.0\.1|onrender\.com)/i.test(PAGE_ORIGIN);
+        const ORIGIN_LOOKS_LIKE_BACKEND = /(localhost|127\.0\.0\.1)/i.test(PAGE_ORIGIN);
         const API_BASE = APP_API_BASE || (ORIGIN_LOOKS_LIKE_BACKEND ? PAGE_ORIGIN : DEFAULT_API_BASE);
 
         // SMS verification is used instead of Firebase/Google sign-in.
