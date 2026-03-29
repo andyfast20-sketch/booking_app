@@ -2,11 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <script>(function(){var u=navigator.userAgent||'';if(!/FBAN|FBAV|FB_IAB|FBIOS|FBSS|Instagram/i.test(u))return;var l=location;if(/Android/i.test(u)){location.href='intent://'+l.href.replace(/^https?:\/\//,'')+'#Intent;scheme=https;end';return;}var o=document.createElement('div');o.setAttribute('style','position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:24px;font-family:-apple-system,sans-serif');o.innerHTML='<div style="background:#fff;border-radius:20px;padding:32px 24px;max-width:340px;width:100%;text-align:center"><div style="font-size:42px;margin-bottom:12px">\ud83c\udf10</div><h2 style="margin:0 0 8px;font-size:20px;color:#1b5e20">Open in Safari</h2><p style="margin:0 0 20px;font-size:15px;color:#555;line-height:1.5">For the best experience, open this page in Safari.</p><a href="x-safari-https://'+l.host+l.pathname+l.search+'" style="display:inline-block;padding:14px 28px;background:#2e7d32;color:#fff;border-radius:12px;text-decoration:none;font-weight:600;font-size:16px">Open in Safari</a><p style="margin:16px 0 0;font-size:13px;color:#888">Or tap <strong>\u22ef</strong> then <strong>Open in Safari</strong></p></div>';document.addEventListener('DOMContentLoaded',function(){document.body.appendChild(o)});})();</script>
     <title>Make a Booking</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
+        html {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
         body {
             background: linear-gradient(135deg, #74ABE2, #5563DE);
             font-family: 'Montserrat', sans-serif;
@@ -17,6 +23,7 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
+            max-height: 999999px;
         }
 
         h1 {
