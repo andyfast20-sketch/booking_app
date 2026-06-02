@@ -753,6 +753,187 @@
             transform: scale(1) translateY(0);
         }
 
+        .contact-popup {
+            position: fixed;
+            inset: 0;
+            z-index: 10010;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
+            background:
+                radial-gradient(circle at 8% 14%, rgba(255, 214, 82, 0.22), transparent 45%),
+                radial-gradient(circle at 90% 8%, rgba(71, 207, 120, 0.22), transparent 44%),
+                rgba(6, 16, 10, 0.8);
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.35s ease, visibility 0.35s ease;
+        }
+
+        .contact-popup.visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .contact-popup-card {
+            width: min(94vw, 520px);
+            border-radius: 28px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(243, 249, 241, 0.97));
+            border: 1px solid rgba(46, 125, 50, 0.24);
+            box-shadow:
+                0 34px 72px rgba(0, 0, 0, 0.36),
+                0 0 0 1px rgba(255, 255, 255, 0.34) inset,
+                0 0 60px rgba(127, 226, 141, 0.32);
+            transform: translateY(20px) scale(0.96);
+            transition: transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .contact-popup.visible .contact-popup-card {
+            transform: translateY(0) scale(1);
+        }
+
+        .contact-popup-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 25% 6%, rgba(255, 237, 178, 0.66), transparent 38%),
+                linear-gradient(165deg, rgba(76, 175, 80, 0.13), transparent 52%);
+        }
+
+        .contact-popup-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 38px;
+            height: 38px;
+            border: none;
+            border-radius: 12px;
+            color: #13441f;
+            background: rgba(255, 255, 255, 0.88);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+            cursor: pointer;
+            z-index: 2;
+            transition: transform 0.25s ease, background 0.25s ease;
+        }
+
+        .contact-popup-close:hover {
+            transform: translateY(-1px);
+            background: #ffffff;
+        }
+
+        .contact-popup-content {
+            position: relative;
+            z-index: 1;
+            padding: 34px 26px 26px;
+            display: grid;
+            gap: 18px;
+        }
+
+        .contact-popup-badge {
+            justify-self: start;
+            padding: 7px 14px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #1f7f35, #2f9b46);
+            color: #ffffff;
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            box-shadow: 0 10px 24px rgba(22, 95, 41, 0.33);
+        }
+
+        .contact-popup-title {
+            margin: 0;
+            color: #163b20;
+            font-size: clamp(1.45rem, 2.8vw, 1.9rem);
+            line-height: 1.1;
+            letter-spacing: -0.4px;
+        }
+
+        .contact-popup-subtitle {
+            margin: 0;
+            color: rgba(22, 59, 32, 0.76);
+            font-size: 0.98rem;
+        }
+
+        .contact-popup-phone {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 15px;
+            border-radius: 16px;
+            background: linear-gradient(130deg, rgba(255, 255, 255, 0.95), rgba(232, 245, 233, 0.95));
+            border: 1px solid rgba(46, 125, 50, 0.2);
+            color: #184b27;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 1.04rem;
+            box-shadow: 0 12px 24px rgba(23, 66, 34, 0.12);
+            transition: transform 0.28s ease, box-shadow 0.28s ease;
+        }
+
+        .contact-popup-phone:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 30px rgba(23, 66, 34, 0.2);
+        }
+
+        .contact-popup-actions {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .contact-popup-action {
+            border: none;
+            border-radius: 14px;
+            padding: 12px 14px;
+            color: #ffffff;
+            font-size: 0.92rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.26s ease, box-shadow 0.26s ease;
+        }
+
+        .contact-popup-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .contact-popup-action.chat {
+            background: linear-gradient(135deg, #2f67f6, #4a89ff);
+            box-shadow: 0 14px 25px rgba(47, 103, 246, 0.3);
+        }
+
+        .contact-popup-action.whatsapp {
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 45%, #075e54 100%);
+            box-shadow: 0 14px 25px rgba(7, 94, 84, 0.32);
+        }
+
+        @media (max-width: 560px) {
+            .contact-popup-content {
+                padding: 30px 20px 20px;
+            }
+
+            .contact-popup-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-popup-phone {
+                font-size: 0.98rem;
+            }
+        }
+
         /* Appointments section */
         .appointments {
             padding: 70px 0;
@@ -1940,7 +2121,7 @@
             transition: var(--transition);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255, 215, 80, 0.14);
-            overflow: hidden;
+            overflow: visible;
             max-height: 999999px;
         }
 
@@ -1957,14 +2138,14 @@
 
         header.scrolled {
             padding: 10px 0;
-            background: rgba(255, 255, 255, 0.98);
-            border-bottom-color: rgba(46, 125, 50, 0.15);
-            box-shadow: 0 12px 25px rgba(23, 61, 32, 0.15);
+            background: rgba(27, 62, 22, 0.98);
+            border-bottom-color: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.28);
         }
 
         header.scrolled::before {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.65) 0%, rgba(46, 125, 50, 0.1) 65%);
-            opacity: 0.85;
+            background: linear-gradient(135deg, rgba(46, 125, 50, 0.4) 0%, rgba(27, 94, 32, 0.6) 100%);
+            opacity: 1;
         }
 
         .header-container {
@@ -1980,7 +2161,7 @@
         .logo {
             display: inline-flex;
             align-items: center;
-            gap: 18px;
+            gap: 12px;
             text-decoration: none;
             letter-spacing: 0.5px;
             color: var(--white);
@@ -1990,116 +2171,128 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 58px;
-            height: 58px;
-            border-radius: 18px;
-            background: linear-gradient(135deg, rgba(56, 142, 60, 0.9), rgba(27, 94, 32, 0.9));
-            padding: 10px;
+            width: 80px;
+            height: 80px;
+            background: transparent;
+            border: none;
+            padding: 0;
             position: relative;
-            overflow: hidden;
-            box-shadow: 0 14px 28px rgba(12, 53, 25, 0.32);
-            isolation: isolate;
+            overflow: visible;
+            box-shadow: none;
+            flex-shrink: 0;
         }
 
-        .logo-icon::before {
-            content: '';
-            position: absolute;
-            inset: -12px;
-            border-radius: 24px;
-            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.45), transparent 60%);
-            z-index: 0;
-            opacity: 0.8;
-            filter: blur(12px);
-        }
+        .logo-icon::before { content: none; }
+        .logo-icon::after  { content: none; }
 
-        .logo-icon::after {
-            content: '';
-            position: absolute;
-            inset: 3px;
-            border-radius: 15px;
-            background: linear-gradient(135deg, rgba(220, 255, 199, 0.25), rgba(255, 255, 255, 0.05));
-            z-index: 1;
-            border: 1px solid rgba(255, 255, 255, 0.25);
-        }
-
-        .logo-icon svg {
-            position: relative;
-            z-index: 2;
+        .logo-icon img {
             width: 100%;
             height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.34));
         }
 
+        /* ── Stunning custom wordmark ── */
         .logo-wordmark {
             display: inline-flex;
             flex-direction: column;
-            line-height: 1.05;
+            line-height: 1;
             font-family: 'Montserrat', sans-serif;
+            gap: 2px;
         }
 
-        .logo-eyebrow {
-            font-size: 10px;
-            letter-spacing: 5px;
+        .logo-operating-badge {
+            align-self: flex-start;
+            font-size: 8.5px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
             text-transform: uppercase;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 4px;
-        }
-
-        .logo-title {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 22px;
-            font-weight: 700;
+            color: #1b5e20;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 4px 9px 3.5px;
+            border-radius: 20px;
+            border: 1px solid rgba(46, 125, 50, 0.22);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+            margin-bottom: 2px;
             display: inline-flex;
-            align-items: baseline;
-            gap: 6px;
-            color: var(--white);
+            align-items: center;
+            gap: 4px;
         }
 
-        .logo-title-text {
-            display: inline-flex;
+        .logo-operating-badge::before {
+            content: '';
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            background-color: #2e7d32;
+            border-radius: 50%;
+            animation: pulse-green 2s infinite;
         }
 
-        .logo-title .highlight {
+        @keyframes pulse-green {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.8); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(46, 125, 50, 0); }
+            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
+        }
+
+        .logo-main-line {
+            font-size: 32px;
+            font-weight: 900;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+            background: linear-gradient(105deg, #ffffff 0%, #ffe082 45%, #aef590 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.22));
+        }
+
+        .logo-main-line .highlight {
+            -webkit-text-fill-color: initial;
+            background: none;
             color: #ffe082;
         }
 
-        .logo-tagline {
-            font-size: 10px;
-            letter-spacing: 3.2px;
+        .logo-sub-line {
+            font-size: 9.5px;
+            font-weight: 600;
+            letter-spacing: 3.8px;
             text-transform: uppercase;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.7);
-            margin-top: 6px;
+            color: rgba(255, 255, 255, 0.55);
+            margin-top: 2px;
+        }
+
+        header.scrolled .logo-operating-badge {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+            box-shadow: none;
+        }
+
+        header.scrolled .logo-operating-badge::before {
+            background-color: #aef590;
+        }
+
+        header.scrolled .logo-main-line {
+            background: linear-gradient(105deg, #ffffff 0%, #ffe082 45%, #aef590 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header.scrolled .logo-sub-line {
+            color: rgba(255, 255, 255, 0.55);
         }
 
         header.scrolled .logo {
-            color: var(--primary-dark);
+            color: #ffffff;
         }
 
         header.scrolled .logo-icon {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(220, 255, 199, 0.9));
-            box-shadow: 0 10px 22px rgba(23, 61, 32, 0.18);
-        }
-
-        header.scrolled .logo-icon::after {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.35), rgba(210, 255, 210, 0.25));
-            border-color: rgba(46, 125, 50, 0.25);
-        }
-
-        header.scrolled .logo-eyebrow {
-            color: var(--primary-light);
-        }
-
-        header.scrolled .logo-title {
-            color: var(--primary);
-        }
-
-        header.scrolled .logo-title .highlight {
-            color: var(--secondary);
-        }
-
-        header.scrolled .logo-tagline {
-            color: var(--text-light);
+            background: transparent;
+            box-shadow: none;
+            border: none;
         }
 
         /* ══════════════════════════════════════════
@@ -2199,32 +2392,32 @@
             transform: translateY(-1px);
         }
 
-        /* ── Scrolled (white header) states ── */
+        /* ── Scrolled (still green header) states ── */
         header.scrolled nav ul {
-            background: rgba(255,255,255,.85);
-            border-color: rgba(46,125,50,.15);
-            box-shadow: 0 4px 20px rgba(0,0,0,.1), 0 1px 0 rgba(46,125,50,.1) inset;
+            background: rgba(255,255,255,.06);
+            border-color: rgba(255,255,255,.1);
+            box-shadow: 0 4px 24px rgba(0,0,0,.22), 0 1px 0 rgba(255,215,80,.1) inset;
         }
         header.scrolled nav ul li a {
-            color: #2e3a28;
+            color: rgba(255,255,255,0.82);
         }
         header.scrolled nav ul li a:hover {
-            color: #1b5e20;
+            color: #ffffff;
         }
         header.scrolled nav ul li a:hover::before {
-            background: rgba(46,125,50,.1);
+            background: rgba(255,255,255,.1);
         }
         header.scrolled nav ul li a::after {
-            background: linear-gradient(90deg, transparent, #2e7d32, #66bb6a, transparent);
+            background: linear-gradient(90deg, transparent, #ffe082, #ffd740, transparent);
         }
         header.scrolled nav ul li:last-child a {
-            background: linear-gradient(135deg, #2e7d32 0%, #388e3c 60%, #43a047 100%);
-            color: #ffffff;
-            box-shadow: 0 4px 16px rgba(46,125,50,.35), 0 1px 0 rgba(255,255,255,.25) inset;
+            background: linear-gradient(135deg, #ffd740 0%, #ffab00 60%, #ff8f00 100%);
+            color: #1a2e00;
+            box-shadow: 0 4px 16px rgba(255,183,0,.35), 0 1px 0 rgba(255,255,255,.3) inset;
         }
         header.scrolled nav ul li:last-child a:hover {
-            background: linear-gradient(135deg, #388e3c 0%, #43a047 60%, #56ac5b 100%);
-            box-shadow: 0 6px 22px rgba(46,125,50,.5), 0 1px 0 rgba(255,255,255,.3) inset;
+            background: linear-gradient(135deg, #ffe57f 0%, #ffca28 60%, #ffab00 100%);
+            box-shadow: 0 6px 22px rgba(255,183,0,.55), 0 1px 0 rgba(255,255,255,.4) inset;
         }
 
         .mobile-menu-btn {
@@ -2243,7 +2436,183 @@
         }
 
         header.scrolled .mobile-menu-btn {
-            color: var(--primary);
+            color: var(--white);
+        }
+
+        /* ══════════════════════════════════════════
+           EXISTING CUSTOMERS SECTION
+        ══════════════════════════════════════════ */
+        .existing-customers {
+            background: linear-gradient(160deg, #0d2110 0%, #1b3a20 40%, #1e4724 100%);
+            padding: 90px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .existing-customers::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 50% at 80% 20%, rgba(174,245,144,0.07) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 60% at 10% 80%, rgba(46,125,50,0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .existing-customers .section-title h2 {
+            color: #ffffff;
+        }
+        .existing-customers .section-title p {
+            color: rgba(255,255,255,0.6);
+        }
+        .ec-cols {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 56px;
+            align-items: start;
+            margin-top: 48px;
+        }
+        /* keep old .ec-layout name harmless */
+        .ec-layout { display: none; }
+        .ec-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(174,245,144,0.12);
+            border: 1px solid rgba(174,245,144,0.25);
+            color: #aef590;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 6px 14px;
+            border-radius: 999px;
+            margin-bottom: 18px;
+        }
+        .ec-headline {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(1.55rem, 2.5vw, 2.1rem);
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.2;
+            margin: 0 0 16px;
+        }
+        .ec-intro {
+            color: rgba(255,255,255,0.72);
+            font-size: 1.05rem;
+            line-height: 1.7;
+            margin-bottom: 32px;
+            max-width: 560px;
+        }
+        .ec-features {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            margin-bottom: 36px;
+        }
+        .ec-feature {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+        .ec-feature-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: rgba(174,245,144,0.1);
+            border: 1px solid rgba(174,245,144,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aef590;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .ec-feature-text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .ec-feature-text strong {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .ec-feature-text span {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.62);
+            line-height: 1.6;
+            max-width: 480px;
+        }
+        .ec-video-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        /* Glowing outer frame */
+        .ec-video-frame {
+            position: relative;
+            width: 300px;
+            padding: 10px;
+            border-radius: 28px;
+            background: linear-gradient(145deg, rgba(174,245,144,0.18) 0%, rgba(46,125,50,0.25) 50%, rgba(255,215,64,0.12) 100%);
+            box-shadow:
+                0 0 0 1px rgba(174,245,144,0.25),
+                0 0 40px rgba(174,245,144,0.18),
+                0 0 80px rgba(46,125,50,0.15),
+                0 40px 80px rgba(0,0,0,0.55),
+                inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+        .ec-video-frame::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 29px;
+            background: linear-gradient(135deg, rgba(174,245,144,0.4) 0%, rgba(46,125,50,0.1) 40%, rgba(255,215,64,0.3) 100%);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .ec-video-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #aef590;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        .ec-video-container {
+            position: relative;
+            width: 100%;
+            /* YouTube Shorts aspect ratio 9:16 */
+            padding-top: 177.78%;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow:
+                0 20px 40px rgba(0,0,0,0.6),
+                0 0 0 1px rgba(174,245,144,0.1);
+            z-index: 1;
+        }
+        .ec-video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        @media (max-width: 900px) {
+            .ec-cols {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            .ec-video-frame {
+                width: 260px;
+                margin: 0 auto;
+            }
         }
 
         /* Hero Section */
@@ -3007,6 +3376,16 @@
             z-index: 2;
         }
 
+        .video-card-note {
+            margin-top: -10px;
+            margin-bottom: 20px;
+            padding-left: 12px;
+            border-left: 3px solid rgba(46, 125, 50, 0.35);
+            color: var(--primary-dark);
+            font-weight: 600;
+            line-height: 1.55;
+        }
+
         .video-frame {
             border-radius: 18px;
             overflow: hidden;
@@ -3049,24 +3428,115 @@
             cursor: pointer;
             pointer-events: none;
             z-index: 3;
+            filter: contrast(1.06) saturate(1.08);
+        }
+
+        .video-thumbnail::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(7, 12, 9, 0.08) 0%, rgba(7, 12, 9, 0.58) 100%);
+            z-index: 0;
         }
 
         .video-thumbnail::after {
-            content: 'Replay video';
-            font-size: 0.9rem;
-            letter-spacing: 0.6px;
-            text-transform: uppercase;
-            color: var(--white);
-            background: rgba(0, 0, 0, 0.65);
-            padding: 10px 22px;
-            border-radius: 999px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            content: '';
+            width: 72px;
+            height: 72px;
+            background:
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%232e7d32' d='M8 5v14l11-7z'/%3E%3C/svg%3E")
+                no-repeat center center,
+                rgba(255, 255, 255, 0.92);
+            background-size: 44px 44px, auto;
+            border-radius: 50%;
+            box-shadow: 0 6px 28px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 1;
+            flex-shrink: 0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .video-thumbnail:hover::after {
+            transform: scale(1.12);
+            box-shadow: 0 10px 36px rgba(0, 0, 0, 0.6);
         }
 
         .video-thumbnail.visible {
             opacity: 1;
             visibility: visible;
             pointer-events: auto;
+        }
+
+        .video-lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 10, 7, 0.76);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            z-index: 10030;
+        }
+
+        .video-lightbox.visible {
+            display: flex;
+        }
+
+        .video-lightbox-inner {
+            width: min(92vw, 420px);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.45);
+            background: #000;
+            position: relative;
+        }
+
+        .video-lightbox-crop {
+            width: 100%;
+            aspect-ratio: 9 / 16;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+        }
+
+        .video-lightbox-frame {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 118%;
+            height: 118%;
+            transform: translate(-50%, -50%);
+            border: 0;
+            display: block;
+        }
+
+        @media (max-width: 640px) {
+            .video-lightbox-frame {
+                width: 112%;
+                height: 112%;
+            }
+        }
+
+        .video-lightbox-close {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            width: 44px;
+            height: 44px;
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.82);
+            color: #fff;
+            font-size: 1.5rem;
+            line-height: 1;
+            cursor: pointer;
+            z-index: 10031;
+        }
+
+        .video-lightbox-close:hover {
+            background: rgba(0, 0, 0, 0.95);
         }
 
         @media (max-width: 1024px) {
@@ -4410,6 +4880,30 @@
             transform: translateY(-3px);
         }
 
+        .footer-whatsapp-button {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 20px;
+            justify-content: center;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            text-decoration: none;
+            color: #fff;
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 45%, #075e54 100%);
+            box-shadow: 0 12px 24px rgba(7, 94, 84, 0.28);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .footer-whatsapp-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 28px rgba(7, 94, 84, 0.34);
+        }
+
+        .footer-whatsapp-button i {
+            font-size: 1.4rem;
+        }
+
         .footer-admin-link {
             color: #ccc;
             text-decoration: none;
@@ -4619,13 +5113,17 @@
             }
 
             .logo {
-                gap: 14px;
+                gap: 8px;
+                padding: 0;
             }
 
             .logo-icon {
-                width: 68px;
-                height: 68px;
-                padding: 10px;
+                width: 76px;
+                height: 76px;
+                background: transparent;
+                box-shadow: none;
+                border: none;
+                animation: logoFloat 3.6s ease-in-out infinite;
             }
 
             .header-container {
@@ -4633,93 +5131,18 @@
                 padding: 18px 0;
             }
 
-            .logo {
-                padding: 8px 16px;
-                border-radius: 18px;
-                background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
-                box-shadow: 0 20px 36px rgba(12, 53, 25, 0.28);
-                position: relative;
-                overflow: hidden;
-                isolation: isolate;
+            .logo-main-line {
+                font-size: 28px;
             }
 
-            .logo::before {
-                content: '';
-                position: absolute;
-                inset: 0;
-                background: linear-gradient(130deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0));
-                opacity: 0.65;
-                pointer-events: none;
-                z-index: 0;
+            .logo-operating-badge {
+                font-size: 8px;
+                padding: 3px 7px 2.5px;
             }
 
-            .logo-icon {
-                width: 60px;
-                height: 60px;
-                border-radius: 18px;
-                position: relative;
-                z-index: 1;
-                box-shadow:
-                    0 0 0 2.5px rgba(255, 215, 80, 0.55),
-                    0 0 0 5px rgba(255, 215, 80, 0.14),
-                    0 18px 36px rgba(5, 22, 10, 0.55),
-                    0 4px 12px rgba(255, 215, 80, 0.22);
-                background: linear-gradient(145deg, rgba(56,142,60,0.96), rgba(18,72,28,0.96));
-                animation: logoFloat 3.6s ease-in-out infinite, logoGlowPulse 3.6s ease-in-out infinite;
-            }
-
-            @keyframes logoGlowPulse {
-                0%, 100% { box-shadow: 0 0 0 2.5px rgba(255,215,80,.55), 0 0 0 5px rgba(255,215,80,.14), 0 18px 36px rgba(5,22,10,.55), 0 4px 12px rgba(255,215,80,.22); }
-                50%       { box-shadow: 0 0 0 2.5px rgba(255,215,80,.9),  0 0 0 9px rgba(255,215,80,.22), 0 22px 44px rgba(5,22,10,.65), 0 4px 20px rgba(255,215,80,.45); }
-            }
-
-            .logo-title {
-                font-size: 15px;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0px;
-                line-height: 1.12;
-                padding: 0;
-                border-radius: 0;
-                background: transparent;
-                border: none;
-                box-shadow: none;
-                backdrop-filter: none;
-            }
-
-            .logo-wordmark {
-                position: relative;
-                z-index: 1;
-            }
-
-            header.scrolled .logo {
-                background: linear-gradient(135deg, rgba(46, 125, 50, 0.15), rgba(46, 125, 50, 0.03));
-                box-shadow: 0 18px 30px rgba(23, 61, 32, 0.18);
-            }
-
-            header.scrolled .logo::before {
-                background: linear-gradient(130deg, rgba(46, 125, 50, 0.22), rgba(255, 255, 255, 0));
-                opacity: 0.75;
-            }
-
-            .logo-title-text,
-            .logo-title .highlight {
-                display: inline-flex;
-                align-items: center;
-                padding: 0;
-                border-radius: 0;
-                text-transform: none;
-                letter-spacing: 0.02em;
-                font-weight: 700;
-            }
-
-            .logo-title .highlight {
-                color: #ffe082;
-                display: block;
-                font-size: 22px;
-                line-height: 0.9;
-                letter-spacing: -0.01em;
-                margin-top: 1px;
+            .logo-sub-line {
+                font-size: 8px;
+                letter-spacing: 3px;
             }
 
             .logo-eyebrow {
@@ -5024,9 +5447,9 @@
             }
 
             header.scrolled .mobile-menu-btn {
-                background: rgba(46, 125, 50, 0.12);
-                border-color: rgba(46, 125, 50, 0.22);
-                box-shadow: 0 14px 24px rgba(23, 61, 32, 0.18);
+                background: rgba(255, 255, 255, 0.12);
+                border-color: rgba(255, 255, 255, 0.14);
+                box-shadow: 0 14px 24px rgba(0, 0, 0, 0.2);
             }
 
             .section-title h2 {
@@ -5193,17 +5616,12 @@
                 height: 66px;
             }
 
-            .logo-title {
-                font-size: 16px;
+            .logo-main-line {
+                font-size: 26px;
             }
 
-            .logo-title .highlight {
-                font-size: 24px;
-            }
-
-            .logo-tagline {
-                font-size: 9px;
-                letter-spacing: 3.5px;
+            .logo-sub-line {
+                letter-spacing: 3px;
             }
 
             .header-container {
@@ -5254,29 +5672,30 @@
         }
 
         @media (max-width: 640px) {
-            .logo-eyebrow {
-                display: none;
-            }
-
             .logo {
-                padding: 8px 14px;
+                padding: 0;
+                gap: 8px;
             }
 
             .logo-icon {
-                width: 46px;
-                height: 46px;
+                width: 58px;
+                height: 58px;
             }
 
-            .logo-title {
-                font-size: 14px;
+            .logo-main-line {
+                font-size: 24px;
             }
 
-            .logo-title-text,
-            .logo-title .highlight {
-                letter-spacing: 0.04em;
+            .logo-operating-badge {
+                display: none;
             }
 
-            .logo-tagline {
+            .logo-top-line {
+                font-size: 9.5px;
+                letter-spacing: 4px;
+            }
+
+            .logo-sub-line {
                 display: none;
             }
 
@@ -5375,26 +5794,17 @@
             }
 
             .logo {
-                font-size: 22px;
-                gap: 12px;
+                gap: 10px;
             }
 
             .logo-icon {
-                width: 56px;
-                height: 56px;
-                padding: 8px;
+                width: 64px;
+                height: 64px;
+                padding: 0;
             }
 
-            .logo-title {
-                font-size: 13px;
-            }
-
-            .logo-title-text {
-                letter-spacing: 0.02em;
-            }
-
-            .logo-title .highlight {
-                margin-top: 1px;
+            .logo-main-line {
+                font-size: 23px;
             }
 
             .booking-header h2 {
@@ -5747,120 +6157,11 @@
         <div class="container header-container">
             <a href="#" class="logo">
                 <span class="logo-icon" aria-hidden="true">
-                    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
-                        <defs>
-                            <radialGradient id="bg" cx="0.42" cy="0.28" r="0.82">
-                                <stop offset="0%" stop-color="#1a4a20"/>
-                                <stop offset="100%" stop-color="#071208"/>
-                            </radialGradient>
-                            <linearGradient id="deck-g" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stop-color="#aadf18"/>
-                                <stop offset="100%" stop-color="#5c8c00"/>
-                            </linearGradient>
-                            <linearGradient id="eng-g" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stop-color="#c8f020"/>
-                                <stop offset="100%" stop-color="#7aaa08"/>
-                            </linearGradient>
-                            <radialGradient id="whl-big" cx="0.35" cy="0.3" r="0.75">
-                                <stop offset="0%" stop-color="#505050"/>
-                                <stop offset="100%" stop-color="#0e0e0e"/>
-                            </radialGradient>
-                            <radialGradient id="whl-sm" cx="0.35" cy="0.3" r="0.75">
-                                <stop offset="0%" stop-color="#454545"/>
-                                <stop offset="100%" stop-color="#0e0e0e"/>
-                            </radialGradient>
-                        </defs>
-
-                        <!-- ── Badge bg ── -->
-                        <circle cx="32" cy="32" r="31" fill="url(#bg)"/>
-                        <!-- Gold border ring -->
-                        <circle cx="32" cy="32" r="30" fill="none" stroke="rgba(255,215,80,0.55)" stroke-width="1.4"/>
-
-                        <!-- ── HANDLE (go from rear-deck up-left to T-bar) ── -->
-                        <!-- Main bar -->
-                        <line x1="16" y1="38" x2="30" y2="10" stroke="#a0a0a0" stroke-width="4.5" stroke-linecap="round"/>
-                        <!-- Shine on bar -->
-                        <line x1="17.2" y1="38" x2="31.2" y2="10" stroke="rgba(255,255,255,0.28)" stroke-width="1.8" stroke-linecap="round"/>
-                        <!-- T-bar grip -->
-                        <rect x="20" y="7.5" width="22" height="5.5" rx="2.75" fill="#1c1c1c"/>
-                        <rect x="20" y="7.5" width="22" height="2.2" rx="2.2" fill="#3a3a3a"/>
-                        <!-- Grip bands -->
-                        <line x1="25" y1="8" x2="25" y2="12.5" stroke="rgba(0,0,0,0.5)" stroke-width="1.2"/>
-                        <line x1="29" y1="8" x2="29" y2="12.5" stroke="rgba(0,0,0,0.5)" stroke-width="1.2"/>
-                        <line x1="33" y1="8" x2="33" y2="12.5" stroke="rgba(0,0,0,0.5)" stroke-width="1.2"/>
-                        <line x1="37" y1="8" x2="37" y2="12.5" stroke="rgba(0,0,0,0.5)" stroke-width="1.2"/>
-
-                        <!-- ── ENGINE BLOCK ── -->
-                        <rect x="26" y="29" width="16" height="10" rx="2.5" fill="url(#eng-g)"/>
-                        <!-- Highlight on top -->
-                        <rect x="26" y="29" width="16" height="3.5" rx="2.5" fill="rgba(255,255,255,0.25)"/>
-                        <!-- Shine stripe -->
-                        <rect x="29" y="30.5" width="9" height="1.4" rx="0.7" fill="rgba(255,255,255,0.55)"/>
-                        <!-- Cooling fins -->
-                        <line x1="30" y1="32" x2="30" y2="38.5" stroke="rgba(0,0,0,0.22)" stroke-width="1"/>
-                        <line x1="34" y1="32" x2="34" y2="38.5" stroke="rgba(0,0,0,0.22)" stroke-width="1"/>
-                        <line x1="38" y1="32" x2="38" y2="38.5" stroke="rgba(0,0,0,0.22)" stroke-width="1"/>
-
-                        <!-- ── EXHAUST ── -->
-                        <rect x="38.5" y="23" width="3.5" height="7" rx="1.75" fill="#303030"/>
-                        <!-- smoke rings -->
-                        <circle cx="40" cy="21.5" r="2.2" fill="rgba(220,220,220,0.14)"/>
-                        <circle cx="41.5" cy="19" r="1.5" fill="rgba(220,220,220,0.09)"/>
-
-                        <!-- ── MOWER DECK (bold, wide, lime green) ── -->
-                        <rect x="8" y="38" width="48" height="11" rx="3" fill="url(#deck-g)"/>
-                        <!-- Deck top face highlight -->
-                        <rect x="8" y="38" width="48" height="4.5" rx="3" fill="rgba(255,255,255,0.18)"/>
-                        <!-- Bright specular stripe -->
-                        <rect x="12" y="39.5" width="32" height="1.8" rx="0.9" fill="rgba(255,255,255,0.65)"/>
-                        <!-- Underside shadow line -->
-                        <rect x="9" y="47.2" width="46" height="1.8" rx="0.5" fill="rgba(0,0,0,0.35)"/>
-
-                        <!-- ── REAR WHEEL (large, left) ── -->
-                        <!-- Tyre -->
-                        <circle cx="17" cy="49" r="10" fill="url(#whl-big)"/>
-                        <!-- Tyre sidewall band -->
-                        <circle cx="17" cy="49" r="8" fill="none" stroke="#3a3a3a" stroke-width="1.8"/>
-                        <!-- Tread dots -->
-                        <circle cx="17" cy="49" r="10" fill="none" stroke="#1a1a1a" stroke-width="1" stroke-dasharray="3.5,3"/>
-                        <!-- Rim disc -->
-                        <circle cx="17" cy="49" r="5" fill="#2a2a2a" stroke="#5a5a5a" stroke-width="1"/>
-                        <!-- Spokes -->
-                        <line x1="17" y1="40" x2="17" y2="44.5" stroke="#707070" stroke-width="2" stroke-linecap="round"/>
-                        <line x1="17" y1="53.5" x2="17" y2="58" stroke="#707070" stroke-width="2" stroke-linecap="round"/>
-                        <line x1="8"  y1="49" x2="12.5" y2="49" stroke="#707070" stroke-width="2" stroke-linecap="round"/>
-                        <line x1="21.5" y1="49" x2="26" y2="49" stroke="#707070" stroke-width="2" stroke-linecap="round"/>
-                        <line x1="10.9" y1="42.9" x2="14.2" y2="46.2" stroke="#686868" stroke-width="1.6" stroke-linecap="round"/>
-                        <line x1="19.8" y1="51.8" x2="23" y2="55" stroke="#686868" stroke-width="1.6" stroke-linecap="round"/>
-                        <line x1="23.1" y1="42.9" x2="19.8" y2="46.2" stroke="#686868" stroke-width="1.6" stroke-linecap="round"/>
-                        <line x1="10.9" y1="55.1" x2="14.2" y2="51.8" stroke="#686868" stroke-width="1.6" stroke-linecap="round"/>
-                        <!-- Chrome hub -->
-                        <circle cx="17" cy="49" r="2.6" fill="#c8c8c8"/>
-                        <circle cx="17" cy="49" r="1.3" fill="#f0f0f0"/>
-
-                        <!-- ── FRONT WHEEL (smaller, right) ── -->
-                        <circle cx="48" cy="50" r="7" fill="url(#whl-sm)"/>
-                        <circle cx="48" cy="50" r="5.4" fill="none" stroke="#3a3a3a" stroke-width="1.4"/>
-                        <circle cx="48" cy="50" r="7" fill="none" stroke="#1a1a1a" stroke-width="0.9" stroke-dasharray="2.8,2.4"/>
-                        <circle cx="48" cy="50" r="3.4" fill="#2a2a2a" stroke="#5a5a5a" stroke-width="0.9"/>
-                        <line x1="48" y1="43.5" x2="48" y2="47" stroke="#707070" stroke-width="1.7" stroke-linecap="round"/>
-                        <line x1="48" y1="53" x2="48" y2="56.5" stroke="#707070" stroke-width="1.7" stroke-linecap="round"/>
-                        <line x1="41.5" y1="50" x2="45" y2="50" stroke="#707070" stroke-width="1.7" stroke-linecap="round"/>
-                        <line x1="51"  y1="50" x2="54.5" y2="50" stroke="#707070" stroke-width="1.7" stroke-linecap="round"/>
-                        <circle cx="48" cy="50" r="1.8" fill="#d0d0d0"/>
-                        <circle cx="48" cy="50" r="0.9" fill="#f0f0f0"/>
-
-                        <!-- ── CUT GRASS LINES (behind rear wheel, mower goes right) ── -->
-                        <line x1="3" y1="56" x2="8"  y2="56" stroke="#4caf50" stroke-width="1.5" stroke-linecap="round"/>
-                        <line x1="4" y1="59" x2="9"  y2="59" stroke="#388e3c" stroke-width="1.2" stroke-linecap="round"/>
-                        <!-- Uncut grass blades ahead of front wheel -->
-                        <line x1="57" y1="57" x2="56" y2="51" stroke="#5abf5e" stroke-width="2" stroke-linecap="round"/>
-                        <line x1="61" y1="58" x2="59.5" y2="52" stroke="#4caf50" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
+                    <img src="{{ url_for('static', filename='images/pay-as-you-mow-icon.png') }}" alt="Pay As You Mow logo icon" loading="eager" decoding="async">
                 </span>
-                <span class="logo-wordmark">
-                    <span class="logo-title"><span class="logo-title-text">Pay As You</span><span class="highlight">Mow</span></span>
-                    <span class="logo-tagline">Audenshaw &bull; Denton &bull; Dukinfield</span>
+                <span class="logo-wordmark" aria-label="Pay As You Mow">
+                    <span class="logo-operating-badge">Operating in Audenshaw & Denton</span>
+                    <span class="logo-main-line">Pay As You <span class="highlight">Mow</span></span>
                 </span>
             </a>
             <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Open menu" aria-controls="nav" aria-expanded="false">
@@ -5869,8 +6170,8 @@
             <nav id="nav">
                 <ul>
                     <li><a href="#home"><span class="nav-icon"><i class="fas fa-house"></i></span><span class="nav-label">Home</span><i class="fas fa-chevron-right nav-arrow"></i></a></li>
-                    <li><a href="#services"><span class="nav-icon"><i class="fas fa-leaf"></i></span><span class="nav-label">My Services</span><i class="fas fa-chevron-right nav-arrow"></i></a></li>
-                    <li><a href="#why"><span class="nav-icon"><i class="fas fa-star"></i></span><span class="nav-label">Why Choose Me</span><i class="fas fa-chevron-right nav-arrow"></i></a></li>
+                    <li><a href="#services"><span class="nav-icon"><i class="fas fa-leaf"></i></span><span class="nav-label">Service</span><i class="fas fa-chevron-right nav-arrow"></i></a></li>
+                    <li><a href="#why"><span class="nav-icon"><i class="fas fa-star"></i></span><span class="nav-label">Why Me</span><i class="fas fa-chevron-right nav-arrow"></i></a></li>
                     <li><a href="#about"><span class="nav-icon"><i class="fas fa-user"></i></span><span class="nav-label">About</span><i class="fas fa-chevron-right nav-arrow"></i></a></li>
                     <li><a href="#faq"><span class="nav-icon"><i class="fas fa-circle-question"></i></span><span class="nav-label">FAQ</span><i class="fas fa-chevron-right nav-arrow"></i></a></li>
                     <li><a href="#testimonials"><span class="nav-icon"><i class="fas fa-comments"></i></span><span class="nav-label">Testimonials</span><i class="fas fa-chevron-right nav-arrow"></i></a></li>
@@ -6042,7 +6343,7 @@
                 <div class="about-text">
                     <h3>Meet Your Gardener</h3>
                     <p>Hi, I'm Andy, a dedicated garden maintenance professional with 15 years of experience serving Audenshaw and Denton. I take pride in delivering high-quality service at competitive rates while helping customers maintain beautiful outdoor spaces.</p>
-                    <p>Gardening is more than a job—it's my passion. I enjoy working in nature, meeting people, and staying active. As I operate part-time, availability is limited, but I always strive to accommodate my customers. If you're looking for a reliable gardener, feel free to get in touch!</p>
+                    <p>Gardening is more than a job—it's my passion. I enjoy working in nature, meeting people, and staying active. As I operate part-time, availability is limited. If you're looking for a reliable gardener, feel free to get in touch!</p>
                     <a href="#appointments" class="btn btn-quote">Arrange a Free Quote</a>
                 </div>
                 <div class="about-video">
@@ -6070,6 +6371,7 @@
                     <h3>Are you a registered business?</h3>
                     <p>Yes, I am a fully registered gardener and submit my accounts every year.</p>
                     <p>Payment for my services can be made by cash or online which adds convenience for my customers.</p>
+                    <p>I work part time, which means availability and customer numbers are limited.</p>
                 </article>
                 <article class="faq-card">
                     <h3>How much do you charge?</h3>
@@ -6087,12 +6389,52 @@
         </div>
     </section>
 
+    {% if video_testimonials is defined and video_testimonials %}
+    <section class="video-showcase" id="video-testimonials">
+        <div class="container">
+            <div class="section-title">
+                <h2>Video Testimonials</h2>
+                <p>Watch real feedback from customers who have used Pay As You Mow.</p>
+            </div>
+            <div class="video-grid">
+                {% for video in video_testimonials %}
+                {% set card_title = 'Pay As You Mow' if loop.index == 3 else (video.title or ('Customer Story ' ~ loop.index)) %}
+                {% set card_video_id = 'V_ym0RQmiAc' if loop.index == 3 else (video.youtube_id or '') %}
+                {% set card_note = 'Ray from Denton talks about the service.' if loop.index == 1 else ('May talks about the service she has received over the last 2 years.' if loop.index == 2 else ('More about Pay As You Mow gardening service. Hope you enjoy.' if loop.index == 3 else '')) %}
+                <article class="video-card">
+                    <div class="video-card-header">
+                        <span class="video-card-label"><i class="fab fa-youtube" aria-hidden="true"></i> Video testimonial</span>
+                        <span class="video-card-metric"><i class="fas fa-check-circle" aria-hidden="true"></i> Verified customer</span>
+                    </div>
+                    <h3>{{ card_title | e }}</h3>
+                    {% if card_note %}
+                    <p class="video-card-note">{{ card_note }}</p>
+                    {% endif %}
+                    <div class="video-frame" data-video-id="{{ card_video_id | e }}"{% if loop.index == 3 %} data-open-modal="true"{% endif %}>
+                        <iframe src="https://www.youtube.com/embed/{{ card_video_id | e }}?rel=0&amp;modestbranding=1&amp;enablejsapi=1" title="{{ card_title | e }}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <div class="video-lightbox" id="videoLightbox" aria-hidden="true">
+        <div class="video-lightbox-inner" role="dialog" aria-modal="true" aria-label="Video player">
+            <button type="button" class="video-lightbox-close" id="videoLightboxClose" aria-label="Close video">&times;</button>
+            <div class="video-lightbox-crop">
+                <iframe id="videoLightboxFrame" class="video-lightbox-frame" src="about:blank" title="Video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
     <!-- Testimonials Section -->
     <section class="testimonials" id="testimonials">
         <div class="container">
             <div class="section-title">
                 <h2>Customer Testimonials</h2>
-                <p>What our clients say about our services</p>
+                <p>What our clients say about my services</p>
             </div>
             <div class="testimonials-slider" id="testimonialSlider">
                 {% if reviews is defined and reviews %}
@@ -6167,6 +6509,65 @@
         </div>
     </div>
 
+    <!-- Existing Customers Section -->
+    <section class="existing-customers" id="existing-customers">
+        <div class="container">
+            <div class="section-title">
+                <h2>Existing Customers</h2>
+                <p>An intelligent booking system built exclusively for you</p>
+            </div>
+            <div class="ec-cols">
+
+                <!-- Column 1: Features -->
+                <div class="ec-content">
+                    <div class="ec-badge"><i class="fas fa-calendar-alt"></i> Smart Queue System</div>
+                    <h3 class="ec-headline">A Booking System Like No Other</h3>
+                    <p class="ec-intro">As an existing customer, you have access to something genuinely unique — a bespoke online booking system that no other local gardener offers.</p>
+                    <div class="ec-features">
+                        <div class="ec-feature">
+                            <div class="ec-feature-icon"><i class="fas fa-list-ol"></i></div>
+                            <div class="ec-feature-text">
+                                <strong>See Your Place in the Queue</strong>
+                                <span>Simply phone in and an AI agent will tell you exactly how many gardens are ahead of yours — complete transparency, no guessing.</span>
+                            </div>
+                        </div>
+                        <div class="ec-feature">
+                            <div class="ec-feature-icon"><i class="fas fa-bolt"></i></div>
+                            <div class="ec-feature-text">
+                                <strong>Book an Earlier Slot</strong>
+                                <span>When you phone in, the AI agent tells you how many gardens are in front of you. If any earlier appointment slots are available, you can book one straight away and jump the queue.</span>
+                            </div>
+                        </div>
+                        <div class="ec-feature">
+                            <div class="ec-feature-icon"><i class="fas fa-calendar-check"></i></div>
+                            <div class="ec-feature-text">
+                                <strong>Flexible, Part-Time Availability</strong>
+                                <span>This is a part-time service run with care and commitment. Available dates are updated regularly — so if a slot disappears, just check back soon for newly opened times.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column 2: Video -->
+                <div class="ec-video-wrap">
+                    <div class="ec-video-label"><i class="fas fa-play-circle"></i> See it in action</div>
+                    <div class="ec-video-frame">
+                        <div class="ec-video-container">
+                            <iframe
+                                src="https://www.youtube.com/embed/UzePOuUg5ww"
+                                title="Pay As You Mow Booking System"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen
+                            ></iframe>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
     <!-- Appointments Section (near the bottom of the page) -->
     <section class="appointments" id="appointments">
         <div class="container">
@@ -6203,7 +6604,7 @@
         </div>
     </section>
 
-    <a href="https://wa.me/447595289669" class="whatsapp-button" target="_blank" rel="noopener" aria-label="Chat with Pay As You Mow on WhatsApp">
+    <a href="https://wa.me/447874405434" class="whatsapp-button" target="_blank" rel="noopener" aria-label="Chat with Pay As You Mow on WhatsApp">
         <span class="icon"><i class="fa-brands fa-whatsapp"></i></span>
         <div class="whatsapp-text">
             <span>Message us on</span>
@@ -6219,12 +6620,9 @@
                     <h3>Pay As You Mow</h3>
                     <p>Low prices, great work and happy customer</p>
                     <a class="footer-admin-link" href="/admin">Welcome to Pay As You Mow</a>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-pinterest"></i></a>
-                    </div>
+                    <a href="https://wa.me/447595289669" class="footer-whatsapp-button" target="_blank" rel="noopener" aria-label="Chat with Pay As You Mow on WhatsApp">
+                        <i class="fab fa-whatsapp" aria-hidden="true"></i>
+                    </a>
                 </div>
                 <div class="footer-column">
                     <h3>Quick Links</h3>
@@ -6233,7 +6631,7 @@
                         <li><a href="#services">My Services</a></li>
                         <li><a href="#about">About Us</a></li>
                         <li><a href="#faq">FAQ</a></li>
-                        <li><a href="#contact">Contact</a></li>
+                        <li><a href="#contact" data-open-contact-popup="true">Contact</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
@@ -6247,8 +6645,8 @@
                 <div class="footer-column">
                     <h3>Contact Info</h3>
                     <ul class="footer-links">
-                        <li><i class="fas fa-map-marker-alt"></i> <a href="https://maps.google.com/?q=Audenshaw,+Manchester" target="_blank" rel="noopener">Audenshaw Manchester</a></li>
-                        <li><i class="fas fa-phone"></i> <a href="tel:07595289669">07595 289 669</a></li>
+                        <li><i class="fas fa-map-marker-alt"></i> <a href="https://maps.google.com/?q=Audenshaw,+Manchester" target="_blank" rel="noopener">Audenshaw, Manchester</a></li>
+                        <li><i class="fas fa-phone"></i> <a href="tel:07874405434">07874 405434</a></li>
                         <li><i class="fas fa-user"></i> Andrew Roberts</li>
                     </ul>
                 </div>
@@ -6258,6 +6656,33 @@
             </div>
         </div>
     </footer>
+
+    <div class="contact-popup" id="contactPopup" aria-hidden="true">
+        <div class="contact-popup-card" role="dialog" aria-modal="true" aria-labelledby="contactPopupTitle" aria-describedby="contactPopupSubtitle">
+            <button type="button" class="contact-popup-close" id="contactPopupClose" aria-label="Close contact details popup">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+            <div class="contact-popup-content">
+                <span class="contact-popup-badge">Contact Details</span>
+                <h3 class="contact-popup-title" id="contactPopupTitle">Let's Get Your Garden Looking Brilliant</h3>
+                <p class="contact-popup-subtitle" id="contactPopupSubtitle">Call, live chat, or WhatsApp us now and we will get back to you quickly.</p>
+                <a class="contact-popup-phone" href="tel:07874405434">
+                    <i class="fas fa-phone"></i>
+                    <span>Mobile Number: 07874 405434</span>
+                </a>
+                <div class="contact-popup-actions">
+                    <button type="button" class="contact-popup-action chat" id="contactPopupChatBtn">
+                        <i class="fas fa-comments"></i>
+                        <span>Open Chat</span>
+                    </button>
+                    <a href="https://wa.me/447595289669" class="contact-popup-action whatsapp" target="_blank" rel="noopener">
+                        <i class="fab fa-whatsapp"></i>
+                        <span>WhatsApp</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Auto Quote Popup -->
     <div class="auto-quote-popup" id="autoQuotePopup" aria-hidden="true">
@@ -7622,6 +8047,43 @@
         const youtubeVideoFrames = Array.from(document.querySelectorAll('.video-frame[data-video-id]'));
         const youtubePlayers = [];
         const youtubeOverlays = [];
+        const videoLightbox = document.getElementById('videoLightbox');
+        const videoLightboxFrame = document.getElementById('videoLightboxFrame');
+        const videoLightboxClose = document.getElementById('videoLightboxClose');
+
+        function openVideoLightbox(videoId) {
+            if (!videoLightbox || !videoLightboxFrame || !videoId) return;
+            videoLightbox.classList.add('visible');
+            videoLightbox.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            videoLightboxFrame.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+        }
+
+        function closeVideoLightbox() {
+            if (!videoLightbox || !videoLightboxFrame) return;
+            videoLightbox.classList.remove('visible');
+            videoLightbox.setAttribute('aria-hidden', 'true');
+            videoLightboxFrame.src = 'about:blank';
+            if (!document.querySelector('.modal-overlay.visible') && !(characterPopup && characterPopup.classList.contains('visible'))) {
+                document.body.classList.remove('modal-open');
+            }
+        }
+
+        if (videoLightboxClose) {
+            videoLightboxClose.addEventListener('click', closeVideoLightbox);
+        }
+        if (videoLightbox) {
+            videoLightbox.addEventListener('click', function (event) {
+                if (event.target === videoLightbox) {
+                    closeVideoLightbox();
+                }
+            });
+        }
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && videoLightbox && videoLightbox.classList.contains('visible')) {
+                closeVideoLightbox();
+            }
+        });
 
         function addThumbnailOverlay(frame, index) {
             const iframe = frame.querySelector('iframe');
@@ -7630,37 +8092,73 @@
             const videoId = frame.dataset.videoId;
             if (!videoId) return;
 
-            if (!iframe.src.includes('enablejsapi=1')) {
-                const separator = iframe.src.includes('?') ? '&' : '?';
-                iframe.src = `${iframe.src}${separator}enablejsapi=1`;
-            }
+            // Facade pattern: save the embed URL and blank the iframe so the browser
+            // doesn't load YouTube at all until the user actually clicks play.
+            // This gives us full control over the thumbnail quality.
+            const embedSrc = (iframe.getAttribute('src') || '').trim();
+            iframe.removeAttribute('src');
+            if (!iframe.id) iframe.id = `video-player-${index}`;
 
-            if (!iframe.id) {
-                iframe.id = `video-player-${index}`;
-            }
-
+            // Overlay is VISIBLE from the start — user sees our thumbnail, not YouTube's blurry one
             const overlay = document.createElement('div');
-            overlay.className = 'video-thumbnail';
-            overlay.style.backgroundImage = `url(https://img.youtube.com/vi/${videoId}/hqdefault.jpg)`;
+            overlay.className = 'video-thumbnail visible';
             overlay.setAttribute('role', 'button');
             overlay.setAttribute('tabindex', '0');
-            overlay.setAttribute('aria-label', 'Replay video');
+            overlay.setAttribute('aria-label', 'Play video');
 
-            const replayVideo = () => {
-                overlay.classList.remove('visible');
-                const player = youtubePlayers[index];
-                if (player && typeof player.seekTo === 'function') {
-                    player.seekTo(0);
-                    player.playVideo();
+            // hqdefault.jpg (480×360) is guaranteed to exist for every YouTube video —
+            // set it immediately so there is always a visible thumbnail.
+            // Then try upgrading to maxresdefault (1280×720) or sddefault (640×480)
+            // asynchronously; only swap in if the image is genuinely high-res.
+            const hqUrl     = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+            const sdUrl     = `https://i.ytimg.com/vi/${videoId}/sddefault.jpg`;
+            const maxresUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+            overlay.style.backgroundImage = `url(${hqUrl})`;
+
+            function tryUpgrade(url, minWidth) {
+                const img = new Image();
+                img.onload = function () {
+                    if (img.naturalWidth >= minWidth) {
+                        overlay.style.backgroundImage = `url(${url})`;
+                    }
+                };
+                img.src = url;
+            }
+            // Try sd first (faster), then maxres
+            tryUpgrade(sdUrl, 480);
+            tryUpgrade(maxresUrl, 640);
+
+            const loadAndPlay = () => {
+                if (frame.dataset.openModal === 'true') {
+                    openVideoLightbox(videoId);
+                    return;
                 }
+                overlay.classList.remove('visible');
+                // Replay: iframe already loaded — seek back to start via YT API
+                if (iframe.getAttribute('src')) {
+                    const player = youtubePlayers[index];
+                    if (player && typeof player.seekTo === 'function') {
+                        player.seekTo(0, true);
+                        player.playVideo();
+                    }
+                    return;
+                }
+                // First play: set the iframe src with autoplay
+                const sep = embedSrc.includes('?') ? '&' : '?';
+                iframe.src = embedSrc + sep + 'autoplay=1';
+                // Attach YT API player once the iframe loads so end-of-video replay works
+                iframe.addEventListener('load', function () {
+                    if (typeof YT !== 'undefined' && YT.Player) {
+                        youtubePlayers[index] = new YT.Player(iframe.id, {
+                            events: { onStateChange: event => handleYouTubeVideoState(event, overlay) }
+                        });
+                    }
+                }, { once: true });
             };
 
-            overlay.addEventListener('click', replayVideo);
-            overlay.addEventListener('keydown', event => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    replayVideo();
-                }
+            overlay.addEventListener('click', loadAndPlay);
+            overlay.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); loadAndPlay(); }
             });
 
             frame.appendChild(overlay);
@@ -7685,21 +8183,8 @@
                 addThumbnailOverlay(frame, index);
             });
 
-            window.onYouTubeIframeAPIReady = function() {
-                youtubeVideoFrames.forEach((frame, index) => {
-                    const iframe = frame.querySelector('iframe');
-                    if (!iframe) return;
-
-                    const overlay = youtubeOverlays[index];
-
-                    youtubePlayers[index] = new YT.Player(iframe.id, {
-                        events: {
-                            onStateChange: event => handleYouTubeVideoState(event, overlay)
-                        }
-                    });
-                });
-            };
-
+            // Pre-load the YT IFrame API — players are created on demand when user first plays
+            window.onYouTubeIframeAPIReady = function () { /* players created on first play */ };
             const ytScript = document.createElement('script');
             ytScript.src = 'https://www.youtube.com/iframe_api';
             document.body.appendChild(ytScript);
@@ -8824,26 +9309,16 @@
                     body: JSON.stringify({ phone })
                 });
                 const sendData = await sendRes.json().catch(() => ({}));
+                // If verification is unavailable (skip flag), proceed silently
+                if (sendData.skip) {
+                    submitQuote(selectedSlot, selectedArea, serviceType, name, email, phone, null);
+                    return;
+                }
                 if (!sendRes.ok) throw new Error(sendData.message || 'Unable to send verification code.');
                 verificationMethod = sendData.method || 'sms';
             } catch (err) {
-                // Verification not configured – submit without verification
-                const friendlyMsg = (err.message || 'Unable to send verification code.').replace(/</g, '&lt;');
-                const errorHTML = `
-                    <div class="auto-quote-text">
-                        <p style="color: var(--secondary);">${friendlyMsg}</p>
-                        <p style="margin-top: 16px; font-size: 0.9rem;">We'll process your quote without phone verification.</p>
-                    </div>
-                    <div class="auto-quote-actions">
-                        <button type="button" class="auto-quote-btn auto-quote-btn-yes" id="continueWithoutVerification">Continue</button>
-                    </div>
-                `;
-                transitionContent(errorHTML, 'Verification Unavailable');
-                setTimeout(() => {
-                    document.getElementById('continueWithoutVerification')?.addEventListener('click', () => {
-                        submitQuote(selectedSlot, selectedArea, serviceType, name, email, phone, null);
-                    });
-                }, 450);
+                // Fallback – submit without verification, no error shown
+                submitQuote(selectedSlot, selectedArea, serviceType, name, email, phone, null);
                 return;
             }
 
@@ -9502,26 +9977,17 @@
                         body: JSON.stringify({ phone: customerPhone })
                     });
                     const sendData = await sendRes.json().catch(() => ({}));
+                    // If verification is unavailable (skip flag), proceed silently
+                    if (sendData.skip) {
+                        verified = false;
+                        submitQuote();
+                        return;
+                    }
                     if (!sendRes.ok) throw new Error(sendData.message || 'Unable to send SMS code.');
                 } catch (err) {
-                    // SMS not configured – submit without verification
-                    const friendlyMsg = String(err.message || 'Unable to send verification code.').replace(/</g, '&lt;');
-                    const errorHTML = `
-                        <div class="auto-quote-text">
-                            <p style="color: var(--secondary);">${friendlyMsg}</p>
-                            <p style="margin-top: 16px; font-size: 0.9rem;">We'll process your quote without phone verification.</p>
-                        </div>
-                        <div class="auto-quote-actions" style="margin-top:16px;">
-                            <button type="button" class="auto-quote-btn auto-quote-btn-yes" id="resilientContinueNoVerify">Continue</button>
-                        </div>
-                    `;
-                    transition(errorHTML, 'Verification Unavailable');
-                    window.setTimeout(() => {
-                        document.getElementById('resilientContinueNoVerify')?.addEventListener('click', () => {
-                            verified = false;
-                            submitQuote();
-                        });
-                    }, 450);
+                    // Fallback – submit without verification, no error shown
+                    verified = false;
+                    submitQuote();
                     return;
                 }
 
@@ -10229,6 +10695,66 @@
             };
 
             load();
+        })();
+    </script>
+
+    <script>
+        (() => {
+            const popup = document.getElementById('contactPopup');
+            const popupClose = document.getElementById('contactPopupClose');
+            const popupChatBtn = document.getElementById('contactPopupChatBtn');
+            const triggers = document.querySelectorAll('[data-open-contact-popup="true"]');
+            if (!popup || !popupClose || !triggers.length) return;
+
+            const openPopup = () => {
+                popup.classList.add('visible');
+                popup.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            };
+
+            const closePopup = () => {
+                popup.classList.remove('visible');
+                popup.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            };
+
+            triggers.forEach((trigger) => {
+                trigger.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    openPopup();
+                });
+            });
+
+            popupClose.addEventListener('click', closePopup);
+
+            popup.addEventListener('click', (event) => {
+                if (event.target === popup) closePopup();
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && popup.classList.contains('visible')) {
+                    closePopup();
+                }
+            });
+
+            if (popupChatBtn) {
+                popupChatBtn.addEventListener('click', () => {
+                    closePopup();
+                    const liveChatToggle = document.getElementById('liveChatToggle');
+                    const liveChatWindow = document.getElementById('liveChatWindow');
+                    if (!liveChatToggle) return;
+
+                    const isOpen = liveChatWindow && liveChatWindow.getAttribute('aria-hidden') === 'false';
+                    if (!isOpen) {
+                        liveChatToggle.click();
+                    }
+
+                    window.setTimeout(() => {
+                        const liveChatInput = document.getElementById('liveChatInput');
+                        if (liveChatInput) liveChatInput.focus();
+                    }, 250);
+                });
+            }
         })();
     </script>
 

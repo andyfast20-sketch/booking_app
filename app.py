@@ -84,6 +84,7 @@ AUTOPILOT_FILE = _data_path("autopilot.json")
 BANNED_IPS_FILE = _data_path("banned_ips.json")
 VISITOR_LOG_FILE = _data_path("visitor_log.json")
 REVIEWS_FILE = _data_path("reviews.json")
+VIDEO_TESTIMONIALS_FILE = _data_path("video_testimonials.json")
 CUSTOMER_SLOTS_FILE = _data_path("customer_slots.json")
 CUSTOMER_SETTINGS_FILE = _data_path("customer_settings.json")
 WEATHER_CONFIG_FILE = _data_path("weather_config.json")
@@ -378,6 +379,16 @@ def _default_reviews_payload():
     ]
 
 
+def _default_video_testimonials_payload():
+    return {
+        "videos": [
+            "https://youtu.be/pcQuRLu64-g",
+            "https://youtu.be/dRyipnl95Ys",
+            "https://youtu.be/oJrPPeow__s",
+        ]
+    }
+
+
 # --- Cloud Backup: restore data from GitHub Gist before creating defaults ---
 if gist_backup:
     gist_backup.init(_DATA_DIR)
@@ -385,6 +396,7 @@ if gist_backup:
 
 _ensure_storage_file(VISITOR_LOG_FILE, default={})
 _ensure_storage_file(REVIEWS_FILE, default=_default_reviews_payload())
+_ensure_storage_file(VIDEO_TESTIMONIALS_FILE, default=_default_video_testimonials_payload())
 _ensure_storage_file(CUSTOMER_SLOTS_FILE, default=[])
 _ensure_storage_file(CUSTOMER_SETTINGS_FILE, default={"access_code": CUSTOMER_ACCESS_CODE})
 _ensure_storage_file(WEATHER_CONFIG_FILE, default={"api_key": ""})
@@ -1226,6 +1238,31 @@ def _make_watchdog_alert_call(to_number: str, message: str, webhook_base_url: st
         return False, f"Telnyx error: {detail}" if detail else f"Telnyx returned HTTP {response.status_code}."
     except Exception as exc:
         return False, f"Unable to place call. ({type(exc).__name__})"
+
+
+def _notify_admin_new_booking(name: str, time: str, location: str, phone: str, webhook_base_url: str = "") -> None:
+    """Fire-and-forget: call the admin's phone and announce a new verified booking via TTS."""
+    import threading
+
+    def _do_call():
+        with _watchdog_config_lock:
+            admin_number = _watchdog_config.get("to_number") or "+447595289669"
+
+        location_part = f" in {location}" if location else ""
+        msg = (
+            f"Hello, Pay As You Mow alert. You have a new verified booking. "
+            f"{name} has booked a quote for {time}{location_part}. "
+            f"Their phone number is {' '.join(phone)}. "
+            f"Please check your bookings panel."
+        )
+        ok, err = _make_watchdog_alert_call(admin_number, msg, webhook_base_url=webhook_base_url)
+        if ok:
+            print(f"[BookingAlert] Admin notification call placed to {admin_number}")
+        else:
+            print(f"[BookingAlert] Admin notification call failed: {err}")
+
+    t = threading.Thread(target=_do_call, daemon=True)
+    t.start()
 
 
 def _make_verification_call(to_number: str, code: str, webhook_base_url: str = "") -> tuple[bool, str]:
@@ -4137,6 +4174,227 @@ def admin_telnyx_diagnostics():
     })
 
 
+@app.route("/admin/telnyx/deep-test", methods=["POST"])
+@require_admin_auth
+def admin_telnyx_deep_test():
+    """Comprehensive live test: authenticate, validate phone number, check voice app, optionally place a test call.
+
+    Accepts an optional JSON body with:
+      - api_key:            if provided, use this key (not yet saved) for testing
+      - from_number:        override from number
+      - voice_connection_id: override connection ID
+      - test_phone:         if provided, place an actual test call at the end
+      - verification_method: "call" or "sms"
+    """
+    import requests as _requests
+
+    payload = request.get_json(silent=True) or {}
+
+    # Allow testing with values not yet saved — fall back to stored config
+    cfg = _telnyx_config_snapshot(include_secret=True)
+    api_key = str(payload.get("api_key") or cfg.get("api_key") or "").strip()
+    from_number = _normalize_phone_number(str(payload.get("from_number") or cfg.get("from_number") or "").strip())
+    voice_conn_id = str(payload.get("voice_connection_id") or cfg.get("voice_connection_id") or "").strip()
+    messaging_profile = str(payload.get("messaging_profile_id") or cfg.get("messaging_profile_id") or "").strip()
+    method = str(payload.get("verification_method") or cfg.get("verification_method") or "call").strip().lower()
+    test_phone = str(payload.get("test_phone") or "").strip()
+
+    steps = []
+    all_ok = True
+    summary_lines = []  # plain-English summary for AI troubleshooting
+
+    # ── Step 1: API key format ────────────────────────────────────────────
+    if not api_key:
+        steps.append({"step": "API Key", "status": "fail", "detail": "No API key provided."})
+        summary_lines.append("FAIL: No Telnyx API key is set.")
+        all_ok = False
+    elif not api_key.startswith("KEY"):
+        steps.append({"step": "API Key", "status": "warn", "detail": f"Key ({len(api_key)} chars) does not start with 'KEY'. Telnyx v2 keys normally start with KEY."})
+        summary_lines.append(f"WARN: API key ({len(api_key)} chars) doesn't start with 'KEY'.")
+    else:
+        steps.append({"step": "API Key", "status": "ok", "detail": f"Present ({len(api_key)} chars, starts with KEY)."})
+
+    # ── Step 2: Live authentication ───────────────────────────────────────
+    auth_ok = False
+    balance = None
+    if api_key:
+        try:
+            r = _requests.get(
+                "https://api.telnyx.com/v2/balance",
+                headers={"Authorization": f"Bearer {api_key}"},
+                timeout=15,
+            )
+            if r.status_code == 200:
+                auth_ok = True
+                bal_data = r.json().get("data", {})
+                balance = bal_data.get("available_credit", "?")
+                steps.append({"step": "Authentication", "status": "ok", "detail": f"Authenticated. Account balance: ${balance} {bal_data.get('currency', 'USD')}."})
+            elif r.status_code == 401:
+                err = ""
+                try:
+                    err = r.json().get("errors", [{}])[0].get("detail", "")
+                except Exception:
+                    pass
+                steps.append({"step": "Authentication", "status": "fail", "detail": f"401 Unauthorized — {err or 'Invalid API key.'}"})
+                summary_lines.append(f"FAIL: Telnyx returned 401. The API key ID or secret is wrong. Detail: {err}")
+                all_ok = False
+            else:
+                steps.append({"step": "Authentication", "status": "fail", "detail": f"Unexpected HTTP {r.status_code}: {r.text[:200]}"})
+                summary_lines.append(f"FAIL: Telnyx returned HTTP {r.status_code} on balance check.")
+                all_ok = False
+        except Exception as exc:
+            steps.append({"step": "Authentication", "status": "fail", "detail": f"Connection error: {exc}"})
+            summary_lines.append(f"FAIL: Could not reach Telnyx API: {exc}")
+            all_ok = False
+
+    # ── Step 3: From number validation ────────────────────────────────────
+    if not from_number or not from_number.startswith("+"):
+        steps.append({"step": "From Number", "status": "fail", "detail": f"Invalid or missing from number: '{from_number or '(empty)'}'. Must be E.164 format like +44..."})
+        summary_lines.append(f"FAIL: From number is missing or invalid: '{from_number}'.")
+        all_ok = False
+    else:
+        steps.append({"step": "From Number", "status": "ok", "detail": from_number})
+
+    # ── Step 4: Check phone number belongs to account ─────────────────────
+    number_on_account = False
+    number_connection = None
+    if auth_ok and from_number:
+        try:
+            r = _requests.get(
+                "https://api.telnyx.com/v2/phone_numbers",
+                headers={"Authorization": f"Bearer {api_key}"},
+                params={"filter[phone_number]": from_number},
+                timeout=15,
+            )
+            if r.status_code == 200:
+                nums = r.json().get("data", [])
+                if nums:
+                    pn = nums[0]
+                    number_on_account = True
+                    number_connection = str(pn.get("connection_id", ""))
+                    number_status = pn.get("status", "unknown")
+                    steps.append({"step": "Number Ownership", "status": "ok", "detail": f"{from_number} found on your Telnyx account (status: {number_status}, connection: {number_connection})."})
+                else:
+                    steps.append({"step": "Number Ownership", "status": "fail", "detail": f"{from_number} is NOT on your Telnyx account. Buy this number in Mission Control or fix the 'From Number' field."})
+                    summary_lines.append(f"FAIL: {from_number} is not found on this Telnyx account.")
+                    all_ok = False
+            else:
+                steps.append({"step": "Number Ownership", "status": "warn", "detail": f"Could not list phone numbers (HTTP {r.status_code})."})
+        except Exception as exc:
+            steps.append({"step": "Number Ownership", "status": "warn", "detail": f"Error checking number: {exc}"})
+
+    # ── Step 5: Voice connection (if call mode) ───────────────────────────
+    voice_app_ok = False
+    webhook_url_on_telnyx = ""
+    if method == "call":
+        if not voice_conn_id:
+            steps.append({"step": "Voice Connection ID", "status": "fail", "detail": "No Voice Connection ID set. Required for call verification."})
+            summary_lines.append("FAIL: Voice Connection ID is empty. Required for AI voice call verification.")
+            all_ok = False
+        elif auth_ok:
+            try:
+                r = _requests.get(
+                    f"https://api.telnyx.com/v2/call_control_applications/{voice_conn_id}",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    timeout=15,
+                )
+                if r.status_code == 200:
+                    app_data = r.json().get("data", {})
+                    app_name = app_data.get("application_name", "?")
+                    webhook_url_on_telnyx = app_data.get("webhook_event_url", "")
+                    is_active = app_data.get("active", False)
+                    voice_app_ok = True
+
+                    detail = f"Voice app '{app_name}' found. Active: {is_active}. Webhook: {webhook_url_on_telnyx or '(not set)'}."
+                    status = "ok" if is_active else "warn"
+                    if not is_active:
+                        summary_lines.append(f"WARN: Voice app '{app_name}' exists but is NOT active.")
+                        all_ok = False
+                    steps.append({"step": "Voice App", "status": status, "detail": detail})
+
+                    # Check the number is assigned to THIS connection
+                    if number_on_account and number_connection and number_connection != voice_conn_id:
+                        steps.append({"step": "Number ↔ Voice App", "status": "fail",
+                                      "detail": f"{from_number} is assigned to connection {number_connection}, but your Voice Connection ID is {voice_conn_id}. They must match. In Telnyx Mission Control, edit the phone number and assign it to the '{app_name}' voice app."})
+                        summary_lines.append(f"FAIL: Phone number {from_number} is on connection {number_connection} but voice app is {voice_conn_id}. Mismatch.")
+                        all_ok = False
+                    elif number_on_account:
+                        steps.append({"step": "Number ↔ Voice App", "status": "ok", "detail": f"{from_number} is correctly assigned to voice app '{app_name}'."})
+                elif r.status_code == 404:
+                    steps.append({"step": "Voice App", "status": "fail", "detail": f"No voice app found with connection ID '{voice_conn_id}'. Check Mission Control → Voice → Voice API."})
+                    summary_lines.append(f"FAIL: Voice app connection ID {voice_conn_id} not found (404).")
+                    all_ok = False
+                else:
+                    steps.append({"step": "Voice App", "status": "fail", "detail": f"Error fetching voice app: HTTP {r.status_code} — {r.text[:200]}"})
+                    all_ok = False
+            except Exception as exc:
+                steps.append({"step": "Voice App", "status": "warn", "detail": f"Error checking voice app: {exc}"})
+
+        # Check webhook URL points to this app
+        if voice_app_ok and webhook_url_on_telnyx:
+            render_url = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/")
+            if render_url and render_url in webhook_url_on_telnyx:
+                steps.append({"step": "Webhook URL", "status": "ok", "detail": f"Webhook points to this app: {webhook_url_on_telnyx}"})
+            elif "/telnyx/call-webhook" in webhook_url_on_telnyx:
+                steps.append({"step": "Webhook URL", "status": "ok", "detail": f"Webhook: {webhook_url_on_telnyx}"})
+            else:
+                steps.append({"step": "Webhook URL", "status": "warn", "detail": f"Webhook URL ({webhook_url_on_telnyx}) may not point to this app. Expected path: /telnyx/call-webhook"})
+                summary_lines.append(f"WARN: Telnyx webhook URL is '{webhook_url_on_telnyx}' — should contain '/telnyx/call-webhook'.")
+
+    # ── Step 6: Messaging profile (if SMS mode) ──────────────────────────
+    if method == "sms":
+        if messaging_profile:
+            steps.append({"step": "Messaging Profile", "status": "ok", "detail": messaging_profile})
+        else:
+            steps.append({"step": "Messaging Profile", "status": "info", "detail": "Not set (Telnyx will use the default profile)."})
+
+    # ── Step 7: Optional live test call/SMS ───────────────────────────────
+    if test_phone and auth_ok and all_ok:
+        normalized_test = _normalize_phone_number(test_phone)
+        if not normalized_test or not normalized_test.startswith("+"):
+            steps.append({"step": "Test Delivery", "status": "fail", "detail": f"Invalid test phone: '{test_phone}'."})
+        else:
+            if method == "call":
+                webhook_base = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/") or request.url_root.rstrip("/")
+                ok, err = _make_verification_call(normalized_test, "1234", webhook_base_url=webhook_base)
+                if ok:
+                    steps.append({"step": "Test Call", "status": "ok", "detail": f"Call initiated to {normalized_test}. You should receive code 1234."})
+                else:
+                    steps.append({"step": "Test Call", "status": "fail", "detail": f"Call failed: {err}"})
+                    summary_lines.append(f"FAIL: Test call to {normalized_test} failed: {err}")
+                    all_ok = False
+            else:
+                ok, err = _send_sms_via_telnyx(normalized_test, f"Pay As You Mow test code: 1234")
+                if ok:
+                    steps.append({"step": "Test SMS", "status": "ok", "detail": f"SMS sent to {normalized_test}."})
+                else:
+                    steps.append({"step": "Test SMS", "status": "fail", "detail": f"SMS failed: {err}"})
+                    summary_lines.append(f"FAIL: Test SMS to {normalized_test} failed: {err}")
+                    all_ok = False
+    elif test_phone and not all_ok:
+        steps.append({"step": "Test Delivery", "status": "skip", "detail": "Skipped — fix the errors above first."})
+
+    # ── Build AI-friendly summary ─────────────────────────────────────────
+    if all_ok:
+        summary = "All Telnyx checks passed. Phone verification should be working."
+    else:
+        summary = "Telnyx phone verification is broken. Issues found:\n" + "\n".join(f"  • {line}" for line in summary_lines)
+        summary += "\n\nConfig tested:"
+        summary += f"\n  API Key: {'KEY...' + api_key[-6:] if len(api_key) > 6 else '(empty)'}"
+        summary += f"\n  From Number: {from_number or '(empty)'}"
+        summary += f"\n  Method: {method}"
+        if method == "call":
+            summary += f"\n  Voice Connection ID: {voice_conn_id or '(empty)'}"
+        else:
+            summary += f"\n  Messaging Profile: {messaging_profile or '(default)'}"
+
+    return jsonify({
+        "all_ok": all_ok,
+        "steps": steps,
+        "summary": summary,
+    })
+
+
 # ---------------------------------------------------------------------------
 # Health endpoint (used by watchdog self-ping)
 # ---------------------------------------------------------------------------
@@ -4651,13 +4909,26 @@ def send_verification_code():
             and str(telnyx_cfg.get("verification_method", "call") or "call").strip().lower() == "call"
         )
 
+        message = f"Your Pay As You Mow verification code is: {code}. Valid for 5 minutes."
         if use_call:
             print(f"[Verify] Calling {phone} with code (raw input: {raw_phone})")
             webhook_base = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/") or request.url_root.rstrip("/")
             success, error_message = _make_verification_call(phone, code, webhook_base_url=webhook_base)
             method = "call"
+
+            # Fallback: if call verification fails, try SMS delivery before returning an error.
+            if not success:
+                print(f"[Verify] CALL failed for {phone}: {error_message}. Trying SMS fallback.")
+                sms_success, sms_error = _send_sms_for_verification(phone, message)
+                if sms_success:
+                    success = True
+                    method = "sms"
+                    error_message = ""
+                    print(f"[Verify] SMS fallback succeeded for {phone}")
+                else:
+                    error_message = f"Call failed: {error_message}. SMS fallback failed: {sms_error}"
+                    print(f"[Verify] SMS fallback failed for {phone}: {sms_error}")
         else:
-            message = f"Your Pay As You Mow verification code is: {code}. Valid for 5 minutes."
             print(f"[Verify] Sending SMS code to {phone} (raw input: {raw_phone})")
             success, error_message = _send_sms_for_verification(phone, message)
             method = "sms"
@@ -4666,8 +4937,9 @@ def send_verification_code():
             return jsonify({"message": "Verification code sent successfully", "method": method})
         else:
             print(f"[Verify] {method.upper()} failed for {phone}: {error_message}")
-            # Never expose raw Telnyx API errors (may contain key IDs) to customers.
-            return jsonify({"message": "Phone verification is temporarily unavailable. Please try again shortly.", "method": method}), 500
+            # Return 200 with skip=True so the front-end proceeds gracefully
+            # rather than blocking the customer with an error dialog.
+            return jsonify({"message": "Verification unavailable", "method": method, "skip": True})
     except Exception as exc:
         print(f"[Verify] Unexpected error: {exc}")
         return jsonify({"message": "An unexpected error occurred. Please try again."}), 500
@@ -4880,6 +5152,71 @@ def _read_text_file(path: str) -> str:
         return ""
     with open(path, "r", encoding="utf-8") as file:
         return file.read()
+
+
+def _extract_youtube_video_id(url: str) -> str:
+    if not isinstance(url, str):
+        return ""
+
+    value = url.strip()
+    if not value:
+        return ""
+
+    patterns = [
+        r"(?:youtu\.be/)([A-Za-z0-9_-]{11})",
+        r"(?:youtube\.com/(?:watch\?v=|embed/|shorts/))([A-Za-z0-9_-]{11})",
+        r"(?:^|[?&]v=)([A-Za-z0-9_-]{11})(?:[&#]|$)",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, value)
+        if match:
+            return match.group(1)
+
+    if re.fullmatch(r"[A-Za-z0-9_-]{11}", value):
+        return value
+
+    return ""
+
+
+def load_video_testimonials():
+    raw = _read_text_file(VIDEO_TESTIMONIALS_FILE).strip()
+    if not raw:
+        return []
+
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return []
+
+    if isinstance(data, dict):
+        entries = data.get("videos", [])
+    elif isinstance(data, list):
+        entries = data
+    else:
+        return []
+
+    if not isinstance(entries, list):
+        return []
+
+    videos = []
+    seen = set()
+    for item in entries:
+        if not isinstance(item, str):
+            continue
+
+        video_id = _extract_youtube_video_id(item)
+        if not video_id or video_id in seen:
+            continue
+
+        seen.add(video_id)
+        videos.append(
+            {
+                "youtube_id": video_id,
+                "title": f"Customer Story {len(videos) + 1}",
+            }
+        )
+
+    return videos
 
 
 def load_reviews():
@@ -5176,7 +5513,13 @@ def _delete_customer_slot_by_id(slot_id: str):
 @app.route("/")
 def home():
     resp = app.make_response(
-        render_template('index.html', reviews=load_reviews(), availability=load_availability(), seo=_seo_snapshot())
+        render_template(
+            'index.html',
+            reviews=load_reviews(),
+            video_testimonials=load_video_testimonials(),
+            availability=load_availability(),
+            seo=_seo_snapshot(),
+        )
     )
     resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     resp.headers["Pragma"] = "no-cache"
@@ -5407,6 +5750,12 @@ def book():
             print(f"[Book] Slot removed. Availability now: {avail_after}")
 
     print(f"[Book] Booking created: id={booking_entry['id']}, name={name}, time={time}, verified={verified}")
+
+    # Notify the admin via an AI voice call for verified bookings
+    if verified:
+        webhook_base = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/") or request.url_root.rstrip("/")
+        _notify_admin_new_booking(name, time, location, phone, webhook_base_url=webhook_base)
+
     return jsonify({"message": f"✅ Booking confirmed for {name} at {time}!"})
 
 
@@ -6128,6 +6477,770 @@ def admin_unban_visitor(ip_str):
         return jsonify({"message": "IP address was not banned."}), 404
 
     return jsonify({"message": "IP address unbanned.", "unbanned": removed_entry})
+
+# ─────────────────────────────────────────────────────────────────
+# MOBILE ADMIN DASHBOARD
+# ─────────────────────────────────────────────────────────────────
+
+@app.route("/api/mobile/stats", methods=["GET"])
+@require_admin_auth
+def api_mobile_stats():
+    """Aggregated stats for the mobile dashboard."""
+    now = datetime.utcnow()
+    today_str = now.strftime("%Y-%m-%d")
+
+    # Today's visitors from visitor log
+    with _visitor_log_lock:
+        log_snapshot = dict(_visitor_log)
+
+    today_visitors = 0
+    for record in log_snapshot.values():
+        for v in record.get("visits", []):
+            ts = v.get("first_seen", "")
+            if ts and ts[:10] == today_str:
+                today_visitors += 1
+                break  # count unique IPs only once
+
+    # Active visitors right now
+    _prune_visitors(now)
+    with _presence_lock:
+        active_now = [
+            {
+                "ip": d.get("ip", ""),
+                "location": d.get("location", "Unknown"),
+                "page": d.get("page", "/"),
+                "user_agent": d.get("user_agent", ""),
+                "since": d["first_seen"].isoformat() + "Z",
+            }
+            for d in _active_visitors.values()
+        ]
+
+    # Bookings
+    all_bookings = load_bookings()
+    today_bookings = [b for b in all_bookings if (b.get("created_at") or "")[:10] == today_str]
+
+    # Contacts / enquiries
+    all_contacts = load_contacts()
+    new_enquiries = [c for c in all_contacts if c.get("status") == "new"]
+
+    return jsonify({
+        "today_visitors": today_visitors,
+        "active_now": active_now,
+        "active_count": len(active_now),
+        "today_bookings": len(today_bookings),
+        "total_bookings": len(all_bookings),
+        "new_enquiries": len(new_enquiries),
+        "total_enquiries": len(all_contacts),
+        "recent_bookings": sorted(all_bookings, key=lambda x: x.get("created_at",""), reverse=True)[:5],
+        "enquiries": sorted(all_contacts, key=lambda x: x.get("created_at",""), reverse=True)[:20],
+        "generated_at": now.isoformat() + "Z",
+    })
+
+
+@app.route("/api/contacts/<contact_id>/reply", methods=["POST"])
+@require_admin_auth
+def api_reply_to_contact(contact_id):
+    """Send an email reply to an enquiry."""
+    contacts = load_contacts()
+    contact = next((c for c in contacts if c.get("id") == contact_id), None)
+    if not contact:
+        return jsonify({"message": "Enquiry not found."}), 404
+
+    data = request.get_json(silent=True) or {}
+    reply_message = (data.get("message") or "").strip()
+    if not reply_message:
+        return jsonify({"message": "Reply message is required."}), 400
+
+    to_email = contact.get("email", "")
+    if not _is_valid_email(to_email):
+        return jsonify({"message": "No valid email address for this enquiry."}), 400
+
+    name = contact.get("name", "Customer")
+    original = contact.get("enquiry", "")
+
+    subject = "Re: Your Enquiry – Pay As You Mow"
+    text_body = f"Hi {name},\n\n{reply_message}\n\nBest regards,\nPay As You Mow"
+    html_body = f"""
+<html><body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:auto">
+<div style="background:linear-gradient(135deg,#2e7d32,#4caf50);padding:20px;border-radius:8px 8px 0 0">
+<h2 style="color:white;margin:0">Pay As You Mow</h2>
+</div>
+<div style="padding:24px;border:1px solid #e0e0e0;border-radius:0 0 8px 8px">
+<p>Hi {name},</p>
+<p style="line-height:1.6">{reply_message.replace(chr(10),'<br>')}</p>
+<hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+<p style="font-size:12px;color:#999">Your original enquiry: <em>{original}</em></p>
+<p style="font-size:12px;color:#999">Best regards,<br><strong>Pay As You Mow</strong></p>
+</div>
+</body></html>"""
+
+    ok, msg = _send_email_via_smtp(to_email=to_email, subject=subject, text_body=text_body, html_body=html_body)
+    if not ok:
+        return jsonify({"message": f"Failed to send reply: {msg}"}), 500
+
+    # Mark enquiry as replied
+    for i, c in enumerate(contacts):
+        if c.get("id") == contact_id:
+            contacts[i]["status"] = "replied"
+            contacts[i]["replied_at"] = datetime.utcnow().isoformat()
+            break
+    save_contacts(contacts)
+
+    return jsonify({"message": "Reply sent successfully."})
+
+
+@app.route("/api/mobile/events")
+@require_admin_auth
+def api_mobile_events():
+    """SSE stream — sends a 'visitor' event whenever someone is actively on the site."""
+    def stream():
+        last_count = -1
+        last_ids = set()
+        for _ in range(600):  # stream for up to 10 minutes
+            import time as _time
+            _prune_visitors(datetime.utcnow())
+            with _presence_lock:
+                current = {
+                    k: {
+                        "ip": d.get("ip", k),
+                        "location": d.get("location", "Unknown"),
+                        "page": d.get("page", "/"),
+                    }
+                    for k, d in _active_visitors.items()
+                }
+            current_ids = set(current.keys())
+            if current_ids != last_ids:
+                last_ids = current_ids
+                payload = json.dumps({"active": list(current.values()), "count": len(current)})
+                yield f"event: visitors\ndata: {payload}\n\n"
+            else:
+                yield ": heartbeat\n\n"
+            _time.sleep(1)
+
+    return Response(stream(), mimetype="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+MOBILE_DASHBOARD_HTML = r"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Admin HQ</title>
+<style>
+:root{
+  --bg:#0d0d1a;
+  --card:#161628;
+  --card2:#1e1e38;
+  --accent1:#7c3aed;
+  --accent2:#06b6d4;
+  --accent3:#f59e0b;
+  --accent4:#10b981;
+  --accent5:#ef4444;
+  --text:#f1f5f9;
+  --muted:#94a3b8;
+  --border:rgba(255,255,255,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+
+/* ── PULSE OVERLAY ── */
+#visitorFlash{
+  position:fixed;inset:0;pointer-events:none;z-index:9999;
+  border:0px solid transparent;transition:border-color .3s,opacity .3s;
+  opacity:0;
+}
+#visitorFlash.active{
+  opacity:1;
+  border:6px solid #7c3aed;
+  box-shadow:inset 0 0 60px rgba(124,58,237,.4),0 0 40px rgba(124,58,237,.6);
+  animation:pulseRing 1s ease-in-out;
+}
+@keyframes pulseRing{
+  0%{opacity:0;border-color:rgba(124,58,237,0)}
+  30%{opacity:1;border-color:#7c3aed}
+  70%{opacity:1;border-color:#06b6d4}
+  100%{opacity:0;border-color:transparent}
+}
+
+/* ── HEADER ── */
+header{
+  background:linear-gradient(135deg,#1a0533 0%,#0c1a3a 100%);
+  padding:16px 20px 12px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:100;
+}
+header h1{font-size:20px;font-weight:700;
+  background:linear-gradient(90deg,#a78bfa,#38bdf8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.live-dot{width:10px;height:10px;border-radius:50%;background:#10b981;
+  box-shadow:0 0 8px #10b981;animation:livePulse 1.4s infinite;margin-left:auto}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.logout-btn{background:none;border:1px solid rgba(255,255,255,.15);color:var(--muted);
+  padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer}
+
+/* ── LOGIN SCREEN ── */
+#loginScreen{
+  position:fixed;inset:0;z-index:200;
+  background:linear-gradient(135deg,#1a0533 0%,#0c1a3a 50%,#0d1f0d 100%);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.login-box{width:100%;max-width:360px;text-align:center}
+.login-icon{font-size:56px;margin-bottom:16px}
+.login-box h2{font-size:26px;font-weight:800;margin-bottom:6px;
+  background:linear-gradient(90deg,#a78bfa,#38bdf8,#34d399);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.login-box p{color:var(--muted);font-size:14px;margin-bottom:28px}
+.login-input{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--border);
+  color:var(--text);padding:14px 16px;border-radius:12px;font-size:16px;
+  margin-bottom:14px;outline:none}
+.login-input:focus{border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.2)}
+.login-btn{width:100%;padding:14px;border:none;border-radius:12px;cursor:pointer;
+  font-size:16px;font-weight:700;
+  background:linear-gradient(135deg,#7c3aed,#4f46e5);color:white;
+  box-shadow:0 4px 20px rgba(124,58,237,.4)}
+.login-btn:active{transform:scale(.98)}
+.login-error{color:#f87171;font-size:13px;margin-top:10px;min-height:20px}
+
+/* ── MAIN CONTENT ── */
+main{display:none;padding:16px;max-width:480px;margin:0 auto}
+
+/* ── ALERT BANNER ── */
+#alertBanner{
+  display:none;
+  background:linear-gradient(135deg,rgba(124,58,237,.3),rgba(6,182,212,.3));
+  border:1px solid rgba(124,58,237,.5);border-radius:12px;
+  padding:12px 16px;margin-bottom:16px;
+  animation:slideIn .4s ease;
+}
+@keyframes slideIn{from{transform:translateY(-10px);opacity:0}to{transform:translateY(0);opacity:1}}
+#alertBanner .alert-text{font-size:14px;font-weight:600;color:#e0d0ff}
+
+/* ── STATS GRID ── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:16px 14px;position:relative;overflow:hidden;
+}
+.stat-card::before{
+  content:'';position:absolute;inset:0;opacity:.1;
+  background:var(--grad);
+}
+.stat-icon{font-size:28px;margin-bottom:8px}
+.stat-value{font-size:32px;font-weight:800;line-height:1;margin-bottom:4px}
+.stat-label{font-size:12px;color:var(--muted);font-weight:500}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.stat-card.visitors{--grad:linear-gradient(135deg,#7c3aed,#4f46e5)}
+.stat-card.visitors .stat-value{color:#a78bfa}
+.stat-card.bookings{--grad:linear-gradient(135deg,#06b6d4,#0284c7)}
+.stat-card.bookings .stat-value{color:#38bdf8}
+.stat-card.enquiries{--grad:linear-gradient(135deg,#f59e0b,#d97706)}
+.stat-card.enquiries .stat-value{color:#fbbf24}
+.stat-card.live{--grad:linear-gradient(135deg,#10b981,#059669)}
+.stat-card.live .stat-value{color:#34d399}
+
+/* ── SECTION HEADERS ── */
+.section-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin:20px 0 10px;
+}
+.section-title{font-size:15px;font-weight:700;
+  background:linear-gradient(90deg,#a78bfa,#38bdf8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.badge{background:rgba(124,58,237,.3);color:#a78bfa;
+  font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px}
+
+/* ── LIVE VISITORS LIST ── */
+.visitor-item{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:12px 14px;margin-bottom:8px;
+  display:flex;align-items:flex-start;gap:10px;
+}
+.visitor-dot{width:8px;height:8px;border-radius:50%;background:#10b981;
+  box-shadow:0 0 6px #10b981;margin-top:4px;flex-shrink:0;
+  animation:livePulse 1.4s infinite}
+.visitor-info .v-loc{font-size:13px;font-weight:600;color:var(--text)}
+.visitor-info .v-page{font-size:11px;color:var(--accent2);margin-top:2px}
+.visitor-info .v-ua{font-size:10px;color:var(--muted);margin-top:2px}
+.empty-state{text-align:center;color:var(--muted);font-size:13px;padding:20px 0}
+
+/* ── ENQUIRY CARDS ── */
+.enquiry-card{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:14px 16px;margin-bottom:12px;
+}
+.enquiry-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.enquiry-name{font-size:15px;font-weight:700}
+.status-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}
+.status-badge.new{background:rgba(245,158,11,.2);color:#fbbf24}
+.status-badge.replied{background:rgba(16,185,129,.2);color:#34d399}
+.status-badge.read{background:rgba(148,163,184,.15);color:#94a3b8}
+.enquiry-meta{font-size:11px;color:var(--muted);margin-bottom:6px}
+.enquiry-text{font-size:13px;color:#cbd5e1;line-height:1.5;margin-bottom:10px}
+.enquiry-actions{display:flex;gap:8px}
+.reply-btn{
+  flex:1;padding:10px;border:none;border-radius:10px;cursor:pointer;
+  font-size:13px;font-weight:600;
+  background:linear-gradient(135deg,#7c3aed,#4f46e5);color:white;
+}
+.reply-btn:active{transform:scale(.97)}
+.mark-read-btn{
+  padding:10px 14px;border:1px solid var(--border);border-radius:10px;cursor:pointer;
+  font-size:13px;font-weight:600;background:none;color:var(--muted);
+}
+
+/* ── BOOKINGS LIST ── */
+.booking-item{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:12px 14px;margin-bottom:8px;
+}
+.booking-name{font-size:14px;font-weight:700}
+.booking-details{font-size:12px;color:var(--muted);margin-top:4px}
+.booking-time{font-size:11px;color:var(--accent2);margin-top:2px}
+
+/* ── REPLY MODAL ── */
+#replyModal{
+  display:none;position:fixed;inset:0;z-index:300;
+  background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
+  align-items:flex-end;justify-content:center;
+}
+#replyModal.open{display:flex}
+.reply-sheet{
+  background:var(--card2);border-radius:20px 20px 0 0;
+  padding:20px;width:100%;max-width:480px;
+  border:1px solid var(--border);
+  animation:slideUp .3s ease;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.reply-sheet h3{font-size:17px;font-weight:700;margin-bottom:4px}
+.reply-sheet p{font-size:12px;color:var(--muted);margin-bottom:14px}
+.reply-sheet textarea{
+  width:100%;background:rgba(255,255,255,.06);border:1px solid var(--border);
+  color:var(--text);padding:14px;border-radius:12px;font-size:14px;
+  min-height:120px;resize:vertical;outline:none;font-family:inherit;
+  margin-bottom:12px;
+}
+.reply-sheet textarea:focus{border-color:#7c3aed}
+.modal-btns{display:flex;gap:10px}
+.cancel-btn{flex:1;padding:12px;border:1px solid var(--border);border-radius:12px;
+  background:none;color:var(--muted);font-size:14px;cursor:pointer}
+.send-btn{flex:2;padding:12px;border:none;border-radius:12px;cursor:pointer;
+  font-size:14px;font-weight:700;
+  background:linear-gradient(135deg,#10b981,#059669);color:white;
+  box-shadow:0 4px 16px rgba(16,185,129,.3)}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;background:var(--card);border-radius:12px;padding:4px;margin-bottom:16px}
+.tab{flex:1;padding:8px;border:none;background:none;color:var(--muted);
+  font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;transition:all .2s}
+.tab.active{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:white}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);
+  background:rgba(16,185,129,.9);color:white;padding:12px 20px;border-radius:24px;
+  font-size:13px;font-weight:600;z-index:400;transition:transform .3s ease;
+  pointer-events:none;white-space:nowrap;
+}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.error{background:rgba(239,68,68,.9)}
+
+/* ── REFRESH BTN ── */
+.refresh-btn{
+  display:block;width:100%;padding:12px;margin-top:8px;
+  border:1px solid var(--border);border-radius:12px;background:none;
+  color:var(--muted);font-size:13px;cursor:pointer;
+}
+</style>
+</head>
+<body>
+<div id="visitorFlash"></div>
+<div id="toast"></div>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-icon">🚀</div>
+    <h2>Admin HQ</h2>
+    <p>Pay As You Mow · Mobile Dashboard</p>
+    <input type="password" class="login-input" id="loginPw" placeholder="Admin password" autocomplete="current-password">
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- MAIN DASHBOARD -->
+<header>
+  <h1>Admin HQ</h1>
+  <div class="live-dot" id="liveDot" title="Live connection"></div>
+  <button class="logout-btn" onclick="doLogout()">Sign out</button>
+</header>
+
+<main id="mainContent">
+  <!-- ALERT BANNER -->
+  <div id="alertBanner">
+    <div class="alert-text" id="alertText">👤 Someone is on the site!</div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card visitors">
+      <div class="stat-icon">👁️</div>
+      <div class="stat-value" id="statVisitors">–</div>
+      <div class="stat-label">Today's Visitors</div>
+    </div>
+    <div class="stat-card live">
+      <div class="stat-icon">🟢</div>
+      <div class="stat-value" id="statLive">–</div>
+      <div class="stat-label">On Site Now</div>
+    </div>
+    <div class="stat-card bookings">
+      <div class="stat-icon">📅</div>
+      <div class="stat-value" id="statBookings">–</div>
+      <div class="stat-label">Today's Bookings</div>
+      <div class="stat-sub" id="statBookingsTotal"></div>
+    </div>
+    <div class="stat-card enquiries">
+      <div class="stat-icon">✉️</div>
+      <div class="stat-value" id="statEnquiries">–</div>
+      <div class="stat-label">New Enquiries</div>
+      <div class="stat-sub" id="statEnquiriesTotal"></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('live')" id="tabLive">🟢 Live</button>
+    <button class="tab" onclick="showTab('enquiries')" id="tabEnquiries">✉️ Enquiries</button>
+    <button class="tab" onclick="showTab('bookings')" id="tabBookings">📅 Bookings</button>
+  </div>
+
+  <!-- LIVE TAB -->
+  <div id="paneLive">
+    <div class="section-header">
+      <span class="section-title">Active Visitors</span>
+      <span class="badge" id="liveCount">0</span>
+    </div>
+    <div id="liveList"><div class="empty-state">No one on site right now</div></div>
+  </div>
+
+  <!-- ENQUIRIES TAB -->
+  <div id="paneEnquiries" style="display:none">
+    <div class="section-header">
+      <span class="section-title">Enquiries</span>
+      <span class="badge" id="enquiryCount">0</span>
+    </div>
+    <div id="enquiryList"><div class="empty-state">No enquiries yet</div></div>
+  </div>
+
+  <!-- BOOKINGS TAB -->
+  <div id="paneBookings" style="display:none">
+    <div class="section-header">
+      <span class="section-title">Recent Bookings</span>
+      <span class="badge" id="bookingCount">0</span>
+    </div>
+    <div id="bookingList"><div class="empty-state">No bookings yet</div></div>
+  </div>
+
+  <button class="refresh-btn" onclick="loadStats()">↻ Refresh</button>
+</main>
+
+<!-- REPLY MODAL -->
+<div id="replyModal">
+  <div class="reply-sheet">
+    <h3>Reply to Enquiry</h3>
+    <p id="replyTo">Replying to …</p>
+    <textarea id="replyText" placeholder="Type your reply here…"></textarea>
+    <div class="modal-btns">
+      <button class="cancel-btn" onclick="closeReply()">Cancel</button>
+      <button class="send-btn" id="sendReplyBtn" onclick="sendReply()">Send Reply ✈️</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let _currentContactId = null;
+let _sse = null;
+let _beepCtx = null;
+let _lastActiveCount = 0;
+let _stats = {};
+
+// ── Audio beep ──
+function beep(){
+  try{
+    if(!_beepCtx) _beepCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = _beepCtx.createOscillator();
+    const g = _beepCtx.createGain();
+    o.connect(g); g.connect(_beepCtx.destination);
+    o.frequency.value = 880;
+    o.type = 'sine';
+    g.gain.setValueAtTime(0.4, _beepCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, _beepCtx.currentTime + 0.6);
+    o.start(_beepCtx.currentTime);
+    o.stop(_beepCtx.currentTime + 0.6);
+  } catch(e){}
+}
+
+// ── Toast ──
+function showToast(msg, isError=false){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isError?' error':'');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.className='', 3000);
+}
+
+// ── Login ──
+async function doLogin(){
+  const pw = document.getElementById('loginPw').value;
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginErr');
+  btn.textContent = 'Signing in…'; btn.disabled = true; err.textContent = '';
+  try{
+    const r = await fetch('/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
+    const d = await r.json();
+    if(r.ok){
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('mainContent').style.display='block';
+      startDashboard();
+    } else {
+      err.textContent = d.error || 'Login failed';
+    }
+  } catch(e){ err.textContent='Connection error'; }
+  finally{ btn.textContent='Sign In'; btn.disabled=false; }
+}
+document.getElementById('loginPw').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+
+// ── Logout ──
+async function doLogout(){
+  await fetch('/admin/logout',{method:'POST'});
+  location.reload();
+}
+
+// ── Tab switching ──
+function showTab(name){
+  ['live','enquiries','bookings'].forEach(t=>{
+    document.getElementById('pane'+t.charAt(0).toUpperCase()+t.slice(1)).style.display = t===name?'block':'none';
+    document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===name);
+  });
+}
+
+// ── Load stats ──
+async function loadStats(){
+  try{
+    const r = await fetch('/api/mobile/stats');
+    if(r.status===401){ location.reload(); return; }
+    _stats = await r.json();
+    renderStats(_stats);
+  } catch(e){ console.error(e); }
+}
+
+function renderStats(d){
+  document.getElementById('statVisitors').textContent = d.today_visitors ?? '–';
+  document.getElementById('statLive').textContent = d.active_count ?? '–';
+  document.getElementById('statBookings').textContent = d.today_bookings ?? '–';
+  document.getElementById('statBookingsTotal').textContent = 'Total: ' + (d.total_bookings ?? 0);
+  document.getElementById('statEnquiries').textContent = d.new_enquiries ?? '–';
+  document.getElementById('statEnquiriesTotal').textContent = 'Total: ' + (d.total_enquiries ?? 0);
+
+  // Live visitors
+  const liveList = document.getElementById('liveList');
+  const active = d.active_now || [];
+  document.getElementById('liveCount').textContent = active.length;
+  if(active.length === 0){
+    liveList.innerHTML = '<div class="empty-state">No one on site right now</div>';
+  } else {
+    liveList.innerHTML = active.map(v=>`
+      <div class="visitor-item">
+        <div class="visitor-dot"></div>
+        <div class="visitor-info">
+          <div class="v-loc">📍 ${esc(v.location||'Unknown')}</div>
+          <div class="v-page">Page: ${esc(v.page||'/')}</div>
+          <div class="v-ua">${esc((v.user_agent||'').substring(0,60))}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  // Enquiries
+  const enqList = document.getElementById('enquiryList');
+  const enqs = d.enquiries || [];
+  document.getElementById('enquiryCount').textContent = enqs.length;
+  if(enqs.length === 0){
+    enqList.innerHTML = '<div class="empty-state">No enquiries yet</div>';
+  } else {
+    enqList.innerHTML = enqs.map(e=>`
+      <div class="enquiry-card" id="enq-${esc(e.id)}">
+        <div class="enquiry-header">
+          <div class="enquiry-name">${esc(e.name||'Unknown')}</div>
+          <div class="status-badge ${esc(e.status||'new')}">${esc(e.status||'new')}</div>
+        </div>
+        <div class="enquiry-meta">📧 ${esc(e.email||'')} · 📞 ${esc(e.phone||'')} · ${fmtDate(e.created_at)}</div>
+        <div class="enquiry-text">${esc(e.enquiry||'')}</div>
+        <div class="enquiry-actions">
+          <button class="reply-btn" onclick="openReply('${esc(e.id)}','${esc(e.name||'')}','${esc(e.email||'')}')">✉️ Reply</button>
+          <button class="mark-read-btn" onclick="markRead('${esc(e.id)}')">✓ Read</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // Bookings
+  const bkList = document.getElementById('bookingList');
+  const bks = d.recent_bookings || [];
+  document.getElementById('bookingCount').textContent = bks.length;
+  if(bks.length === 0){
+    bkList.innerHTML = '<div class="empty-state">No bookings yet</div>';
+  } else {
+    bkList.innerHTML = bks.map(b=>`
+      <div class="booking-item">
+        <div class="booking-name">👤 ${esc(b.name||'?')}</div>
+        <div class="booking-details">📍 ${esc(b.location||'?')} · 📞 ${esc(b.phone||'?')}</div>
+        <div class="booking-time">🗓 ${esc(b.time||'?')} · ${fmtDate(b.created_at)}</div>
+      </div>`).join('');
+  }
+}
+
+// ── SSE for live visitor alerts ──
+function startSSE(){
+  if(_sse){ _sse.close(); }
+  _sse = new EventSource('/api/mobile/events');
+  _sse.addEventListener('visitors', e=>{
+    try{
+      const d = JSON.parse(e.data);
+      const count = d.count || 0;
+      if(count > _lastActiveCount){
+        flashAlert(d.active || []);
+        beep();
+      }
+      _lastActiveCount = count;
+      document.getElementById('statLive').textContent = count;
+      document.getElementById('liveCount').textContent = count;
+      // Update live list
+      const active = d.active || [];
+      const liveList = document.getElementById('liveList');
+      if(active.length === 0){
+        liveList.innerHTML = '<div class="empty-state">No one on site right now</div>';
+      } else {
+        liveList.innerHTML = active.map(v=>`
+          <div class="visitor-item">
+            <div class="visitor-dot"></div>
+            <div class="visitor-info">
+              <div class="v-loc">📍 ${esc(v.location||'Unknown')}</div>
+              <div class="v-page">Page: ${esc(v.page||'/')}</div>
+            </div>
+          </div>`).join('');
+      }
+    } catch(err){}
+  });
+  _sse.onerror = ()=>{
+    document.getElementById('liveDot').style.background='#ef4444';
+    document.getElementById('liveDot').style.boxShadow='0 0 8px #ef4444';
+    setTimeout(startSSE, 5000);
+  };
+}
+
+function flashAlert(active){
+  const banner = document.getElementById('alertBanner');
+  const flash = document.getElementById('visitorFlash');
+  const locs = active.map(v=>v.location||'Unknown').join(', ');
+  document.getElementById('alertText').textContent = `👤 Someone just arrived! (${locs||'Unknown location'})`;
+  banner.style.display='block';
+  flash.classList.remove('active');
+  void flash.offsetWidth;
+  flash.classList.add('active');
+  setTimeout(()=>{ flash.classList.remove('active'); banner.style.display='none'; }, 5000);
+}
+
+// ── Reply modal ──
+function openReply(id, name, email){
+  _currentContactId = id;
+  document.getElementById('replyTo').textContent = `To: ${name} <${email}>`;
+  document.getElementById('replyText').value = '';
+  document.getElementById('replyModal').classList.add('open');
+  setTimeout(()=>document.getElementById('replyText').focus(), 300);
+}
+function closeReply(){
+  document.getElementById('replyModal').classList.remove('open');
+  _currentContactId = null;
+}
+async function sendReply(){
+  const msg = document.getElementById('replyText').value.trim();
+  if(!msg){ showToast('Please type a reply first', true); return; }
+  const btn = document.getElementById('sendReplyBtn');
+  btn.textContent = 'Sending…'; btn.disabled = true;
+  try{
+    const r = await fetch(`/api/contacts/${_currentContactId}/reply`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:msg})
+    });
+    const d = await r.json();
+    if(r.ok){
+      showToast('Reply sent! ✅');
+      closeReply();
+      loadStats();
+    } else {
+      showToast(d.message||'Failed to send', true);
+    }
+  } catch(e){ showToast('Connection error', true); }
+  finally{ btn.textContent='Send Reply ✈️'; btn.disabled=false; }
+}
+
+// ── Mark enquiry as read ──
+async function markRead(id){
+  try{
+    await fetch(`/api/contacts/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'read'})});
+    loadStats();
+  } catch(e){}
+}
+
+// ── Helpers ──
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(iso){
+  if(!iso) return '';
+  try{
+    const d = new Date(iso);
+    const now = new Date();
+    const diff = now - d;
+    if(diff < 60000) return 'just now';
+    if(diff < 3600000) return Math.floor(diff/60000)+'m ago';
+    if(diff < 86400000) return Math.floor(diff/3600000)+'h ago';
+    return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  } catch(e){ return ''; }
+}
+
+// ── Auto-refresh stats every 30s ──
+function startDashboard(){
+  loadStats();
+  startSSE();
+  setInterval(loadStats, 30000);
+}
+
+// ── Check if already logged in on page load ──
+(async function(){
+  try{
+    const r = await fetch('/api/mobile/stats');
+    if(r.ok){
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('mainContent').style.display='block';
+      startDashboard();
+    }
+  } catch(e){}
+})();
+</script>
+</body>
+</html>"""
+
+
+@app.route("/mobile")
+def mobile_dashboard():
+    return MOBILE_DASHBOARD_HTML, 200, {"Content-Type": "text/html; charset=utf-8"}
+
+
 # --- Serve admin.html file ---
 @app.route("/admin")
 def admin_page():

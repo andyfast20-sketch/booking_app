@@ -75,6 +75,93 @@
             color: var(--primary-dark);
         }
 
+        .logo-badge {
+            width: 78px;
+            height: 78px;
+            background: transparent;
+            box-shadow: none;
+            border: none;
+            overflow: visible;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .logo-badge img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.32));
+        }
+
+        .logo-brand {
+            display: inline-flex;
+            flex-direction: column;
+            line-height: 1;
+            font-family: 'Montserrat', sans-serif;
+            gap: 2px;
+        }
+
+        .logo-brand-top {
+            align-self: flex-start;
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: #1b5e20;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 3.5px 7px 3px;
+            border-radius: 20px;
+            border: 1px solid rgba(46, 125, 50, 0.22);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .logo-brand-top::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            background-color: #2e7d32;
+            border-radius: 50%;
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.8); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(46, 125, 50, 0); }
+            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
+        }
+
+        .logo-brand-main {
+            font-size: 26px;
+            font-weight: 900;
+            line-height: 0.95;
+            letter-spacing: -0.5px;
+            background: linear-gradient(105deg, #1b5e20 0%, #2e7d32 45%, #43a047 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-brand-main .highlight {
+            -webkit-text-fill-color: initial;
+            background: none;
+            color: #2e7d32;
+        }
+
+        .logo-brand-sub {
+            font-size: 8.5px;
+            font-weight: 600;
+            letter-spacing: 3.5px;
+            text-transform: uppercase;
+            color: rgba(46, 125, 50, 0.55);
+        }
+
         nav ul {
             list-style: none;
             display: flex;
@@ -301,6 +388,19 @@
                 display: none;
             }
 
+            .logo-badge {
+                width: 50px;
+                height: 50px;
+            }
+
+            .logo-brand-main {
+                font-size: 22px;
+            }
+
+            .logo-brand-sub {
+                display: none;
+            }
+
             .hero h1 {
                 font-size: 1.9rem;
             }
@@ -311,8 +411,13 @@
     <header>
         <div class="container nav-bar">
             <a class="logo" href="/">
-                <i class="fas fa-leaf" aria-hidden="true"></i>
-                <span>Pay As You Mow</span>
+                <span class="logo-badge" aria-hidden="true">
+                    <img src="{{ url_for('static', filename='images/pay-as-you-mow-icon.png') }}" alt="Pay As You Mow logo icon" loading="eager" decoding="async">
+                </span>
+                <span class="logo-brand" aria-label="Pay As You Mow">
+                    <span class="logo-brand-top">Operating in Audenshaw & Denton</span>
+                    <span class="logo-brand-main">Pay As You <span class="highlight">Mow</span></span>
+                </span>
             </a>
             <nav aria-label="Primary navigation">
                 <ul>

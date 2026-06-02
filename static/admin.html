@@ -1910,6 +1910,14 @@
         <p class="panel-summary-note">Expand to configure your Telnyx API key, phone number, and verification method.</p>
       </div>
       <div class="panel-body" id="telnyxPanelBody" hidden>
+
+        <!-- Setup Wizard Button -->
+        <div style="background: linear-gradient(135deg, #1a2332 0%, #0d1b2a 100%); border: 2px solid var(--accent); border-radius: 14px; padding: 24px; margin-bottom: 24px; text-align: center;">
+          <h3 style="color: var(--accent); margin: 0 0 8px 0; font-size: 1.15rem;">🔧 Telnyx Setup Wizard</h3>
+          <p style="color: #aab; margin: 0 0 16px 0; font-size: 0.9rem;">Securely enter your Telnyx credentials, run a full live test against the Telnyx API, and see exactly what's working or broken.</p>
+          <button type="button" class="primary" id="openTelnyxWizardBtn" onclick="openTelnyxWizard()" style="font-size: 1rem; padding: 12px 32px; letter-spacing: 0.5px;">🚀 Launch Setup Wizard</button>
+        </div>
+
         <form id="telnyxForm" class="grid" autocomplete="off" novalidate>
           <div class="section">
             <div class="autopilot-api-header">
@@ -2072,6 +2080,84 @@
         </form>
       </div>
     </section>
+
+    <!-- Telnyx Setup Wizard Modal -->
+    <div id="telnyxWizardOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:10000; justify-content:center; align-items:center; padding:20px;">
+      <div style="background: #0d1b2a; border: 2px solid var(--accent); border-radius: 16px; width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto; padding: 32px; position: relative; box-shadow: 0 25px 80px rgba(0,0,0,0.6);">
+        <button type="button" onclick="closeTelnyxWizard()" style="position:absolute; top:14px; right:16px; background:none; border:none; color:#aab; font-size:1.5rem; cursor:pointer; padding:4px 8px;" aria-label="Close wizard">&times;</button>
+
+        <h2 style="color: var(--accent); margin: 0 0 4px 0;">🔧 Telnyx Setup Wizard</h2>
+        <p style="color: #8899aa; margin: 0 0 24px 0; font-size: 0.88rem;">Enter your Telnyx details below. Nothing is saved until you press <strong>Save &amp; Test</strong>. The API key is stored locally only — never in git.</p>
+
+        <form id="telnyxWizardForm" autocomplete="off" onsubmit="return false;">
+          <!-- Step 1: API Key -->
+          <div style="margin-bottom: 20px;">
+            <label style="display:block; font-weight:600; color:var(--text-primary); margin-bottom:6px;">1️⃣ API Key <span style="color:var(--danger);">*</span></label>
+            <p style="font-size:0.82rem; color:#8899aa; margin:0 0 8px 0;">From Telnyx Mission Control → Auth → API Keys. The full key including the part after the underscore.</p>
+            <input id="wizApiKey" type="password" autocomplete="off" spellcheck="false" placeholder="KEY01234..._secretpart" style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #334; background:#162030; color:#fff; font-family:monospace; font-size:0.95rem;" />
+          </div>
+
+          <!-- Step 2: From Number -->
+          <div style="margin-bottom: 20px;">
+            <label style="display:block; font-weight:600; color:var(--text-primary); margin-bottom:6px;">2️⃣ From Number <span style="color:var(--danger);">*</span></label>
+            <p style="font-size:0.82rem; color:#8899aa; margin:0 0 8px 0;">Your Telnyx phone number in E.164 format.</p>
+            <input id="wizFromNumber" type="tel" autocomplete="off" placeholder="e.g. +441615201615" style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #334; background:#162030; color:#fff; font-size:0.95rem;" />
+          </div>
+
+          <!-- Step 3: Method -->
+          <div style="margin-bottom: 20px;">
+            <label style="display:block; font-weight:600; color:var(--text-primary); margin-bottom:6px;">3️⃣ Verification Method</label>
+            <div style="display:flex; gap:12px;">
+              <label style="display:flex; align-items:center; gap:6px; padding:10px 16px; border:2px solid #334; border-radius:10px; cursor:pointer; color:#dde;" id="wizMethodCallLabel">
+                <input type="radio" name="wiz_method" value="call" checked /> <strong>📞 AI Voice Call</strong>
+              </label>
+              <label style="display:flex; align-items:center; gap:6px; padding:10px 16px; border:2px solid #334; border-radius:10px; cursor:pointer; color:#dde;" id="wizMethodSmsLabel">
+                <input type="radio" name="wiz_method" value="sms" /> <strong>💬 SMS Text</strong>
+              </label>
+            </div>
+          </div>
+
+          <!-- Step 4: Voice Connection ID (call mode) -->
+          <div id="wizVoiceFields" style="margin-bottom: 20px;">
+            <label style="display:block; font-weight:600; color:var(--text-primary); margin-bottom:6px;">4️⃣ Voice Connection ID <span style="color:var(--danger);">*</span></label>
+            <p style="font-size:0.82rem; color:#8899aa; margin:0 0 8px 0;">Mission Control → Voice → Voice API → your app → Connection ID.</p>
+            <input id="wizVoiceConnId" type="text" autocomplete="off" placeholder="e.g. 2906857825307198675" style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #334; background:#162030; color:#fff; font-family:monospace; font-size:0.95rem;" />
+          </div>
+
+          <!-- Step 4 alt: Messaging Profile (SMS mode) -->
+          <div id="wizSmsFields" style="margin-bottom: 20px; display:none;">
+            <label style="display:block; font-weight:600; color:var(--text-primary); margin-bottom:6px;">4️⃣ Messaging Profile ID <span style="font-size:0.8rem; color:#8899aa;">(optional)</span></label>
+            <p style="font-size:0.82rem; color:#8899aa; margin:0 0 8px 0;">Leave blank to use Telnyx default profile.</p>
+            <input id="wizMsgProfile" type="text" autocomplete="off" placeholder="e.g. 40019c44-..." style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #334; background:#162030; color:#fff; font-family:monospace; font-size:0.95rem;" />
+          </div>
+
+          <!-- Test phone (optional) -->
+          <div style="margin-bottom: 24px; padding: 16px; border: 1px dashed #445; border-radius: 10px;">
+            <label style="display:block; font-weight:600; color:var(--text-primary); margin-bottom:6px;">📱 Test Phone Number <span style="font-size:0.8rem; color:#8899aa;">(optional)</span></label>
+            <p style="font-size:0.82rem; color:#8899aa; margin:0 0 8px 0;">If provided, a real test call/SMS will be sent after all checks pass. You'll receive code <strong>1234</strong>.</p>
+            <input id="wizTestPhone" type="tel" autocomplete="off" placeholder="e.g. 07595289669" style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #334; background:#162030; color:#fff; font-size:0.95rem;" />
+          </div>
+
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <button type="button" class="primary" id="wizRunTestBtn" onclick="runTelnyxWizardTest(false)" style="flex:1; padding:14px; font-size:1rem; min-width:160px;">🔍 Test Only</button>
+            <button type="button" class="primary" id="wizSaveTestBtn" onclick="runTelnyxWizardTest(true)" style="flex:1; padding:14px; font-size:1rem; min-width:160px; background:var(--accent); color:#000; font-weight:700;">💾 Save &amp; Test</button>
+          </div>
+        </form>
+
+        <!-- Results Area -->
+        <div id="wizResults" style="display:none; margin-top: 24px; border-top: 1px solid #334; padding-top: 20px;">
+          <h3 style="color: var(--text-primary); margin: 0 0 12px 0;">Test Results</h3>
+          <div id="wizStepsList" style="font-size: 0.9rem; line-height: 2;"></div>
+          <div id="wizOverallResult" style="margin-top: 16px; padding: 16px; border-radius: 10px; font-weight: 700; font-size: 1rem;"></div>
+          <!-- AI Summary (collapsible) -->
+          <details id="wizSummaryBlock" style="display:none; margin-top: 16px;">
+            <summary style="cursor:pointer; color:var(--accent); font-weight:600; font-size:0.9rem;">📋 Copy diagnostic summary for AI troubleshooting</summary>
+            <pre id="wizSummaryText" style="margin-top: 8px; padding: 14px; background:#0a1220; border: 1px solid #334; border-radius: 8px; color: #ccd; font-size: 0.82rem; white-space: pre-wrap; word-break: break-word; max-height: 250px; overflow-y: auto;"></pre>
+            <button type="button" onclick="copyWizSummary()" style="margin-top:8px; padding:8px 16px; border-radius:6px; border:1px solid var(--accent); background:transparent; color:var(--accent); cursor:pointer; font-size:0.85rem;">📋 Copy to Clipboard</button>
+          </details>
+        </div>
+      </div>
+    </div>
 
     <!-- ── Server-Down Watchdog ──────────────────────────────────── -->
     <section class="panel" aria-labelledby="watchdog-heading" data-panel data-expanded="false">
@@ -4410,6 +4496,190 @@
       }
     }
 
+    // ── Telnyx Setup Wizard JS ──────────────────────────────────────────────
+
+    function openTelnyxWizard() {
+      const overlay = document.getElementById('telnyxWizardOverlay');
+      if (!overlay) return;
+      overlay.style.display = 'flex';
+      // Pre-fill from current config
+      const keyEl = document.getElementById('wizApiKey');
+      const fromEl = document.getElementById('wizFromNumber');
+      const voiceEl = document.getElementById('wizVoiceConnId');
+      const msgEl = document.getElementById('wizMsgProfile');
+      if (fromEl && telnyxConfig.from_number) fromEl.value = telnyxConfig.from_number;
+      if (voiceEl && telnyxConfig.voice_connection_id) voiceEl.value = telnyxConfig.voice_connection_id;
+      if (msgEl && telnyxConfig.messaging_profile_id) msgEl.value = telnyxConfig.messaging_profile_id;
+      // Set method radio
+      const method = telnyxConfig.verification_method || 'call';
+      const radios = document.querySelectorAll('input[name="wiz_method"]');
+      radios.forEach(r => { r.checked = (r.value === method); });
+      toggleWizMethodFields();
+      // Clear previous results
+      document.getElementById('wizResults').style.display = 'none';
+      // Focus API key
+      if (keyEl) setTimeout(() => keyEl.focus(), 100);
+    }
+
+    function closeTelnyxWizard() {
+      const overlay = document.getElementById('telnyxWizardOverlay');
+      if (overlay) overlay.style.display = 'none';
+    }
+
+    function toggleWizMethodFields() {
+      const method = document.querySelector('input[name="wiz_method"]:checked')?.value || 'call';
+      const voiceFields = document.getElementById('wizVoiceFields');
+      const smsFields = document.getElementById('wizSmsFields');
+      if (voiceFields) voiceFields.style.display = method === 'call' ? 'block' : 'none';
+      if (smsFields) smsFields.style.display = method === 'sms' ? 'block' : 'none';
+    }
+
+    // Wire method toggle
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('input[name="wiz_method"]').forEach(r => {
+        r.addEventListener('change', toggleWizMethodFields);
+      });
+      // Close on overlay click
+      const overlay = document.getElementById('telnyxWizardOverlay');
+      if (overlay) {
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) closeTelnyxWizard();
+        });
+      }
+    });
+
+    async function runTelnyxWizardTest(saveFirst) {
+      const apiKey = document.getElementById('wizApiKey')?.value.trim() || '';
+      const fromNumber = document.getElementById('wizFromNumber')?.value.trim() || '';
+      const method = document.querySelector('input[name="wiz_method"]:checked')?.value || 'call';
+      const voiceConnId = document.getElementById('wizVoiceConnId')?.value.trim() || '';
+      const msgProfile = document.getElementById('wizMsgProfile')?.value.trim() || '';
+      const testPhone = document.getElementById('wizTestPhone')?.value.trim() || '';
+
+      const resultsDiv = document.getElementById('wizResults');
+      const stepsDiv = document.getElementById('wizStepsList');
+      const overallDiv = document.getElementById('wizOverallResult');
+      const summaryBlock = document.getElementById('wizSummaryBlock');
+      const summaryText = document.getElementById('wizSummaryText');
+
+      // Disable buttons
+      const testBtn = document.getElementById('wizRunTestBtn');
+      const saveBtn = document.getElementById('wizSaveTestBtn');
+      if (testBtn) { testBtn.disabled = true; testBtn.textContent = '⏳ Testing…'; }
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ Testing…'; }
+
+      resultsDiv.style.display = 'block';
+      stepsDiv.innerHTML = '<p style="color:#8899aa;">Running live tests against Telnyx API…</p>';
+      overallDiv.innerHTML = '';
+      summaryBlock.style.display = 'none';
+
+      try {
+        // If save first, persist to the app config
+        if (saveFirst) {
+          const savePayload = {};
+          if (apiKey) savePayload.api_key = apiKey;
+          if (fromNumber) savePayload.from_number = fromNumber;
+          savePayload.verification_method = method;
+          savePayload.voice_connection_id = voiceConnId;
+          savePayload.messaging_profile_id = msgProfile;
+
+          const saveRes = await fetch('/admin/telnyx/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(savePayload),
+          });
+          if (!saveRes.ok) {
+            const errData = await saveRes.json().catch(() => ({}));
+            if (saveRes.status === 401) {
+              throw new Error('Session expired — please refresh the page and log in to admin again, then re-open the wizard.');
+            }
+            throw new Error('Failed to save: ' + (errData.message || errData.error || saveRes.statusText));
+          }
+          const saveData = await saveRes.json().catch(() => ({}));
+          if (saveData.config) telnyxConfig = { ...telnyxConfig, ...saveData.config };
+          renderTelnyxState();
+        }
+
+        // Run the deep test
+        const testPayload = {
+          verification_method: method,
+          test_phone: testPhone,
+        };
+        // Send values for testing (even if not saved)
+        if (apiKey) testPayload.api_key = apiKey;
+        if (fromNumber) testPayload.from_number = fromNumber;
+        testPayload.voice_connection_id = voiceConnId;
+        testPayload.messaging_profile_id = msgProfile;
+
+        const res = await fetch('/admin/telnyx/deep-test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(testPayload),
+        });
+        if (!res.ok && res.status === 401) {
+          throw new Error('Session expired — please refresh the page and log in to admin again, then re-open the wizard.');
+        }
+        const data = await res.json().catch(() => ({}));
+
+        // Render steps
+        let html = '';
+        for (const s of (data.steps || [])) {
+          let icon, color;
+          switch (s.status) {
+            case 'ok':    icon = '✅'; color = '#30c3a6'; break;
+            case 'fail':  icon = '❌'; color = '#ff6b6b'; break;
+            case 'warn':  icon = '⚠️'; color = '#ffd166'; break;
+            case 'skip':  icon = '⏭️'; color = '#8899aa'; break;
+            default:      icon = 'ℹ️'; color = '#8899aa';
+          }
+          html += `<div style="color:${color}; margin-bottom:6px;">${icon} <strong>${s.step}:</strong> ${s.detail}</div>`;
+        }
+        stepsDiv.innerHTML = html;
+
+        // Overall result
+        if (data.all_ok) {
+          overallDiv.style.background = 'rgba(48,195,166,0.12)';
+          overallDiv.style.color = '#30c3a6';
+          overallDiv.style.border = '1px solid rgba(48,195,166,0.3)';
+          overallDiv.innerHTML = '✅ All checks passed! Phone verification is ready.' + (saveFirst ? '' : '<br><span style="font-weight:400;font-size:0.85rem;color:#8899aa;">Click <strong>Save &amp; Test</strong> to apply these settings.</span>');
+        } else {
+          overallDiv.style.background = 'rgba(255,107,107,0.1)';
+          overallDiv.style.color = '#ff6b6b';
+          overallDiv.style.border = '1px solid rgba(255,107,107,0.3)';
+          overallDiv.innerHTML = '❌ Issues found — see details above.';
+
+          // Show AI summary
+          if (data.summary) {
+            summaryBlock.style.display = 'block';
+            summaryText.textContent = data.summary;
+          }
+        }
+      } catch (err) {
+        stepsDiv.innerHTML = `<p style="color:#ff6b6b;">❌ Error: ${err.message}</p>`;
+        overallDiv.innerHTML = '';
+      } finally {
+        if (testBtn) { testBtn.disabled = false; testBtn.textContent = '🔍 Test Only'; }
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Save & Test'; }
+      }
+    }
+
+    function copyWizSummary() {
+      const text = document.getElementById('wizSummaryText')?.textContent || '';
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => { btn.textContent = '📋 Copy to Clipboard'; }, 2000);
+      }).catch(() => {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      });
+    }
+
     // ── SEO JS ──────────────────────────────────────────────────────────────
 
     let seoConfig = {
@@ -5386,7 +5656,8 @@
               <th>First visit</th>
               <th>Last seen</th>
               <th>Time on site</th>
-              <th>Visits logged</th>
+              <th>Visits</th>
+              <th>Pages</th>
               <th>Location</th>
               <th>Status</th>
               <th>Actions</th>
@@ -5394,7 +5665,7 @@
           </thead>
           <tbody>
             ${list
-              .map((visitor) => {
+              .map((visitor, idx) => {
                 const ipValue = visitor && typeof visitor.ip === 'string' ? visitor.ip.trim() : '';
                 const ipDisplay = ipValue ? escapeHtml(ipValue) : '—';
                 const ipTitle = ipValue ? ` title="${escapeHtml(ipValue)}"` : '';
@@ -5406,13 +5677,15 @@
                 const lastSeenTitle = lastSeenRaw ? ` title="${escapeHtml(lastSeenRaw)}"` : '';
                 const visits = Number(visitor && visitor.visit_count ? visitor.visit_count : 0);
                 const totalSeconds = Number(visitor && visitor.total_duration_seconds ? visitor.total_duration_seconds : 0);
-                const currentVisit = visitor && visitor.current_visit && typeof visitor.current_visit === 'object'
-                  ? visitor.current_visit
+                const currentVisit = visitor && visitor.current_session && typeof visitor.current_session === 'object'
+                  ? visitor.current_session
                   : null;
                 const currentSeconds = currentVisit && currentVisit.duration_seconds
                   ? Number(currentVisit.duration_seconds)
                   : 0;
                 const timeOnSite = escapeHtml(formatDuration(totalSeconds + currentSeconds));
+                const allPages = Array.isArray(visitor.pages) ? visitor.pages : [];
+                const pageCount = allPages.length;
                 const locationRaw =
                   visitor && typeof visitor.location === 'string' && visitor.location.trim()
                     ? visitor.location.trim()
@@ -5449,19 +5722,76 @@
                   : bannedFlag
                     ? `<button type="button" class="table-action" data-visitor-action="unban" data-ip="${safeIpAttr}">Unban</button>`
                     : `<button type="button" class="table-action danger" data-visitor-action="ban" data-ip="${safeIpAttr}">Ban</button>`;
+                const viewButton = (visits > 0 || currentVisit)
+                  ? `<button type="button" class="table-action" data-visitor-action="toggle-visits" data-idx="${idx}" style="white-space:nowrap;">▶ Visits</button>`
+                  : '';
                 const actionsCell = disableActions
                   ? '<span class="cell-muted">No actions available</span>'
-                  : `<div class="table-actions">${deleteButton}${banButton}</div>`;
+                  : `<div class="table-actions">${viewButton}${deleteButton}${banButton}</div>`;
+
+                // Build visit history detail row
+                const visitList = Array.isArray(visitor.visits) ? visitor.visits : [];
+                const allVisitRows = [];
+                // Include current (live) visit if present
+                if (currentVisit) {
+                  allVisitRows.push({
+                    first_seen: currentVisit.first_seen || '',
+                    last_seen: currentVisit.last_seen || '',
+                    duration_seconds: Number(currentVisit.duration_seconds || 0),
+                    pages: Array.isArray(currentVisit.pages) ? currentVisit.pages : [],
+                    location: currentVisit.location || '',
+                    live: true,
+                  });
+                }
+                visitList.slice().reverse().forEach(v => {
+                  allVisitRows.push({
+                    first_seen: v.first_seen || '',
+                    last_seen: v.last_seen || '',
+                    duration_seconds: Number(v.duration_seconds || 0),
+                    pages: Array.isArray(v.pages) ? v.pages : [],
+                    location: v.location || '',
+                    live: false,
+                  });
+                });
+
+                const visitDetailHtml = allVisitRows.length
+                  ? allVisitRows.map((v, vi) => {
+                      const vTime = v.first_seen ? escapeHtml(formatDate(v.first_seen)) : '?';
+                      const vDur = escapeHtml(formatDuration(v.duration_seconds));
+                      const vPages = v.pages.length ? v.pages.map(p => `<code style="background:rgba(48,195,166,0.12);padding:2px 6px;border-radius:4px;font-size:0.8rem;">${escapeHtml(p)}</code>`).join(' → ') : '<span style="color:var(--text-muted);">No pages</span>';
+                      const liveTag = v.live ? ' <span style="background:#30c3a6;color:#000;padding:1px 6px;border-radius:4px;font-size:0.72rem;font-weight:700;">LIVE</span>' : '';
+                      return `<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+                        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:4px;">
+                          <span style="font-weight:600;color:var(--text-primary);">Visit #${allVisitRows.length - vi}${liveTag}</span>
+                          <span style="color:var(--text-muted);font-size:0.82rem;">${vTime}</span>
+                          <span style="color:var(--text-muted);font-size:0.82rem;">⏱ ${vDur}</span>
+                        </div>
+                        <div style="font-size:0.85rem;">📄 ${vPages}</div>
+                      </div>`;
+                    }).join('')
+                  : '<span style="color:var(--text-muted);">No visit sessions recorded yet.</span>';
+
                 return `
                   <tr>
                     <td${ipTitle}>${ipDisplay}</td>
                     <td${firstSeenTitle}>${firstVisit}</td>
                     <td${lastSeenTitle}>${lastSeen}</td>
                     <td>${timeOnSite}</td>
-                    <td>${visits}</td>
+                    <td style="font-weight:600;">${visits}</td>
+                    <td>${pageCount} page${pageCount !== 1 ? 's' : ''}</td>
                     <td>${location}</td>
                     <td><span class="visitor-status ${statusClass}"${statusTitleAttr}>${statusLabel}</span></td>
                     <td>${actionsCell}</td>
+                  </tr>
+                  <tr class="visitor-detail-row" data-detail-idx="${idx}" style="display:none;">
+                    <td colspan="9" style="padding:12px 16px; background:rgba(48,195,166,0.04); border-left:3px solid var(--accent);">
+                      <div style="margin-bottom:8px;">
+                        <strong style="color:var(--text-primary);">All pages visited:</strong>
+                        <span style="margin-left:8px;">${allPages.length ? allPages.map(p => `<code style="background:rgba(48,195,166,0.12);padding:2px 6px;border-radius:4px;font-size:0.8rem;">${escapeHtml(p)}</code>`).join(' ') : '<span style="color:var(--text-muted);">None</span>'}</span>
+                      </div>
+                      <div style="margin-bottom:4px;"><strong style="color:var(--text-primary);">Visit sessions (${allVisitRows.length}):</strong></div>
+                      <div style="max-height:300px;overflow-y:auto;">${visitDetailHtml}</div>
+                    </td>
                   </tr>
                 `;
               })
@@ -5469,6 +5799,19 @@
           </tbody>
         </table>
       `;
+
+      // Wire toggle buttons for visit detail rows
+      visitorHistoryContainer.querySelectorAll('[data-visitor-action="toggle-visits"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = btn.getAttribute('data-idx');
+          const row = visitorHistoryContainer.querySelector(`[data-detail-idx="${idx}"]`);
+          if (row) {
+            const isHidden = row.style.display === 'none';
+            row.style.display = isHidden ? 'table-row' : 'none';
+            btn.textContent = isHidden ? '▼ Visits' : '▶ Visits';
+          }
+        });
+      });
     }
 
     async function refreshPresenceData() {
